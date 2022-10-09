@@ -1,0 +1,9 @@
+.idea/
+.DS_Store
+*.pyc
+kniot/
+dumps/
+env/
+database/
+.ipynb_checkpoints/
+*_cookies.txt
