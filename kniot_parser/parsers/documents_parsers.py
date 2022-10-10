@@ -24,7 +24,9 @@ class XmlDataFrameConverter:
 
     def get_id(self):
         """get the id in each entery of the list"""
-        return self.id_field
+        if isinstance(self.id_field,list):
+            return self.id_field
+        return [self.id_field]
 
     def convert(self, file, no_content="NO-CONTENT"):
         """parse file to data frame"""
@@ -96,7 +98,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         list_sub_key="",
     ):
         super().__init__(
-            list_key, id_field, full_data_snapshot, roots, date_columns, float_columns
+            list_key, id_field,full_data_snapshot, roots, date_columns, float_columns
         )
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key

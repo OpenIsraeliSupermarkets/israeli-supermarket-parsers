@@ -16,21 +16,6 @@ class AllTypesFileConverter(ABC):
         """get parser by file type"""
         return getattr(self, file_type)
 
-    # def get_id(self, file_type):
-    #     """get"""
-    #     return self.converter_by_type(file_type).get_id()
-
-    # def convert(self, file_type, full_path):
-    #     """ convert file to data frame """
-    #     results = self.converter_by_type(file_type).convert(full_path)
-
-    #     if results.shape[0] == 0:
-    #         raise ValueError(f" file {full_path} failed to be pharse.")
-    #     return results
-
-    # def should_convert_to_incremental(self, file_type):
-    #     """ check if should be converted to incremental """
-    #     return self.converter_by_type(file_type).is_full_data_snapshot()
 
 
 class DefualtFileConverter(AllTypesFileConverter):
@@ -41,24 +26,24 @@ class DefualtFileConverter(AllTypesFileConverter):
             pricefull=XmlDataFrameConverter(
                 full_data_snapshot=True,
                 list_key="Items",
-                id_field="ItemCode",
+                id_field=["ItemCode","PriceUpdateDate"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             price=XmlDataFrameConverter(
                 list_key="Items",
-                id_field="ItemCode",
+                id_field=["ItemCode","PriceUpdateDate"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             promo=XmlDataFrameConverter(
                 list_key="Promotions",
-                id_field="PromotionId",
+                id_field=["PromotionId","PromotionUpdateDate"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
             ),
             promofull=XmlDataFrameConverter(
                 full_data_snapshot=True,
                 list_key="Promotions",
-                id_field="PromotionId",
+                id_field=["PromotionId","PromotionUpdateDate"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
             ),
@@ -81,24 +66,24 @@ class BigIDFileConverter(DefualtFileConverter):
         self.pricefull = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Products",
-            id_field="ItemCode",
+            id_field=["ItemCode","PriceUpdateDate"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
         )
         self.price = XmlDataFrameConverter(
             list_key="Products",
-            id_field="ItemCode",
+            id_field=["ItemCode","PriceUpdateDate"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
         )
         self.promo = XmlDataFrameConverter(
             list_key="Sales",
-            id_field="ItemCode",
+            id_field=["ItemCode","PriceUpdateDate"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
         self.promofull = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Sales",
-            id_field="ItemCode",
+            id_field=["ItemCode","PromotionUpdateDate"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
@@ -114,4 +99,34 @@ class BranchesFileConverter(BigIDFileConverter):
         super().__init__()
         self.stores = XmlDataFrameConverter(
             full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[]
+        )
+
+
+class DetailsFileConverter(BigIDFileConverter):
+    """ for super-pharam """
+    def __init__(self):
+        super().__init__()
+
+        self.promofull = XmlDataFrameConverter(
+            full_data_snapshot=True,
+            list_key="Header/Details",
+            id_field=["PromotionId","PriceUpdateDate","ItemCode"],
+            roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+        )
+        self.promo = XmlDataFrameConverter(
+            list_key="Header/Details",
+            id_field=["PromotionId","PriceUpdateDate","ItemCode"],
+            roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+        )
+
+        self.pricefull = XmlDataFrameConverter(
+            full_data_snapshot=True,
+            list_key="Header/Details",
+            id_field=["ItemCode","PriceUpdateDate"],
+            roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+        )
+        self.price = XmlDataFrameConverter(
+            list_key="Header/Details",
+            id_field=["ItemCode","PriceUpdateDate"],
+            roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
         )

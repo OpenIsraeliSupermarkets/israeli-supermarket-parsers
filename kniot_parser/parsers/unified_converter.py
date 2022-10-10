@@ -2,6 +2,7 @@ from .all_files_parsers import (
     BranchesFileConverter,
     DefualtFileConverter,
     BigIDFileConverter,
+    DetailsFileConverter
 )
 from kniot_parser.utils import Logger
 
@@ -15,6 +16,7 @@ class UnifiedConverter(object):
         "bareket": BranchesFileConverter,
         "mahsani a shuk": BigIDFileConverter,
         "Victory": BigIDFileConverter,
+        "Super-Pharm":DetailsFileConverter
     }
     defult_parser = DefualtFileConverter
 

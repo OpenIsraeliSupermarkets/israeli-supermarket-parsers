@@ -7,3 +7,5 @@ env/
 database/
 .ipynb_checkpoints/
 *_cookies.txt
+.vscode/
+logging.log
