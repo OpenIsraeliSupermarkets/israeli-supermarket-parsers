@@ -23,6 +23,10 @@ def _file_name_to_components(xml_file_name, empty_store_id=0000):
         store_number = empty_store_id
 
     file_type, chain_id = _find_file_type_and_chain_id(file_name)
+
+    if file_type == "storesfull":
+        file_type = "stores"
+
     return (
         file_name,
         store_number,

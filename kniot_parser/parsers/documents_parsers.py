@@ -30,12 +30,7 @@ class XmlDataFrameConverter:
 
     def convert(self, file, no_content="NO-CONTENT"):
         """parse file to data frame"""
-        root = get_root(file)
-
-        # add the roots to the document
-        root_store = {}
-        for k in self.roots:
-            root_store[k] = root.find(k).text
+        root,root_store = get_root(file,self.list_key,self.roots)
 
         data_frame = self._phrse(root, file, root_store, no_content)
 
@@ -53,9 +48,9 @@ class XmlDataFrameConverter:
         rows = []
 
         add_columns = True
-        elements = root.find(self.list_key)#.getchildren()
+        elements = root.getchildren()
         if len(elements) == 0:
-            if root.find(self.list_key).attrib.get("Count", None) == "0":
+            if root.attrib.get("Count", None) == "0":
                 return pd.DataFrame()
             else:
                 raise ValueError(f"{self.list_key} is wrong")
@@ -110,7 +105,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         rows = []
 
         add_columns = True
-        elements = root.find(self.list_key)#.getchildren()
+        elements = root.getchildren()
         if len(elements) == 0:
             raise ValueError(f"{self.list_key} is wrong")
 

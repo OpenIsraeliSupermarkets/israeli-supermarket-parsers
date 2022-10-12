@@ -51,12 +51,34 @@ class DefualtFileConverter(AllTypesFileConverter):
                 full_data_snapshot=True,
                 list_key="SubChains",
                 sub_roots=["SubChainId", "SubChainName"],
-                id_field="StoreId",
+                id_field=["StoreId"],
                 list_sub_key="Stores",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
             ),
         )
 
+
+class CofixFileConverter(DefualtFileConverter):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.price=XmlDataFrameConverter(
+                        list_key="Items",
+                        id_field=["ItemCode","PriceUpdateDate","ItemId"],
+                        roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                    )
+
+class ShufersalFileConverter(DefualtFileConverter):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.stores=XmlDataFrameConverter(
+                full_data_snapshot=True,
+                list_key="STORES",
+                id_field=["STOREID"],
+                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+            )
 
 class BigIDFileConverter(DefualtFileConverter):
     """a converter to all documents with ID instead of Id"""
@@ -87,6 +109,14 @@ class BigIDFileConverter(DefualtFileConverter):
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
+        self.stores = XmlDataFrameConverter(
+            full_data_snapshot=True,
+            list_key="Sales",
+            id_field=["ItemCode","PromotionUpdateDate"],
+            roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+            date_columns=["PriceUpdateDate"],
+        )
+
 
 
 class BranchesFileConverter(BigIDFileConverter):
@@ -102,6 +132,26 @@ class BranchesFileConverter(BigIDFileConverter):
         )
 
 
+class BranchesPromoFileConverter(BigIDFileConverter):
+    """ "
+    converter to all stores with ID instead of id and
+    'Branches' instead of "Stores"
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.stores = XmlDataFrameConverter(
+            full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[]
+        )
+        self.promo = XmlDataFrameConverter(
+            list_key="Sales",
+            id_field=["ItemCode","PriceUpdateDate","ClubID","ItemType","RewardType","PromotionID"],
+            roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+            date_columns=["PriceUpdateDate"],
+        )
+
+
+
 class DetailsFileConverter(BigIDFileConverter):
     """ for super-pharam """
     def __init__(self):
@@ -109,24 +159,29 @@ class DetailsFileConverter(BigIDFileConverter):
 
         self.promofull = XmlDataFrameConverter(
             full_data_snapshot=True,
-            list_key="Header/Details",
+            list_key="Details",
             id_field=["PromotionId","PriceUpdateDate","ItemCode"],
             roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
         )
         self.promo = XmlDataFrameConverter(
-            list_key="Header/Details",
+            list_key="Details",
             id_field=["PromotionId","PriceUpdateDate","ItemCode"],
             roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
         )
 
         self.pricefull = XmlDataFrameConverter(
             full_data_snapshot=True,
-            list_key="Header/Details",
+            list_key="Details",
             id_field=["ItemCode","PriceUpdateDate"],
             roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
         )
         self.price = XmlDataFrameConverter(
-            list_key="Header/Details",
+            list_key="Details",
             id_field=["ItemCode","PriceUpdateDate"],
             roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+        )
+        self.stores = XmlDataFrameConverter(
+            list_key="Details",
+            id_field=["StoreId"],
+            roots=["ChainId", "SubChainId"],
         )

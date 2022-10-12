@@ -26,12 +26,29 @@ def build_value(name, no_content="NO_BODY"):
             content = sorted(content, key=str)
     return content
 
-def get_root(file):
+def get_root(file,key_to_find,attributes_to_collect):
     """ get ET root """
     tree = ET.parse(file)
     root = tree.getroot()
+    #
+    root_store = dict()
+    root = _get_root(root,key_to_find,attributes_to_collect,root_store)
+    return root,root_store
 
-    envelope = root.find("Envelope")
-    if envelope:
-        return envelope
-    return root
+
+def _get_root(root,key_to_find,attributes_to_collect,collected):
+    if root.tag == key_to_find:
+        return root
+
+    root_children = root.getchildren()
+    result = None
+    for sub in root_children:
+        # collect attributes
+        if len(sub.getchildren()) == 0 and sub.tag in attributes_to_collect:
+            collected[sub.tag] = sub.text
+        else:
+            possible_root = _get_root(sub,key_to_find,attributes_to_collect,collected)
+            if possible_root is not None:
+                result = possible_root
+
+    return result
