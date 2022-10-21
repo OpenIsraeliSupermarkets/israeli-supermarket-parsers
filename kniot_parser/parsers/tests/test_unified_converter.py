@@ -17,11 +17,8 @@ def check_converting_to_data_frame_and_index(folder):
 
     for _, row in files_to_scan.iterrows():
 
-        try:
-            converter = UnifiedConverter(row["store_name"], row["file_type"])
-            data_frame = converter.convert(row["full_path"])
-        except Exception as e:
-            converter.convert(row["full_path"])
+        converter = UnifiedConverter(row["store_name"], row["file_type"])
+        data_frame = converter.convert(row["full_path"])
         assert (
             data_frame.empty
             or len(data_frame[converter.get_key_column()].value_counts())
