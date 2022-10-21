@@ -6,7 +6,7 @@ from .all_files_parsers import (
     ShufersalFileConverter,
     CofixFileConverter,
     MahsaniAShukPromoFileConverter,
-    SalachDabachFileConverter
+    SalachDabachFileConverter,
 )
 from kniot_parser.utils import Logger
 
@@ -23,7 +23,7 @@ class UnifiedConverter(object):
         "Super-Pharm": SuperPharmFileConverter,
         "Shufersal": ShufersalFileConverter,
         "cofix": CofixFileConverter,
-        "salachdabach":SalachDabachFileConverter,
+        "salachdabach": SalachDabachFileConverter,
     }
     defult_parser = DefualtFileConverter
 
@@ -59,7 +59,7 @@ class UnifiedConverter(object):
 
         data_frame = self.drop_duplicate_missing_inforamtion(data_frame)
 
-        return data_frame#self.adjust_to_file_type(data_frame)
+        return self.adjust_to_file_type(data_frame)
 
     def drop_duplicate(self, data_frame):
         """drop duplicate entries in the database"""
@@ -81,7 +81,7 @@ class UnifiedConverter(object):
                 if (
                     change.shape[1] == 1
                     and "UnitQty" in change.columns
-#                    and "Unknown " in change["UnitQty"].values
+                    #                    and "Unknown " in change["UnitQty"].values
                 ):
                     return data.tail(1)
                 else:
@@ -121,6 +121,14 @@ class UnifiedConverter(object):
             columns_nan_mapping = {"itemid": "not_apply"}
             ignore_columns = []
             rename = {"itemnm": "itemname"}
+        elif self.file_type == "promo":
+            columns_nan_mapping = {}
+            ignore_columns = []
+            rename = {}
+        elif self.file_type == "promofull":
+            columns_nan_mapping = {}
+            ignore_columns = []
+            rename = {}
 
         for column, fill_value in columns_nan_mapping.items():
             data_frame[column] = fill_value

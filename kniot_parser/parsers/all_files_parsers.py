@@ -136,20 +136,18 @@ class BranchesFileConverter(BigIDFileConverter):
 
 
 class BareketFileConverter(BranchesFileConverter):
-
     def __init__(self):
         super().__init__()
         self.promofull = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Sales",
-            id_field=["PromotionID","ItemCode"],
+            id_field=["PromotionID", "ItemCode"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
 
-class VictoryFileConverter(BranchesFileConverter):
-   
 
+class VictoryFileConverter(BranchesFileConverter):
     def __init__(self):
         super().__init__()
         self.promofull = XmlDataFrameConverter(
@@ -160,8 +158,10 @@ class VictoryFileConverter(BranchesFileConverter):
             date_columns=["PriceUpdateDate"],
         )
 
+
 class SalachDabachFileConverter(CofixFileConverter):
     pass
+
 
 class MahsaniAShukPromoFileConverter(BigIDFileConverter):
     """ "

@@ -50,7 +50,7 @@ class XmlDataFrameConverter:
 
         add_columns = True
         if not root and "Super-Pharm" in file:
-            return pd.DataFrame() # shufersal don't add count=0
+            return pd.DataFrame()  # shufersal don't add count=0
 
         elements = root.getchildren()
         if len(elements) == 0:

@@ -5,13 +5,14 @@ from kniot_parser.utils import (
     read_dump_folder,
     get_sample_price_data,
     get_sample_store_data,
+    get_sample_promo_full_data,
     get_sample_promo_data,
     get_sample_price_full_data,
 )
 
 
-def templete(folder, expected_store_columns):
-
+def check_converting_columns_mergable(folder, expected_store_columns):
+    """create one data frame with all columns"""
     files_to_scan = read_dump_folder(folder=folder)
     for _, row in files_to_scan.iterrows():
 
@@ -26,12 +27,11 @@ def templete(folder, expected_store_columns):
 
 
 @pytest.mark.run(order=1)
-def test_unifiing_store_columns(folder="samples_store"):
+def test_unifiing_store_columns():
     """test converting to data frame"""
 
-    # get_sample_store_data(folder)
-
-    templete(
+    folder = get_sample_store_data()
+    check_converting_columns_mergable(
         folder,
         [
             "address",
@@ -53,11 +53,11 @@ def test_unifiing_store_columns(folder="samples_store"):
 
 
 @pytest.mark.run(order=2)
-def test_unifiing_prices_columns(folder="samples_price"):
+def test_unifiing_prices_columns():
     """test converting to data frame"""
 
-    get_sample_price_data(folder)
-    templete(
+    folder = get_sample_price_data()
+    check_converting_columns_mergable(
         folder,
         [
             "allowdiscount",
@@ -87,11 +87,11 @@ def test_unifiing_prices_columns(folder="samples_price"):
 
 
 @pytest.mark.run(order=3)
-def test_unifiing_prices_full_columns(folder="samples_price_full"):
+def test_unifiing_prices_full_columns():
     """test converting to data frame"""
 
-    get_sample_price_full_data(folder)
-    templete(
+    folder = get_sample_price_full_data()
+    check_converting_columns_mergable(
         folder,
         [
             "allowdiscount",
@@ -123,22 +123,60 @@ def test_unifiing_prices_full_columns(folder="samples_price_full"):
 
 
 @pytest.mark.run(order=3)
-def test_unifiing_promo(folder="samples_promo"):
+def test_unifiing_promo():
     """test converting to data frame"""
 
-    get_sample_promo_data(folder)
+    folder = get_sample_promo_data()
+    check_converting_columns_mergable(
+        folder,
+        [
+            "allowmultiplediscounts",
+            "bikoretno",
+            "chainid",
+            "file_id",
+            "isgiftitem",
+            "itemcode",
+            "priceupdatedate",
+            "promotiondetails",
+            "promotionid",
+            "rewardtype",
+            "storeid",
+            "subchainid",
+        ],
+    )
+    # shutil.rmtree(folder)
 
-    files_to_scan = read_dump_folder(folder=folder)
 
-    for _, row in files_to_scan.iterrows():
+@pytest.mark.run(order=3)
+def test_unifiing_promo_all():
+    """test converting to data frame"""
 
-        converter = UnifiedConverter(row["store_name"], row["file_type"])
-        data_frame = converter.convert(row["full_path"])
-
-        assert (
-            data_frame.empty
-            or len(data_frame[converter.get_key_column()].value_counts())
-            == data_frame.shape[0]
-        ), f"{row['full_path']}, key is not unique."
-
+    folder = get_sample_promo_full_data()
+    check_converting_columns_mergable(
+        folder,
+        [
+            "allowdiscount",
+            "bikoretno",
+            "bisweighted",
+            "chainid",
+            "file_id",
+            "itemcode",
+            "itemid",
+            "itemname",
+            "itemprice",
+            "itemstatus",
+            "itemtype",
+            "manufacturecountry",
+            "manufactureritemdescription",
+            "manufacturername",
+            "priceupdatedate",
+            "qtyinpackage",
+            "quantity",
+            "storeid",
+            "subchainid",
+            "unitofmeasure",
+            "unitofmeasureprice",
+            "unitqty",
+        ],
+    )
     # shutil.rmtree(folder)

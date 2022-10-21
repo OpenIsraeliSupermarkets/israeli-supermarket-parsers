@@ -12,7 +12,7 @@ from kniot_parser.utils import (
 
 
 def check_converting_to_data_frame_and_index(folder):
-    """ check converting to df and index """
+    """check converting to df and index"""
     files_to_scan = read_dump_folder(folder=folder)
 
     for _, row in files_to_scan.iterrows():
@@ -33,8 +33,7 @@ def check_converting_to_data_frame_and_index(folder):
 def test_unifiing_store():
     """test converting to data frame"""
 
-    folder = "samples_store"
-    get_sample_store_data(folder)
+    folder = get_sample_store_data()
     check_converting_to_data_frame_and_index(folder)
     # shutil.rmtree(folder)
 
@@ -43,8 +42,7 @@ def test_unifiing_store():
 def test_unifiing_prices():
     """test converting to data frame"""
 
-    folder = "samples_price"
-    get_sample_price_data(folder)
+    folder = get_sample_price_data()
     check_converting_to_data_frame_and_index(folder)
     # shutil.rmtree(folder)
 
@@ -53,8 +51,7 @@ def test_unifiing_prices():
 def test_unifiing_prices_full():
     """test converting to data frame"""
 
-    folder = "samples_price_full"
-    get_sample_price_full_data(folder)
+    folder = get_sample_price_full_data()
     check_converting_to_data_frame_and_index(folder)
     # shutil.rmtree(folder)
 
@@ -63,8 +60,7 @@ def test_unifiing_prices_full():
 def test_unifiing_promo():
     """test converting to data frame"""
 
-    folder = "samples_promo"
-    get_sample_promo_data(folder)
+    folder = get_sample_promo_data()
     check_converting_to_data_frame_and_index(folder)
     # shutil.rmtree(folder)
 
@@ -73,7 +69,6 @@ def test_unifiing_promo():
 def test_unifiing_promo_full():
     """test converting to data frame"""
 
-    folder = "samples_promo_full"
-    get_sample_promo_full_data(folder)
+    folder = get_sample_promo_full_data()
     check_converting_to_data_frame_and_index(folder)
     # shutil.rmtree(folder)

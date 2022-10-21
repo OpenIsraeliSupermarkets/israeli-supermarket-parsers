@@ -12,28 +12,29 @@ def get_sample_data(dump_folder_name, filter_type=None):
             task.start()
         else:
             ScarpingTask(dump_folder_name=dump_folder_name, limit=10).start()
+    return dump_folder_name
 
 
-def get_sample_store_data(dump_folder_name):
+def get_sample_store_data():
     """get only store to scrape"""
-    get_sample_data(dump_folder_name, FileTypesFilters.STORE_FILE.name)
+    return get_sample_data("samples_store", FileTypesFilters.STORE_FILE.name)
 
 
-def get_sample_price_data(dump_folder_name):
+def get_sample_price_data():
     """get only price to scrape"""
-    get_sample_data(dump_folder_name, FileTypesFilters.PRICE_FILE.name)
+    return get_sample_data("samples_price", FileTypesFilters.PRICE_FILE.name)
 
 
-def get_sample_price_full_data(dump_folder_name):
+def get_sample_price_full_data():
     """get only price full to scrape"""
-    get_sample_data(dump_folder_name, FileTypesFilters.PRICE_FULL_FILE.name)
+    return get_sample_data("samples_price_full", FileTypesFilters.PRICE_FULL_FILE.name)
 
 
-def get_sample_promo_data(dump_folder_name):
+def get_sample_promo_data():
     """get only promo to scrape"""
-    get_sample_data(dump_folder_name, FileTypesFilters.PROMO_FILE.name)
+    return get_sample_data("samples_promo", FileTypesFilters.PROMO_FILE.name)
 
 
-def get_sample_promo_full_data(dump_folder_name):
+def get_sample_promo_full_data():
     """get only promo full to scrape"""
-    get_sample_data(dump_folder_name, FileTypesFilters.PROMO_FULL_FILE.name)
+    return get_sample_data("samples_promo_full", FileTypesFilters.PROMO_FULL_FILE.name)
