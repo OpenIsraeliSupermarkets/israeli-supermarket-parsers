@@ -4,7 +4,6 @@ from .utils.data_loading import read_dump_folder
 from .utils.logger import Logger
 
 
-
 class ConvertingProcess(ProcessJob):
     """converting file to database"""
 
@@ -13,7 +12,7 @@ class ConvertingProcess(ProcessJob):
         start processing file according to thier "update_date"
         """
         # take args
-        data_folder  = kwargs.pop("data_folder")
+        data_folder = kwargs.pop("data_folder")
         filter_task_kwargs = kwargs.pop("filter_task_kwargs")
 
         def insert_task(

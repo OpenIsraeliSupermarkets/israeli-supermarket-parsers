@@ -9,3 +9,4 @@ database/
 *_cookies.txt
 .vscode/
 logging.log
+*.xml

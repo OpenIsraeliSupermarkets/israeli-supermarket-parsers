@@ -2,7 +2,6 @@ import pandas as pd
 from .xml_utils import build_value, get_root
 
 
-
 class XmlDataFrameConverter:
     """parser the xml docuement"""
 
@@ -24,15 +23,17 @@ class XmlDataFrameConverter:
 
     def get_id(self):
         """get the id in each entery of the list"""
-        if isinstance(self.id_field,list):
+        if isinstance(self.id_field, list):
             return self.id_field
         return [self.id_field]
 
-    def convert(self, file, no_content="NO-CONTENT"):
+    def convert(self, file, no_content="NO-CONTENT", row_limit=None):
         """parse file to data frame"""
-        root,root_store = get_root(file,self.list_key,self.roots)
+        root, root_store = get_root(file, self.list_key, self.roots)
 
-        data_frame = self._phrse(root, file, root_store, no_content)
+        data_frame = self._phrse(
+            root, file, root_store, no_content, row_limit=row_limit
+        )
 
         if self.date_columns and not data_frame.empty:
             for column in self.date_columns:
@@ -43,11 +44,14 @@ class XmlDataFrameConverter:
                 data_frame[column] = pd.to_numeric(data_frame[column])
         return data_frame.fillna("NOT_APPLY")
 
-    def _phrse(self, root, file, root_store, no_content):
+    def _phrse(self, root, file, root_store, no_content, row_limit=None):
         cols = ["file_id"] + list(root_store.keys())
         rows = []
 
         add_columns = True
+        if not root and "Super-Pharm" in file:
+            return pd.DataFrame() # shufersal don't add count=0
+
         elements = root.getchildren()
         if len(elements) == 0:
             if root.attrib.get("Count", None) == "0":
@@ -67,8 +71,11 @@ class XmlDataFrameConverter:
                     print(f"for value {name} found no content!")
                 values[tag] = value
             rows.append(values.copy())
-
             add_columns = False
+
+            if row_limit and len(rows) >= row_limit:
+                break
+
         return pd.DataFrame(rows, columns=cols)
 
     def is_full_data_snapshot(self):
@@ -93,12 +100,12 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         list_sub_key="",
     ):
         super().__init__(
-            list_key, id_field,full_data_snapshot, roots, date_columns, float_columns
+            list_key, id_field, full_data_snapshot, roots, date_columns, float_columns
         )
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
 
-    def _phrse(self, root, file, root_store, no_content):
+    def _phrse(self, root, file, root_store, no_content, row_limit=None):
         """parse file to data frame"""
 
         cols = ["file_id"] + list(root_store.keys())
@@ -128,5 +135,8 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                     values[tag] = value
                 rows.append(values.copy())
                 add_columns = False
+
+                if row_limit and len(rows) >= row_limit:
+                    break
 
         return pd.DataFrame(rows, columns=cols)

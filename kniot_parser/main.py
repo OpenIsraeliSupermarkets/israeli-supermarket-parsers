@@ -3,7 +3,8 @@ from .utils.logger import Logger
 
 
 class ConvertingTask:
-    """ main convert task"""
+    """main convert task"""
+
     def __call__(
         self, data_folder="dumps", folders_to_process=None, number_of_processes=6
     ):
