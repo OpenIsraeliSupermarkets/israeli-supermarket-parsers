@@ -81,6 +81,7 @@ class ShufersalFileConverter(DefualtFileConverter):
             list_key="STORES",
             id_field=["STOREID"],
             roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+            chainid="7290027600007",
         )
 
 

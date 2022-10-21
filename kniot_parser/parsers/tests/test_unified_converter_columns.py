@@ -1,5 +1,6 @@
 import shutil
 import pytest
+import pandas as pd
 from kniot_parser.parsers import UnifiedConverter
 from kniot_parser.utils import (
     read_dump_folder,
@@ -8,22 +9,39 @@ from kniot_parser.utils import (
     get_sample_promo_full_data,
     get_sample_promo_data,
     get_sample_price_full_data,
+    get_all_chain_ids
 )
+from il_supermarket_scarper import ScraperFactory
 
 
-def check_converting_columns_mergable(folder, expected_store_columns):
+def check_converting_columns_mergable(folder, expected_store_columns, row_limit=None):
     """create one data frame with all columns"""
     files_to_scan = read_dump_folder(folder=folder)
+
+    all_data_frames = []
+    count_empty = 0
     for _, row in files_to_scan.iterrows():
 
         converter = UnifiedConverter(row["store_name"], row["file_type"])
-        data_frame = converter.convert(row["full_path"], row_limit=1)
+        data_frame = converter.convert(row["full_path"], row_limit=row_limit)
 
         sorted_columns_names = sorted(data_frame.columns)
-        if len(data_frame.columns) != len(expected_store_columns) or not (
-            sorted_columns_names == expected_store_columns
+        if data_frame.empty:
+            count_empty+=1
+        
+        if not (
+            data_frame.empty
+            or (
+                len(sorted_columns_names) == len(expected_store_columns)
+                and (sorted_columns_names == expected_store_columns)
+            )
         ):
             print()
+        all_data_frames.append(data_frame.copy())
+
+    final = pd.concat(all_data_frames)
+    assert len(final["chainid"].unique()) == len(get_all_chain_ids())
+    assert (len(final["file_id"].unique()) + count_empty) == files_to_scan.shape[0]
 
 
 @pytest.mark.run(order=1)
@@ -71,6 +89,8 @@ def test_unifiing_prices_columns():
             "itemprice",
             "itemstatus",
             "itemtype",
+            "lastupdatedate",
+            "lastupdatetime",
             "manufacturecountry",
             "manufactureritemdescription",
             "manufacturername",
@@ -105,6 +125,7 @@ def test_unifiing_prices_full_columns():
             "itemprice",
             "itemstatus",
             "itemtype",
+            'lastupdatedate', 'lastupdatetime',
             "manufacturecountry",
             "manufactureritemdescription",
             "manufacturername",

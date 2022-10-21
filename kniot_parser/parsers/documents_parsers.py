@@ -13,6 +13,7 @@ class XmlDataFrameConverter:
         roots=None,
         date_columns=None,
         float_columns=None,
+        **additional_constant,
     ):
         self.list_key = list_key
         self.roots = roots
@@ -20,12 +21,17 @@ class XmlDataFrameConverter:
         self.float_columns = float_columns
         self.id_field = id_field
         self.full_data_snapshot = full_data_snapshot
+        self.additional_constant = additional_constant
 
     def get_id(self):
         """get the id in each entery of the list"""
         if isinstance(self.id_field, list):
             return self.id_field
         return [self.id_field]
+
+    def get_constant(self, value):
+        """get constant"""
+        return self.additional_constant.get(value, None)
 
     def convert(self, file, no_content="NO-CONTENT", row_limit=None):
         """parse file to data frame"""

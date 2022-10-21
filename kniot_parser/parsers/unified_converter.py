@@ -100,27 +100,40 @@ class UnifiedConverter(object):
         return data_frame
 
     def adjust_to_file_type(self, data_frame):
+        if data_frame.empty:
+            return data_frame
+
         data_frame.columns = map(lambda x: x.lower(), data_frame.columns)
 
         if self.file_type == "stores":
             columns_nan_mapping = {
                 "subchainid": "not_apply",
                 "subchainname": "not_apply",
-                "chainid": "seems_redundant",
-                "lastupdatedate": "never",
-                "lastupdatetime": "never",
+                "chainid": lambda: self.file_type_parser.get_constant("chainid"),
+                "lastupdatedate": "unknown",
+                "lastupdatetime": "unknown",
             }
             ignore_columns = ["latitude", "longitude"]
             rename = {}
 
         elif self.file_type == "pricefull":
-            columns_nan_mapping = {"itemid": "not_apply", "itemtype": "not_apply"}
+            columns_nan_mapping = {
+                "itemid": "not_apply",
+                "itemtype": "not_apply",
+                "lastupdatedate": "unknown",
+                "lastupdatetime": "unknown",
+            }
             ignore_columns = []
-            rename = {"blsweighted": "bisweighted", "itemnm": "itemname"}
+            rename = {"blsweighted": "bisweighted", "itemnm": "itemname","manufactureitemdescription":"manufactureritemdescription","manufacturename":"manufacturername","unitmeasure":"unitofmeasure"}
         elif self.file_type == "price":
-            columns_nan_mapping = {"itemid": "not_apply"}
+            columns_nan_mapping = {
+                "itemid": "not_apply",
+                "itemtype": "not_apply",
+                "lastupdatedate": "unknown",
+                "lastupdatetime": "unknown",
+            }
             ignore_columns = []
-            rename = {"itemnm": "itemname"}
+            rename = {"blsweighted": "bisweighted", "itemnm": "itemname","manufactureitemdescription":"manufactureritemdescription","manufacturename":"manufacturername","unitmeasure":"unitofmeasure"}
         elif self.file_type == "promo":
             columns_nan_mapping = {}
             ignore_columns = []
@@ -131,7 +144,12 @@ class UnifiedConverter(object):
             rename = {}
 
         for column, fill_value in columns_nan_mapping.items():
-            data_frame[column] = fill_value
+            if column not in data_frame.columns:
+
+                if isinstance(fill_value, str):
+                    data_frame[column] = fill_value
+                else:
+                    data_frame[column] = fill_value()
 
         data_frame = data_frame.drop(columns=ignore_columns, errors="ignore")
         data_frame = data_frame.rename(columns=rename)
