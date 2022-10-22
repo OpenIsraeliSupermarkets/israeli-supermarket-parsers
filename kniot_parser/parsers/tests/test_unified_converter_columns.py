@@ -1,6 +1,7 @@
 import shutil
 import pytest
 import pandas as pd
+import numpy as np
 from kniot_parser.parsers import UnifiedConverter
 from kniot_parser.utils import (
     read_dump_folder,
@@ -9,10 +10,8 @@ from kniot_parser.utils import (
     get_sample_promo_full_data,
     get_sample_promo_data,
     get_sample_price_full_data,
-    get_all_chain_ids
+    get_all_chain_ids,
 )
-from il_supermarket_scarper import ScraperFactory
-
 
 def check_converting_columns_mergable(folder, expected_store_columns, row_limit=None):
     """create one data frame with all columns"""
@@ -27,8 +26,8 @@ def check_converting_columns_mergable(folder, expected_store_columns, row_limit=
 
         sorted_columns_names = sorted(data_frame.columns)
         if data_frame.empty:
-            count_empty+=1
-        
+            count_empty += 1
+
         if not (
             data_frame.empty
             or (
@@ -40,7 +39,10 @@ def check_converting_columns_mergable(folder, expected_store_columns, row_limit=
         all_data_frames.append(data_frame.copy())
 
     final = pd.concat(all_data_frames)
-    assert len(final["chainid"].unique()) == len(get_all_chain_ids())
+    # some chains as two ids
+    assert (np.isin(final["chainid"].unique(), get_all_chain_ids())).all()
+
+    # check all files was processed
     assert (len(final["file_id"].unique()) + count_empty) == files_to_scan.shape[0]
 
 
@@ -125,7 +127,8 @@ def test_unifiing_prices_full_columns():
             "itemprice",
             "itemstatus",
             "itemtype",
-            'lastupdatedate', 'lastupdatetime',
+            "lastupdatedate",
+            "lastupdatetime",
             "manufacturecountry",
             "manufactureritemdescription",
             "manufacturername",
@@ -151,18 +154,48 @@ def test_unifiing_promo():
     check_converting_columns_mergable(
         folder,
         [
+            "additionalrestrictions",
+            "additionalscoupon",
+            "additionalsgiftcount",
+            "additionalsminbasketamount",
+            "additionalstotals",
             "allowmultiplediscounts",
             "bikoretno",
             "chainid",
+            "clubid",
+            "clubs",
+            "discountedprice",
+            "discountedpricepermida",
+            "discountrate",
+            "discounttype",
             "file_id",
+            "giftsitems",
             "isgiftitem",
+            "isweightedpromo",
             "itemcode",
+            "itemtype",
+            "maxqty",
+            "minnoofitemofered",
+            "minnoofitemsoffered",
+            "minpurchaseamnt",
+            "minpurchaseamount",
+            "minqty",
             "priceupdatedate",
+            "promotiondescription",
             "promotiondetails",
+            "promotionenddate",
+            "promotionendhour",
             "promotionid",
+            "promotionitems",
+            "promotionstartdate",
+            "promotionstarthour",
+            "promotionupdatedate",
+            "remark",
+            "remarks",
             "rewardtype",
             "storeid",
             "subchainid",
+            "weightunit",
         ],
     )
     # shutil.rmtree(folder)

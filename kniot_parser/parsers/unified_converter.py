@@ -116,7 +116,7 @@ class UnifiedConverter(object):
             ignore_columns = ["latitude", "longitude"]
             rename = {}
 
-        elif self.file_type == "pricefull":
+        elif self.file_type in ["pricefull", "price"]:
             columns_nan_mapping = {
                 "itemid": "not_apply",
                 "itemtype": "not_apply",
@@ -124,24 +124,63 @@ class UnifiedConverter(object):
                 "lastupdatetime": "unknown",
             }
             ignore_columns = []
-            rename = {"blsweighted": "bisweighted", "itemnm": "itemname","manufactureitemdescription":"manufactureritemdescription","manufacturename":"manufacturername","unitmeasure":"unitofmeasure"}
-        elif self.file_type == "price":
+            rename = {
+                "blsweighted": "bisweighted",
+                "itemnm": "itemname",
+                "manufactureitemdescription": "manufactureritemdescription",
+                "manufacturename": "manufacturername",
+                "unitmeasure": "unitofmeasure",
+            }
+        elif self.file_type in ["promo", "promofull"]:
             columns_nan_mapping = {
-                "itemid": "not_apply",
+                "additionalrestrictions": "not_apply",
+                "clubs": "not_apply",
+                "discountrate": "not_apply",
+                "discounttype": "not_apply",
+                "minqty": "not_apply",
+                "promotiondescription": "not_apply",
+                "weightunit": "not_apply",
+                "promotionstarthour": "not_apply",
+                "promotionupdatedate": "not_apply",
+                "minnoofitemofered": "not_apply",
+                "promotionendhour": "not_apply",
+                "isweightedpromo": "not_apply",
+                "promotionitems": "not_apply",
+                "promotionenddate": "not_apply",
+                "promotionstartdate": "not_apply",
+                "promotiondetails": "not_apply",
+                "isgiftitem": "not_apply",
+                "itemcode": "not_apply",
+                "priceupdatedate": "not_apply",
+                "discountedpricepermida": "not_apply",
+                "discountedprice": "not_apply",
+                "minpurchaseamnt": "not_apply",
+                "maxqty": "not_apply",
+                "remarks": "not_apply",
+                "remark": "not_apply",
+                "giftsitems": "not_apply",
+                "additionalscoupon": "not_apply",
+                "clubid": "not_apply",
+                "additionalsgiftcount": "not_apply",
+                "minpurchaseamount": "not_apply",
+                "additionalstotals": "not_apply",
+                "additionalsminbasketamount": "not_apply",
+                "minnoofitemsoffered": "not_apply",
                 "itemtype": "not_apply",
-                "lastupdatedate": "unknown",
-                "lastupdatetime": "unknown",
             }
             ignore_columns = []
-            rename = {"blsweighted": "bisweighted", "itemnm": "itemname","manufactureitemdescription":"manufactureritemdescription","manufacturename":"manufacturername","unitmeasure":"unitofmeasure"}
-        elif self.file_type == "promo":
-            columns_nan_mapping = {}
-            ignore_columns = []
             rename = {}
-        elif self.file_type == "promofull":
-            columns_nan_mapping = {}
-            ignore_columns = []
-            rename = {}
+     
+        # fix chain ids.
+        data_frame["chainid"] = data_frame["chainid"].replace(
+            "72906", "7290696200003"
+        )
+        data_frame["chainid"] = data_frame["chainid"].replace(
+            "72908", "7290875100001"
+        )
+        data_frame['chainid'] = data_frame['chainid'].replace(
+            "72906390","7290639000004"
+        )
 
         for column, fill_value in columns_nan_mapping.items():
             if column not in data_frame.columns:

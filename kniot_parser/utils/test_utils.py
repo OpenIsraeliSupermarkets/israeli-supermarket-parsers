@@ -1,5 +1,5 @@
 import os
-from il_supermarket_scarper import ScarpingTask, FileTypesFilters,ScraperFactory
+from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 
 
 def get_sample_data(dump_folder_name, filter_type=None):
@@ -41,7 +41,7 @@ def get_sample_promo_full_data():
 
 
 def get_all_chain_ids():
-    """ get all chain ids """
+    """get all chain ids"""
     all_ids = []
     for chain_constractor in ScraperFactory.all_scrapers():
         all_ids.extend(chain_constractor().get_chain_id())

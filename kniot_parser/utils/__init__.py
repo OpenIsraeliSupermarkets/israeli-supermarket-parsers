@@ -5,5 +5,6 @@ from .test_utils import (
     get_sample_promo_data,
     get_sample_price_full_data,
     get_sample_promo_full_data,
+    get_all_chain_ids,
 )
 from .data_loading import read_dump_folder
