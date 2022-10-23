@@ -8,3 +8,4 @@ from .test_utils import (
     get_all_chain_ids,
 )
 from .data_loading import read_dump_folder
+from il_supermarket_scarper import FileTypesFilters

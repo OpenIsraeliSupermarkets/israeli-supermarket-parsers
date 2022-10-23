@@ -49,11 +49,13 @@ class ParallelParser(MultiProcessor):
     """run insert task on parallel"""
 
     def __init__(self, data_folder, folder_to_process=None, number_of_processes=6):
-        super().__init__(
-            task_to_execute=ConvertingProcess, number_of_processes=number_of_processes
-        )
+        super().__init__(number_of_processes=number_of_processes)
         self.data_folder = data_folder
         self.folder_to_process = folder_to_process
+
+    def task_to_execute(self):
+        """the task to execute"""
+        return ConvertingProcess
 
     def get_arguments_list(self):
         """create list of arguments"""

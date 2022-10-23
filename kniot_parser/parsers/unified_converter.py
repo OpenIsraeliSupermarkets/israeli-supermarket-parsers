@@ -1,3 +1,4 @@
+from kniot_parser.utils import Logger
 from .all_files_parsers import (
     BareketFileConverter,
     DefualtFileConverter,
@@ -8,7 +9,6 @@ from .all_files_parsers import (
     MahsaniAShukPromoFileConverter,
     SalachDabachFileConverter,
 )
-from kniot_parser.utils import Logger
 
 
 class UnifiedConverter(object):
@@ -170,17 +170,6 @@ class UnifiedConverter(object):
             }
             ignore_columns = []
             rename = {}
-     
-        # fix chain ids.
-        data_frame["chainid"] = data_frame["chainid"].replace(
-            "72906", "7290696200003"
-        )
-        data_frame["chainid"] = data_frame["chainid"].replace(
-            "72908", "7290875100001"
-        )
-        data_frame['chainid'] = data_frame['chainid'].replace(
-            "72906390","7290639000004"
-        )
 
         for column, fill_value in columns_nan_mapping.items():
             if column not in data_frame.columns:
@@ -192,5 +181,12 @@ class UnifiedConverter(object):
 
         data_frame = data_frame.drop(columns=ignore_columns, errors="ignore")
         data_frame = data_frame.rename(columns=rename)
+
+        # fix chain ids.
+        data_frame["chainid"] = data_frame["chainid"].replace("72906", "7290696200003")
+        data_frame["chainid"] = data_frame["chainid"].replace("72908", "7290875100001")
+        data_frame["chainid"] = data_frame["chainid"].replace(
+            "72906390", "7290639000004"
+        )
 
         return data_frame

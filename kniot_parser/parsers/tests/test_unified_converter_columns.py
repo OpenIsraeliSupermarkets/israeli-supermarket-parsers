@@ -13,6 +13,7 @@ from kniot_parser.utils import (
     get_all_chain_ids,
 )
 
+
 def check_converting_columns_mergable(folder, expected_store_columns, row_limit=None):
     """create one data frame with all columns"""
     files_to_scan = read_dump_folder(folder=folder)
