@@ -53,6 +53,7 @@ class DefualtFileConverter(AllTypesFileConverter):
                 id_field=["StoreId"],
                 list_sub_key="Stores",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                renames={"LastUpdateDate":"DocLastUpdateDate","LastUpdateTime":"DocLastUpdateTime"}
             ),
         )
 
@@ -80,7 +81,8 @@ class ShufersalFileConverter(DefualtFileConverter):
             full_data_snapshot=True,
             list_key="STORES",
             id_field=["STOREID"],
-            roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+            roots=["ChainId", "ChainName", "LASTUPDATEDATE"],
+            renames={"LASTUPDATEDATE":"DocLASTUPDATEDATE"},
             chainid="7290027600007",
         )
 
@@ -145,6 +147,10 @@ class BareketFileConverter(BranchesFileConverter):
             id_field=["PromotionID", "ItemCode"],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
+        )
+        self.stores = XmlDataFrameConverter(
+            full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[],
+            ChainName="ברקת"
         )
 
 

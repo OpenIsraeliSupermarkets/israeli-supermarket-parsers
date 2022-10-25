@@ -13,7 +13,8 @@ class XmlDataFrameConverter:
         roots=None,
         date_columns=None,
         float_columns=None,
-        **additional_constant,
+        renames=None,
+        **additional_constant
     ):
         self.list_key = list_key
         self.roots = roots
@@ -21,6 +22,7 @@ class XmlDataFrameConverter:
         self.float_columns = float_columns
         self.id_field = id_field
         self.full_data_snapshot = full_data_snapshot
+        self.renames = renames
         self.additional_constant = additional_constant
 
     def get_id(self):
@@ -71,7 +73,7 @@ class XmlDataFrameConverter:
                 tag = name.tag
                 if add_columns:
                     cols.append(tag)
-                value = build_value(name, no_content=no_content)
+                value = build_value(name,self.additional_constant, no_content=no_content)
 
                 if value == no_content:
                     print(f"for value {name} found no content!")
@@ -104,9 +106,11 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         float_columns=None,
         sub_roots=None,
         list_sub_key="",
+        renames=None,
+        **additional_constant
     ):
         super().__init__(
-            list_key, id_field, full_data_snapshot, roots, date_columns, float_columns
+            list_key, id_field, full_data_snapshot, roots, date_columns, float_columns,renames=renames,additional_constant=additional_constant,
         )
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
@@ -134,7 +138,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                     tag = name.tag
                     if add_columns:
                         cols.append(tag)
-                    value = build_value(name, no_content=no_content)
+                    value = build_value(name, self.additional_constant,no_content=no_content)
 
                     if value == no_content:
                         print(f"for value {name} found no content!")

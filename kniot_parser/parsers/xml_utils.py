@@ -1,19 +1,19 @@
 import xml.etree.ElementTree as ET
 
 
-def build_value(name, no_content="NO_BODY"):
+def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
 
     content = name.text
     # missing content something like '<ManufacturerName />'
     if not content:
-        content = no_content
+        content = constant_mapping.get(name.tag,no_content)
     if "\n" in content:
         normaled_keys = list()  # shufersal as 'ClubId' and 'Clubid", normoalize this
         keys = list()
         content = list()
         for item in name.findall("*"):
-            content.append(build_value(item))
+            content.append(build_value(item,constant_mapping))
             keys.append(item.tag)
             normaled_keys.append(item.tag.lower())
 

@@ -46,3 +46,17 @@ def get_all_chain_ids():
     for chain_constractor in ScraperFactory.all_scrapers():
         all_ids.extend(chain_constractor().get_chain_id())
     return all_ids
+
+def get_all_scrapers_names():
+    """get all chain ids"""
+    all_names = []
+    for chain_constractor in ScraperFactory.all_scrapers():
+        all_names.append(chain_constractor.__name__)
+    return all_names
+
+def get_scraper_name_from_id(chain_id):
+    """ get the constractor name from the chain id """
+    for chain_constractor in ScraperFactory.all_scrapers():
+        print(chain_constractor().get_chain_id())
+        if str(chain_id) in (chain_constractor().get_chain_id()):
+            return chain_constractor.__name__

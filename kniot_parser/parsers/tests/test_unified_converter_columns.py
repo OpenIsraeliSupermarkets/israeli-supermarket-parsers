@@ -52,6 +52,7 @@ def test_unifiing_store_columns():
     """test converting to data frame"""
 
     folder = get_sample_store_data()
+    folder = "stores_test"
     check_converting_columns_mergable(
         folder,
         [
@@ -60,6 +61,8 @@ def test_unifiing_store_columns():
             "chainid",
             "chainname",
             "city",
+            "doclastupdatedate",
+            "doclastupdatetime",
             "file_id",
             "lastupdatedate",
             "lastupdatetime",
