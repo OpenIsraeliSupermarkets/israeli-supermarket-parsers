@@ -224,7 +224,7 @@ class UnifiedConverter(object):
         data_frame = data_frame.drop(columns=['lastupdatedate','lastupdatetime'])
         data_frame = data_frame.drop(columns=['doclastupdatedate','doclastupdatetime'])
 
-        words_indacting_online = ['אונליין','אינטרנט','חנות עסקאות','ליקוט','ממ"ר']
+        words_indacting_online = ['אונליין','אינטרנט','חנות עסקאות','ליקוט','ממ"ר','ONLINE',"אתר סחר"]
         data_frame['is_online'] = (data_frame['storename'].str.contains("|".join(words_indacting_online)))
                                     
         return data_frame
