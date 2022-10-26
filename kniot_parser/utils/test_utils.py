@@ -57,6 +57,5 @@ def get_all_scrapers_names():
 def get_scraper_name_from_id(chain_id):
     """ get the constractor name from the chain id """
     for chain_constractor in ScraperFactory.all_scrapers():
-        print(chain_constractor().get_chain_id())
         if str(chain_id) in (chain_constractor().get_chain_id()):
             return chain_constractor.__name__

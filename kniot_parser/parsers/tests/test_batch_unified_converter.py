@@ -13,6 +13,7 @@ from kniot_parser.utils import (
 if __name__ == "__main__":
     """ merge all store files """
     folder = get_sample_store_data()
+    #folder = "stores_test"
     MultiUnifiedConverter(
         dump_folder=folder, file_type="stores", number_of_processes=2
     ).execute().to_csv("stores.csv",index=False)

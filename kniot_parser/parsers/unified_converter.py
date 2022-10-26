@@ -226,5 +226,32 @@ class UnifiedConverter(object):
 
         words_indacting_online = ['אונליין','אינטרנט','חנות עסקאות','ליקוט','ממ"ר','ONLINE',"אתר סחר"]
         data_frame['is_online'] = (data_frame['storename'].str.contains("|".join(words_indacting_online)))
-                                    
-        return data_frame
+
+
+        def fill_sub_chainname(x):
+            if x['subchainname'] != "NO-CONTENT":
+                return x['subchainname']
+            if x['chainname'] == "שופרסל":
+                mapping = {
+                    "3":"שערי רווחה",
+                    "18":"GOOD MARKET"
+                }
+                return mapping.get(str(x['subchainid']),x['subchainname'])
+            if x['chainname'] == "סופר פארם ישראל":
+                return "סופר פארם ישראל"
+            if x['chainname'] == "ברקת":
+                return "ברקת"
+            return x['subchainname']
+
+        data_frame['subchainname'] = data_frame.apply(fill_sub_chainname,axis=1)
+        
+        def fix_store_type(x):
+            if x['storetype'] != "NO-CONTENT":
+                return x['storetype']
+            if x['subchainname'] == "BE":
+                return 1
+            if x['subchainname'] == "ויקטורי":
+                return 1
+
+        data_frame['storetype'] = data_frame.apply(fix_store_type,axis=1)
+        return data_frame.drop(columns=['bikoretno'])
