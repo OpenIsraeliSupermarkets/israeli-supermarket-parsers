@@ -43,7 +43,7 @@ class UnifiedConverter(object):
 
     def get_key_column(self):
         """the key check document is index base on"""
-        return self.file_type_parser.get_id()
+        return [ i.lower() for i in self.file_type_parser.get_id()]
 
     def convert(self, file, row_limit=None):
         """convert a file base on the type,chain"""

@@ -19,11 +19,12 @@ def check_converting_to_data_frame_and_index(folder):
 
         converter = UnifiedConverter(row["store_name"], row["file_type"])
         data_frame = converter.convert(row["full_path"])
-        assert (
+        if not(
             data_frame.empty
             or len(data_frame[converter.get_key_column()].value_counts())
             == data_frame.shape[0]
-        ), f"{row['full_path']}, key is not unique."
+        ): 
+            assert False,f"{row['full_path']}, key is not unique."
 
 
 @pytest.mark.run(order=1)

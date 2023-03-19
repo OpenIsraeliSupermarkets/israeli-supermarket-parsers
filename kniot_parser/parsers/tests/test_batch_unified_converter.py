@@ -12,19 +12,19 @@ from kniot_parser.utils import (
 
 if __name__ == "__main__":
     """ merge all store files """
-    folder = get_sample_store_data()
-    #folder = "stores_test"
-    MultiUnifiedConverter(
-        dump_folder=folder, file_type="stores", number_of_processes=2
-    ).execute().to_csv("stores.csv",index=False)
+    # folder = get_sample_store_data()
+    # #folder = "stores_test"
+    # MultiUnifiedConverter(
+    #     dump_folder=folder, file_type="stores", number_of_processes=2
+    # ).execute().to_csv("stores.csv",index=False)
 
 
 # # def test_merge_price():
 #     """ merge all prices files """
-#     folder = get_sample_price_data()
-#     MultiUnifiedConverter(
-#         dump_folder=folder, file_type="price", number_of_processes=3
-#     ).execute().to_csv("prices.csv")
+    folder = get_sample_price_data()
+    MultiUnifiedConverter(
+        dump_folder=folder, file_type="price", number_of_processes=3
+    ).execute().to_csv("prices.csv",index=False)
 
 
 # # # def test_merge_price_full():
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 #     folder = get_sample_price_full_data()
 #     MultiUnifiedConverter(
 #         dump_folder=folder, file_type="pricefull", number_of_processes=3
-#     ).execute().to_csv("prices_full.csv")
+#     ).execute().to_csv("prices_full.csv",index=False)
 
 
 # # # def test_merge_promo():
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 #     folder = get_sample_promo_data()
 #     MultiUnifiedConverter(
 #         dump_folder=folder, file_type="promo", number_of_processes=3
-#     ).execute().to_csv("promo.csv")
+#     ).execute().to_csv("promo.csv",index=False)
 
 
 # # # def test_merge_promo_full():
@@ -48,4 +48,4 @@ if __name__ == "__main__":
 #     folder = get_sample_promo_full_data()
 #     MultiUnifiedConverter(
 #         dump_folder=folder, file_type="promofull", number_of_processes=3
-#     ).execute().to_csv("promo_full.csv")
+#     ).execute().to_csv("promo_full.csv",index=False)

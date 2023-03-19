@@ -42,7 +42,7 @@ class DefualtFileConverter(AllTypesFileConverter):
             promofull=XmlDataFrameConverter(
                 full_data_snapshot=True,
                 list_key="Promotions",
-                id_field=["PromotionId", "PromotionUpdateDate"],
+                id_field=["PromotionId"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
             ),
@@ -112,7 +112,7 @@ class BigIDFileConverter(DefualtFileConverter):
         self.promofull = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Sales",
-            id_field=["ItemCode", "PromotionUpdateDate"],
+            id_field=["PromotionId",'ItemCode'],
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
@@ -230,7 +230,7 @@ class SuperPharmFileConverter(BigIDFileConverter):
         self.pricefull = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Details",
-            id_field=["ItemCode", "PriceUpdateDate"],
+            id_field=["ItemCode"],
             roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
         )
         self.price = XmlDataFrameConverter(
