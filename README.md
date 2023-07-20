@@ -1,18 +1,5 @@
-# Kniot Scrapper
+# Kniot Parser
 
-Israel supermarkets XML files scrapper
+Israel supermarkets XML files parser. 
 
-
-## Supports:
-* Dor Alon
-* Freshmarket
-* Hazi Hinam
-* Keshet Taamim
-* Osher Ad
-* Rami Levy
-* Shufersal
-* Stop Market
-* Superdosh
-* Tiv Taam
-* Yohananof
-* Salach Dabach
+TBD
