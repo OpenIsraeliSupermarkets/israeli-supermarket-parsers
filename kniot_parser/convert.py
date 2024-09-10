@@ -1,7 +1,7 @@
 import os
 from queue import Empty
 from .utils.database import MongoDb
-from .parsers.unified_converter import UnifiedConverter
+from .unified_converter import UnifiedConverter
 
 
 class XmlToDataBaseConverter:

@@ -1,5 +1,5 @@
 from kniot_parser.utils import Logger
-from .all_files_parsers import (
+from .parsers.all_files_parsers import (
     BareketFileConverter,
     DefualtFileConverter,
     SuperPharmFileConverter,

@@ -1,4 +1,3 @@
-from abc import ABC
 from kniot_parser.documents import (
     XmlBaseConverter,
     XmlDataFrameConverter,
@@ -6,7 +5,7 @@ from kniot_parser.documents import (
 )
 
 
-class BaseFileConverter(ABC):
+class BaseFileConverter:
     """abstract parser"""
 
     def __init__(

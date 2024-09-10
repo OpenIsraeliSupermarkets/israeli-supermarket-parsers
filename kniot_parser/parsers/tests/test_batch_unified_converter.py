@@ -1,4 +1,4 @@
-from kniot_parser.parsers.batch_unified_converter import MultiUnifiedConverter
+from kniot_parser.batch_unified_converter import MultiUnifiedConverter
 from kniot_parser.utils import (
     get_sample_price_data,
     get_sample_store_data,
