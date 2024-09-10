@@ -1,7 +1,7 @@
 from kniot_parser.documents import (
     XmlDataFrameConverter,
 )
-from .base import BigIDFileConverter
+from .big_id import BigIDFileConverter
 
 
 class BigIdBranchesFileConverter(BigIDFileConverter):
@@ -10,8 +10,17 @@ class BigIdBranchesFileConverter(BigIDFileConverter):
     'Branches' instead of "Stores"
     """
 
-    def __init__(self):
-        super().__init__()
-        self.stores = XmlDataFrameConverter(
-            full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[]
+    def __init__(self, stores_parser=None, **kwarg):
+        super().__init__(
+            stores_parser=(
+                stores_parser
+                if stores_parser
+                else XmlDataFrameConverter(
+                    full_data_snapshot=True,
+                    list_key="Branches",
+                    id_field="StoreID",
+                    roots=[],
+                )
+            ),
+            **kwarg
         )
