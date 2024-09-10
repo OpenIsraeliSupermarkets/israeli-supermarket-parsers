@@ -82,7 +82,7 @@ class MultiProcessor:
         tasks_to_accomplish.close()
         tasks_to_accomplish.join_thread()
 
-        #self.wait_to_finish(tasks_accomplished, size)
+        # self.wait_to_finish(tasks_accomplished, size)
 
         results = []
         while not tasks_accomplished.empty() or len(results) < size:

@@ -1,20 +1,8 @@
-from abc import ABC
+
 from .documents_parsers import XmlDataFrameConverter, SubRootedXmlDataFrameConverter
 
 
-class AllTypesFileConverter(ABC):
-    """abstract parser"""
 
-    def __init__(self, pricefull, promofull, stores, promo, price) -> None:
-        self.pricefull = pricefull
-        self.promofull = promofull
-        self.stores = stores
-        self.promo = promo
-        self.price = price
-
-    def get(self, file_type):
-        """get parser by file type"""
-        return getattr(self, file_type)
 
 
 class DefualtFileConverter(AllTypesFileConverter):
@@ -22,40 +10,7 @@ class DefualtFileConverter(AllTypesFileConverter):
 
     def __init__(self):
         super().__init__(
-            pricefull=XmlDataFrameConverter(
-                full_data_snapshot=True,
-                list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate"],
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
-            price=XmlDataFrameConverter(
-                list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate"],
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
-            promo=XmlDataFrameConverter(
-                list_key="Promotions",
-                id_field=["PromotionId", "PromotionUpdateDate"],
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                date_columns=["PromotionUpdateDate"],
-            ),
-            promofull=XmlDataFrameConverter(
-                full_data_snapshot=True,
-                list_key="Promotions",
-                id_field=["PromotionId"],
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                date_columns=["PromotionUpdateDate"],
-            ),
-            stores=SubRootedXmlDataFrameConverter(
-                full_data_snapshot=True,
-                list_key="SubChains",
-                sub_roots=["SubChainId", "SubChainName"],
-                id_field=["StoreId"],
-                list_sub_key="Stores",
-                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                renames={"LastUpdateDate":"DocLastUpdateDate","LastUpdateTime":"DocLastUpdateTime"}
-            ),
-        )
+            
 
 
 class CofixFileConverter(DefualtFileConverter):
