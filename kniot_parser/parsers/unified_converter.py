@@ -43,15 +43,15 @@ class UnifiedConverter(object):
 
     def get_key_column(self):
         """the key check document is index base on"""
-        return [ i.lower() for i in self.file_type_parser.get_id()]
+        return [i.lower() for i in self.file_type_parser.get_id()]
 
     def convert(self, file, row_limit=None):
         """convert a file base on the type,chain"""
         Logger.info(f" converting file {file}.")
         data_frame = self.file_type_parser.convert(file, row_limit=row_limit)
 
-        data_frame = data_frame.replace(r'\n',' ', regex=True) 
-        data_frame = data_frame.replace(r'\r',' ', regex=True) 
+        data_frame = data_frame.replace(r"\n", " ", regex=True)
+        data_frame = data_frame.replace(r"\r", " ", regex=True)
 
         Logger.info(f"file {file}, dataframe shape is {data_frame.shape}")
         data_frame = self.drop_duplicate(data_frame)
@@ -62,7 +62,7 @@ class UnifiedConverter(object):
 
         data_frame = self.drop_duplicate_missing_inforamtion(data_frame)
 
-        data_frame =  self.adjust_to_file_type(data_frame)
+        data_frame = self.adjust_to_file_type(data_frame)
 
         return self.scheme_fixing(data_frame)
 
@@ -198,60 +198,75 @@ class UnifiedConverter(object):
 
         return data_frame
 
-    
-    def scheme_fixing(self,data_frame):
+    def scheme_fixing(self, data_frame):
         if self.file_type == "stores":
             return self._stores_processing(data_frame)
 
         return data_frame
 
+    def _stores_processing(self, data_frame):
 
-    def _stores_processing(self,data_frame):
-        
-        def merge_to_last_update_date(x,prefix=""):
-            never_value = '01/01/0001 00:00:00'
-            if x[f'{prefix}lastupdatedate'] == never_value:
-                return 'never'
-            if x[f'{prefix}lastupdatetime'] == "unknown" and x[f'{prefix}lastupdatedate'] == "unknown":
-                return 'unknown'
-            if x[f'{prefix}lastupdatetime'] == "unknown":
-                return x[f'{prefix}lastupdatedate']
-            return str(x[f'{prefix}lastupdatedate']) + " " + str(x[f'{prefix}lastupdatetime'])
+        def merge_to_last_update_date(x, prefix=""):
+            never_value = "01/01/0001 00:00:00"
+            if x[f"{prefix}lastupdatedate"] == never_value:
+                return "never"
+            if (
+                x[f"{prefix}lastupdatetime"] == "unknown"
+                and x[f"{prefix}lastupdatedate"] == "unknown"
+            ):
+                return "unknown"
+            if x[f"{prefix}lastupdatetime"] == "unknown":
+                return x[f"{prefix}lastupdatedate"]
+            return (
+                str(x[f"{prefix}lastupdatedate"])
+                + " "
+                + str(x[f"{prefix}lastupdatetime"])
+            )
 
-        data_frame['lastupdatedatetime'] = data_frame[['lastupdatedate','lastupdatetime']].apply(merge_to_last_update_date,axis=1)
-        data_frame['doclastupdatedatetime'] = data_frame[['doclastupdatedate','doclastupdatetime']].apply(merge_to_last_update_date,axis=1,prefix="doc") 
+        data_frame["lastupdatedatetime"] = data_frame[
+            ["lastupdatedate", "lastupdatetime"]
+        ].apply(merge_to_last_update_date, axis=1)
+        data_frame["doclastupdatedatetime"] = data_frame[
+            ["doclastupdatedate", "doclastupdatetime"]
+        ].apply(merge_to_last_update_date, axis=1, prefix="doc")
 
-        data_frame = data_frame.drop(columns=['lastupdatedate','lastupdatetime'])
-        data_frame = data_frame.drop(columns=['doclastupdatedate','doclastupdatetime'])
+        data_frame = data_frame.drop(columns=["lastupdatedate", "lastupdatetime"])
+        data_frame = data_frame.drop(columns=["doclastupdatedate", "doclastupdatetime"])
 
-        words_indacting_online = ['אונליין','אינטרנט','חנות עסקאות','ליקוט','ממ"ר','ONLINE',"אתר סחר"]
-        data_frame['is_online'] = (data_frame['storename'].str.contains("|".join(words_indacting_online)))
-
+        words_indacting_online = [
+            "אונליין",
+            "אינטרנט",
+            "חנות עסקאות",
+            "ליקוט",
+            'ממ"ר',
+            "ONLINE",
+            "אתר סחר",
+        ]
+        data_frame["is_online"] = data_frame["storename"].str.contains(
+            "|".join(words_indacting_online)
+        )
 
         def fill_sub_chainname(x):
-            if x['subchainname'] != "NO-CONTENT":
-                return x['subchainname']
-            if x['chainname'] == "שופרסל":
-                mapping = {
-                    "3":"שערי רווחה",
-                    "18":"GOOD MARKET"
-                }
-                return mapping.get(str(x['subchainid']),x['subchainname'])
-            if x['chainname'] == "סופר פארם ישראל":
+            if x["subchainname"] != "NO-CONTENT":
+                return x["subchainname"]
+            if x["chainname"] == "שופרסל":
+                mapping = {"3": "שערי רווחה", "18": "GOOD MARKET"}
+                return mapping.get(str(x["subchainid"]), x["subchainname"])
+            if x["chainname"] == "סופר פארם ישראל":
                 return "סופר פארם ישראל"
-            if x['chainname'] == "ברקת":
+            if x["chainname"] == "ברקת":
                 return "ברקת"
-            return x['subchainname']
+            return x["subchainname"]
 
-        data_frame['subchainname'] = data_frame.apply(fill_sub_chainname,axis=1)
-        
+        data_frame["subchainname"] = data_frame.apply(fill_sub_chainname, axis=1)
+
         def fix_store_type(x):
-            if x['storetype'] != "NO-CONTENT":
-                return x['storetype']
-            if x['subchainname'] == "BE":
+            if x["storetype"] != "NO-CONTENT":
+                return x["storetype"]
+            if x["subchainname"] == "BE":
                 return 1
-            if x['subchainname'] == "ויקטורי":
+            if x["subchainname"] == "ויקטורי":
                 return 1
 
-        data_frame['storetype'] = data_frame.apply(fix_store_type,axis=1)
-        return data_frame.drop(columns=['bikoretno'])
+        data_frame["storetype"] = data_frame.apply(fix_store_type, axis=1)
+        return data_frame.drop(columns=["bikoretno"])
