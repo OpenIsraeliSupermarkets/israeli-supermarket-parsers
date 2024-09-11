@@ -2,3 +2,4 @@ pandas==1.1.5
 lxml==5.2.1
 pymongo==4.0.2
 il-supermarket-scraper==0.4.2
+pytest
