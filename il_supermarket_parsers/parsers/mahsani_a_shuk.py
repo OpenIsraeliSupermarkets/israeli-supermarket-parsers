@@ -9,33 +9,36 @@ class MahsaniAShukPromoFileConverter(BigIDFileConverter):
     """
 
     def __init__(self):
-        super().__init__()
-        self.stores_parser = XmlDataFrameConverter(
-            full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[]
-        )
-        self.promo_parser = XmlDataFrameConverter(
-            list_key="Sales",
-            id_field=[
-                "ItemCode",
-                "PriceUpdateDate",
-                "ClubID",
-                "ItemType",
-                "RewardType",
-                "PromotionID",
-            ],
-            roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-            date_columns=["PriceUpdateDate"],
-        )
-        self.promofull_parser = XmlDataFrameConverter(
-            list_key="Sales",
-            id_field=[
-                "ItemCode",
-                "PriceUpdateDate",
-                "ClubID",
-                "ItemType",
-                "RewardType",
-                "PromotionID",
-            ],
-            roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-            date_columns=["PriceUpdateDate"],
+        super().__init__(
+            stores_parser=XmlDataFrameConverter(
+                list_key="Branches",
+                id_field="StoreID",
+                roots=[],
+            ),
+            promo_parser=XmlDataFrameConverter(
+                list_key="Sales",
+                id_field=[
+                    "ItemCode",
+                    "PriceUpdateDate",
+                    "ClubID",
+                    "ItemType",
+                    "RewardType",
+                    "PromotionID",
+                ],
+                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                date_columns=["PriceUpdateDate"],
+            ),
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Sales",
+                id_field=[
+                    "ItemCode",
+                    "PriceUpdateDate",
+                    "ClubID",
+                    "ItemType",
+                    "RewardType",
+                    "PromotionID",
+                ],
+                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                date_columns=["PriceUpdateDate"],
+            ),
         )

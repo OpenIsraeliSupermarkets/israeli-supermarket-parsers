@@ -5,35 +5,33 @@ import pandas as pd
 from . import Logger
 
 
-def _find_file_type_and_chain_id(file_name):
-    """get the file type"""
-    lower_file_name = file_name.lower()
-    match = re.search(r"\d", lower_file_name)
-    index = match.start()
-    return lower_file_name[:index], lower_file_name[index:]
+class DumpFile:
 
+    def __init__(self, file_name, empty_store_id="0000") -> None:
 
-def _file_name_to_components(xml_file_name, empty_store_id=0000):
-    """ " split file to components"""
-    try:
-        file_name, store_number, date, *_ = xml_file_name.split(".")[0].split("-")
-    except ValueError:
-        # global files
-        file_name, date, *_ = xml_file_name.split(".")[0].split("-")
-        store_number = empty_store_id
+        try:
+            self.file_name, self.store_number, self.date, *_ = file_name.split(".")[
+                0
+            ].split("-")
+        except ValueError:
+            # global files
+            self.file_name, self.date, *_ = file_name.split(".")[0].split("-")
+            self.store_number = empty_store_id
 
-    file_type, chain_id = _find_file_type_and_chain_id(file_name)
+        self.file_type, self.chain_id = self._find_file_type_and_chain_id(file_name)
 
-    if file_type == "storesfull":
-        file_type = "stores"
+        if self.file_type == "storesfull":
+            self.file_type = "stores"
 
-    return (
-        file_name,
-        store_number,
-        datetime.datetime.strptime(date, "%Y%m%d%H%M"),
-        file_type,
-        chain_id,
-    )
+        self.datetime.datetime.strptime(self.date, "%Y%m%d%H%M")
+
+    @classmethod
+    def _find_file_type_and_chain_id(cls, file_name):
+        """get the file type"""
+        lower_file_name = file_name.lower()
+        match = re.search(r"\d", lower_file_name)
+        index = match.start()
+        return lower_file_name[:index], lower_file_name[index:]
 
 
 def read_dump_folder(folder, store_names=None, files_types=None, empty_store_id=0000):

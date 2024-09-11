@@ -3,9 +3,12 @@ from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
 )
+from il_supermarket_scarper import FileTypesFilters
+from abc import ABC
+import json
 
 
-class BaseFileConverter:
+class BaseFileConverter(ABC):
     """abstract parser"""
 
     def __init__(
@@ -20,7 +23,6 @@ class BaseFileConverter:
             pricefull_parser
             if pricefull_parser
             else XmlDataFrameConverter(
-                full_data_snapshot=True,
                 list_key="Items",
                 id_field=["ItemCode", "PriceUpdateDate"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
@@ -30,7 +32,6 @@ class BaseFileConverter:
             promofull_parser
             if promofull_parser
             else XmlDataFrameConverter(
-                full_data_snapshot=True,
                 list_key="Promotions",
                 id_field=["PromotionId"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
@@ -41,7 +42,6 @@ class BaseFileConverter:
             stores_parser
             if stores_parser
             else SubRootedXmlDataFrameConverter(
-                full_data_snapshot=True,
                 list_key="SubChains",
                 sub_roots=["SubChainId", "SubChainName"],
                 id_field=["StoreId"],
@@ -72,3 +72,30 @@ class BaseFileConverter:
                 date_columns=["PromotionUpdateDate"],
             )
         )
+
+    def _load_column_config(self, json_key):
+        with open("il_supermarket_parsers/conf/processing.json") as file:
+            return json.load(file)[json_key]
+
+    def read(self, filename_path):
+
+        if filename_path.file_type == FileTypesFilters.PRICE_FILE:
+            parser = self.price_parser
+            settings = "price"
+        elif filename_path.file_type == FileTypesFilters.PRICE_FULL_FILE:
+            parser = self.pricefull_parser
+            settings = "pricefull"
+
+        elif filename_path.file_type == FileTypesFilters.PROMO_FILE:
+            parser = self.promo_parsers
+            settings = "price"
+
+        elif filename_path.file_type == FileTypesFilters.PROMO_FULL_FILE:
+            parser = self.promofull_parser
+            settings = "pricefull"
+
+        else:
+            parser = self.stores_parser
+            settings = "store"
+
+        return parser.convert(parser, **self._load_column_config(settings))

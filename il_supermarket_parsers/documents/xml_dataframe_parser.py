@@ -5,7 +5,26 @@ from .base import XmlBaseConverter
 class XmlDataFrameConverter(XmlBaseConverter):
     """parser the xml docuement"""
 
-    def _phrse(self, root, file, root_store, no_content, row_limit=None):
+    def _normlize_columns(
+        self,
+        data,
+        missing_columns_default_values,
+        columns_to_remove,
+        columns_to_rename,
+        **kwarg,
+    ):
+        for column, fill_value in missing_columns_default_values.items():
+            if column not in data.columns:
+
+                if isinstance(fill_value, str):
+                    data[column] = fill_value
+                else:
+                    data[column] = fill_value()
+
+        data = data.drop(columns=columns_to_remove, errors="ignore")
+        return data.rename(columns=columns_to_rename)
+
+    def _phrse(self, root, file, root_store, no_content, row_limit=None, **kwarg):
         cols = ["file_id"] + list(root_store.keys())
         rows = []
 
@@ -47,4 +66,4 @@ class XmlDataFrameConverter(XmlBaseConverter):
         if self.float_columns and not data_frame.empty:
             for column in self.float_columns:
                 data_frame[column] = pd.to_numeric(data_frame[column])
-        return data_frame.fillna("NOT_APPLY")
+        return self._normlize_columns(data_frame.fillna("NOT_APPLY"))
