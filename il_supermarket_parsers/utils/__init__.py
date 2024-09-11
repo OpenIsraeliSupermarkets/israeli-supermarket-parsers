@@ -12,4 +12,4 @@ from .test_utils import (
 from il_supermarket_scarper import FileTypesFilters
 from .xml_utils import get_root, build_value
 from il_supermarket_parsers.utils.test_utils import get_sample_data
-from .data_loader import DataLoader,DumpFile
+from .data_loader import DataLoader, DumpFile

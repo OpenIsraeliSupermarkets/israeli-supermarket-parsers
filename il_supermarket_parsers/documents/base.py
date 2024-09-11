@@ -43,12 +43,12 @@ class XmlBaseConverter(ABC):
         data = self._phrse(
             root, file, root_store, no_content, row_limit=row_limit, **kwarg
         )
-        return self._normlize_columns(data,**kwarg)
+        return self._normlize_columns(data, **kwarg)
 
     @abstractmethod
     def _phrse(self, root, file, root_store, no_content, row_limit=None, **kwarg):
         pass
 
     @abstractmethod
-    def _normlize_columns(self,data):
+    def _normlize_columns(self, data):
         pass

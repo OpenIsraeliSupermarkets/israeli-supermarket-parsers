@@ -4,24 +4,23 @@ from .utils import DataLoader
 from .parser_factroy import ParserFactory
 
 
-class StoreParseingPipeline():
+class StoreParseingPipeline:
     """
     processing a store data
     """
 
-    def __init__(self,folder,store_enum) -> None:
+    def __init__(self, folder, store_enum) -> None:
         self.store_enum = store_enum
         self.folder = folder
         self.database = MongoDb(self.store_enum.name)
 
     def process(self):
-        data = DataLoader(self.folder,store_names=[self.store_enum.name])
+        data = DataLoader(self.folder, store_names=[self.store_enum.name])
 
     def convert(self, full_path, file_type, update_date):
         """convert xml to database"""
         #
 
-        
         xml = UnifiedConverter(self.store_name, file_type)
 
         try:
