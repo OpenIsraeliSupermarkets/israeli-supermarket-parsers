@@ -49,7 +49,7 @@ class ParserFactory(Enum):
     @classmethod
     def all_active(cls):
         """get all the scarpers and filter disabled scrapers"""
-        return (member for member in cls if cls.is_scraper_enabled(member))
+        return (member for member in cls)
 
     @classmethod
     def sample(cls, n=1):
@@ -72,10 +72,8 @@ class ParserFactory(Enum):
         enum = None
         if isinstance(class_name, ParserFactory):
             enum = class_name
-        elif class_name in cls.all_scrapers_name():
+        elif class_name in cls.all_parsers_name():
             enum = getattr(ParserFactory, class_name)
         else:
             raise ValueError(f"class_names {class_name} not found")
-        if not cls.is_scraper_enabled(enum):
-            return None
         return enum.value
