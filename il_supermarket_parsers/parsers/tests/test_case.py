@@ -3,8 +3,8 @@ import unittest
 import os
 import uuid
 from il_supermarket_scarper.utils import FileTypesFilters
-from kniot_parser.parser_factroy import ParserFactory
-from kniot_parser.utils import get_sample_data
+from il_supermarket_parsers.parser_factroy import ParserFactory
+from il_supermarket_parsers.utils import get_sample_data
 
 
 def make_test_case(scraper_enum, parser_enum, store_id):
@@ -96,7 +96,10 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             os.makedirs(dump_path)
 
             init_scraper_function = ParserFactory.get(scraper_enum)
-            init_scraper_function(folder_name=dump_path)
+            
+            df = init_scraper_function(folder_name=dump_path)
+
+            assert df.shape[0] > 0
 
 
         def _get_temp_folder(self):

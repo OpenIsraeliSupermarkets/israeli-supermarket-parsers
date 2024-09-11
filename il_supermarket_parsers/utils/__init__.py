@@ -12,4 +12,4 @@ from .test_utils import (
 from .data_loading import read_dump_folder
 from il_supermarket_scarper import FileTypesFilters
 from .xml_utils import get_root, build_value
-from kniot_parser.utils.test_utils import get_sample_data
+from il_supermarket_parsers.utils.test_utils import get_sample_data

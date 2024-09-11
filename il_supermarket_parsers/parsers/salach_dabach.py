@@ -1,5 +1,5 @@
-from kniot_parser.engines import BaseFileConverter
-from kniot_parser.documents import XmlDataFrameConverter
+from il_supermarket_parsers.engines import BaseFileConverter
+from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class SalachDabachFileConverter(BaseFileConverter):
