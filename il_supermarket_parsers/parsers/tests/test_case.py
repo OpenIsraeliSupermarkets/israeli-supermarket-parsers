@@ -36,56 +36,6 @@ def make_test_case(scraper_enum, parser_enum, store_id):
                 self._delete_folder_and_sub_folder(download_path)
                 os.removedirs(download_path)
 
-        def _make_sure_filter_work(
-            self,
-            files_found,
-            file_type=None,
-            limit=None,
-            store_id=None,
-            only_latest=False,
-        ):
-            """make sure the file type filter works"""
-            if file_type:
-                filtered_files = 0
-                for f_type in file_type:
-                    filtered_files += len(FileTypesFilters.filter(f_type, files_found))
-                assert len(files_found) == filtered_files
-            if store_id:
-                store_mark = []
-                for file in files_found:
-                    store_mark.append(int(file.split("-")[1]))
-                assert len(set(store_mark)) == 1 and len(store_mark) == len(files_found)
-            if only_latest:
-                files_sources = []
-                for file in files_found:
-                    source = file.split("-")[:2]
-                    assert source not in files_sources
-                    store_mark.append(source)
-
-            assert (
-                not limit or len(files_found) == limit
-            ), f""" Found {files_found}
-                                                                f"files but should be {limit}"""
-
-        def _make_sure_file_contain_chain_ids(self, chain_ids, file):
-            """make sure the scraper download only the chain id"""
-            found_chain_id = False
-            for possible_chain_ids in chain_ids:
-                if possible_chain_ids in file:
-                    found_chain_id = True
-            assert found_chain_id, f"should be one of {chain_ids} but {file}"
-
-        def _make_sure_file_extension_is_xml(self, file_name):
-            """make sure the file extension is xml"""
-            file_ext = file_name.split(".")[-1]
-            assert file_ext == "xml", f" should be xml but {file_ext}, file:{file_name}"
-
-        def _make_sure_file_is_not_empty(self, scraper, full_file_path):
-            """make sure the files is not empty"""
-            if not scraper.is_valid_file_empty(full_file_path):
-                assert (
-                    os.path.getsize(full_file_path) != 0
-                ), f"{full_file_path} is empty file."
 
         def _parser_validate(
             self,
