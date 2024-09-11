@@ -111,7 +111,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             get_sample_data(
                             "samples_store", 
                             FileTypesFilters.STORE_FILE.name,
-                            enabled_scrapers=[self.scraper_enum]
+                            enabled_scrapers=[self.scraper_enum.name]
                             )
             self._parser_validate(parser_enum, "samples_store", limit=1)
 
@@ -120,7 +120,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             get_sample_data(
                             "samples_promo", 
                             FileTypesFilters.PROMO_FILE.name,
-                            enabled_scrapers=[self.scraper_enum]
+                            enabled_scrapers=[self.scraper_enum.name]
                             )
             self._parser_validate(parser_enum, "samples_promo", limit=1)
 
@@ -129,7 +129,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             get_sample_data(
                             "samples_promo_all", 
                             FileTypesFilters.PROMO_FULL_FILE.name,
-                            enabled_scrapers=[self.scraper_enum]
+                            enabled_scrapers=[self.scraper_enum.name]
                             )
             self._parser_validate(parser_enum, "samples_promo_all", limit=1)
 
@@ -138,7 +138,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             get_sample_data(
                             "samples_prices", 
                             FileTypesFilters.PRICE_FILE.name,
-                            enabled_scrapers=[self.scraper_enum]
+                            enabled_scrapers=[self.scraper_enum.name]
                             )
             self._parser_validate(parser_enum, "samples_prices", limit=1)
 
@@ -147,7 +147,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             get_sample_data(
                             "samples_prices_all", 
                             FileTypesFilters.PRICE_FULL_FILE.name,
-                            enabled_scrapers=[self.scraper_enum]
+                            enabled_scrapers=[self.scraper_enum.name]
                             )
             self._parser_validate(parser_enum, "samples_prices_all", limit=1)
 
