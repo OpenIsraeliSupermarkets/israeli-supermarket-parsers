@@ -11,19 +11,21 @@ class XmlBaseConverter(ABC):
         id_field,
         full_data_snapshot=False,
         roots=None,
-        date_columns=None,
-        float_columns=None,
-        renames=None,
+        columns_to_date=None,
+        columns_to_float=None,
+        columns_to_renames=None,
+        columns_to_drop=None,
         **additional_constant
     ):
         self.list_key = list_key
         self.roots = roots
-        self.date_columns = date_columns
-        self.float_columns = float_columns
+        self.columns_to_date = columns_to_date
+        self.columns_to_float = columns_to_float
         self.id_field = id_field
         self.full_data_snapshot = full_data_snapshot
-        self.renames = renames
+        self.columns_to_renames = columns_to_renames
         self.additional_constant = additional_constant
+        self.columns_to_drop = columns_to_drop
 
     def get_id(self):
         """get the id in each entery of the list"""
