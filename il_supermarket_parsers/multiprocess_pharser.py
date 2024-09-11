@@ -1,6 +1,6 @@
 from .convert import XmlToDataBaseConverter
 from .utils.multi_prcoessing import MultiProcessor, ProcessJob
-from .utils.data_loading import read_dump_folder
+from .utils.data_loader import read_dump_folder
 from .utils.logger import Logger
 
 

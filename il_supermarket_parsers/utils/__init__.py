@@ -9,9 +9,8 @@ from .test_utils import (
     get_scraper_name_from_id,
     get_all_scrapers_names,
 )
-from .data_loading import read_dump_folder
 from il_supermarket_scarper import FileTypesFilters
 from .xml_utils import get_root, build_value
 from il_supermarket_parsers.utils.test_utils import get_sample_data
 from .types import DumpFile
-from .data_loading import read_dump_folder
+from .data_loader import DataLoader
