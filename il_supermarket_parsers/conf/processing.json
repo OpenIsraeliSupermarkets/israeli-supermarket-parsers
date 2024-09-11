@@ -1,5 +1,6 @@
 {
     "promo":{
+        "full_data_snapshot":false,
         "missing_columns_default_values":{
             "additionalrestrictions": "not_apply",
             "clubs": "not_apply",
@@ -40,6 +41,7 @@
         "columns_to_rename":{}
     },
     "promofull":{
+        "full_data_snapshot":true,
         "missing_columns_default_values":{
             "additionalrestrictions": "not_apply",
             "clubs": "not_apply",
@@ -80,6 +82,7 @@
         "columns_to_rename":{}
     },
     "price":{
+        "full_data_snapshot":false,
         "missing_columns_default_values":{
             "itemid": "not_apply",
             "itemtype": "not_apply",
@@ -96,6 +99,7 @@
         }
     },
     "pricefull":{
+        "full_data_snapshot":true,
         "missing_columns_default_values":{
             "itemid": "not_apply",
             "itemtype": "not_apply",
@@ -112,6 +116,7 @@
         }
     },
     "stores":{
+        "full_data_snapshot":true,
         "missing_columns_default_values":{
             "subchainid": "not_apply",
             "subchainname": "not_apply",

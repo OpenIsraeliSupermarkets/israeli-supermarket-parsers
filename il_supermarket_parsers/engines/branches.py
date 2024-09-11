@@ -16,7 +16,6 @@ class BigIdBranchesFileConverter(BigIDFileConverter):
                 stores_parser
                 if stores_parser
                 else XmlDataFrameConverter(
-                    full_data_snapshot=True,
                     list_key="Branches",
                     id_field="StoreID",
                     roots=[],

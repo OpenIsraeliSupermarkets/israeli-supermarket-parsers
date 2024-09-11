@@ -9,23 +9,15 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self,
         list_key,
         id_field,
-        full_data_snapshot=False,
         roots=None,
-        date_columns=None,
-        float_columns=None,
         sub_roots=None,
         list_sub_key="",
-        renames=None,
         **additional_constant,
     ):
         super().__init__(
             list_key,
             id_field,
-            full_data_snapshot,
             roots,
-            date_columns,
-            float_columns,
-            renames=renames,
             additional_constant=additional_constant,
         )
         self.sub_roots = sub_roots

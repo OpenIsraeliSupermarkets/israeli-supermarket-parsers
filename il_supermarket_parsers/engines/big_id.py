@@ -20,7 +20,6 @@ class BigIDFileConverter(BaseFileConverter):
                 pricefull_parser
                 if pricefull_parser
                 else XmlDataFrameConverter(
-                    full_data_snapshot=True,
                     list_key="Products",
                     id_field=["ItemCode", "PriceUpdateDate"],
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
@@ -49,7 +48,6 @@ class BigIDFileConverter(BaseFileConverter):
                 promofull_parser
                 if promofull_parser
                 else XmlDataFrameConverter(
-                    full_data_snapshot=True,
                     list_key="Sales",
                     id_field=["PromotionId", "ItemCode"],
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
@@ -60,7 +58,6 @@ class BigIDFileConverter(BaseFileConverter):
                 stores_parser
                 if stores_parser
                 else XmlDataFrameConverter(
-                    full_data_snapshot=True,
                     list_key="Sales",
                     id_field=["ItemCode", "PromotionUpdateDate"],
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
