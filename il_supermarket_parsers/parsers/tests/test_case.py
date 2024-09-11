@@ -44,6 +44,7 @@ def make_test_case(scraper_enum, parser_enum, store_id):
             df = init_scraper_function(folder_name=dump_path)
 
             assert df.shape[0] > 0
+            # TBD: add validation on the dataframe columns
 
         def _get_temp_folder(self):
             """get a temp folder to download the files into"""
