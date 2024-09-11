@@ -1,29 +1,30 @@
 import os
 from queue import Empty
-from .utils.database import MongoDb
-from .unified_converter import UnifiedConverter
+from .utils import MongoDb
+from .parser_factroy import ParserFactory
 
 
-class XmlToDataBaseConverter:
-    """convert xml to database"""
+class StoreParseingPipeline):
+    """
+    processing a store data
+    """
 
-    def __init__(self, branch_store_id, store_name) -> None:
-        self.branch_store_id = branch_store_id
-        self.store_name = store_name
+    def __init__(self, store_enum) -> None:
+        self.store_enum = store_enum
+        self.database = MongoDb(self.store_enum.name)
 
     def convert(self, full_path, file_type, update_date):
         """convert xml to database"""
         #
-        database = MongoDb(self.store_name, self.branch_store_id, file_type)
         xml = UnifiedConverter(self.store_name, file_type)
 
         try:
             id_field_name = xml.get_key_column()
 
-            if not database.is_file_already_processed(full_path):
+            if not self.database.is_file_already_processed(full_path):
 
                 # check there is not file that process after it.
-                database.validate_all_data_source_processed_was_before(update_date)
+                self.database.validate_all_data_source_processed_was_before(update_date)
 
                 # insert line by line
                 try:
@@ -35,7 +36,7 @@ class XmlToDataBaseConverter:
                     if xml.should_convert_to_incremental():
 
                         # get the last not deleted entriees
-                        not_deleted_entries = database.get_store_last_state(
+                        not_deleted_entries = self.database.get_store_last_state(
                             id_field_name
                         )
                         #
@@ -50,12 +51,12 @@ class XmlToDataBaseConverter:
                             if doc_id in not_deleted_entries:
                                 not_deleted_entries.remove(doc_id)
 
-                            existing_doc = database.find_one_doc(
+                            existing_doc = self.database.find_one_doc(
                                 id_field_name, line[id_field_name]
                             )
                             insert_doc = line[line != "NOT_APPLY"].to_dict()
 
-                            if not existing_doc or database.document_had_changed(
+                            if not existing_doc or self.database.document_had_changed(
                                 insert_doc, existing_doc
                             ):
 
@@ -63,15 +64,15 @@ class XmlToDataBaseConverter:
                                 if existing_doc:
                                     print(
                                         f"Found an update for {existing_doc[id_field_name]}: \n"
-                                        f"{database.diff_document(insert_doc,existing_doc)}\n"
+                                        f"{self.database.diff_document(insert_doc,existing_doc)}\n"
                                     )
 
                                 # insert with new update
-                                database.insert_one_doc(insert_doc, update_date)
+                                self.database.insert_one_doc(insert_doc, update_date)
 
                         # mark deleted for the document left.
                         for entry_left in not_deleted_entries:
-                            database.update_one_doc(
+                            self.database.update_one_doc(
                                 {id_field_name: entry_left},
                                 id_field_name,
                                 mark_deleted=True,
@@ -79,9 +80,9 @@ class XmlToDataBaseConverter:
                     else:
                         # simpley add all
                         for _, line in raw.iterrows():
-                            database.insert_one_doc(line.to_dict(), update_date)
+                            self.database.insert_one_doc(line.to_dict(), update_date)
                 except Empty as error:
-                    database.insert_file_processed(
+                    self.database.insert_file_processed(
                         {
                             "execption": str(error),
                             **self._to_doc(
@@ -91,12 +92,12 @@ class XmlToDataBaseConverter:
                     )
                 else:
                     # update when all is done
-                    database.insert_file_processed(
+                    self.database.insert_file_processed(
                         self._to_doc(full_path, file_type, update_date, id_field_name)
                     )
             return True
         except Exception as error:
-            database.insert_failure(
+            self.database.insert_failure(
                 {
                     "execption": str(error),
                     **self._to_doc(full_path, file_type, update_date, id_field_name),
