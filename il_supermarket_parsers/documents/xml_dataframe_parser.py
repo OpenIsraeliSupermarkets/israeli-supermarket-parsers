@@ -5,7 +5,6 @@ from .base import XmlBaseConverter
 class XmlDataFrameConverter(XmlBaseConverter):
     """parser the xml docuement"""
 
-
     def _phrse(self, root, file, root_store, no_content, row_limit=None):
         cols = ["file_id"] + list(root_store.keys())
         rows = []
