@@ -4,6 +4,7 @@ from il_supermarket_parsers.documents import (
     SubRootedXmlDataFrameConverter,
 )
 from il_supermarket_scarper import FileTypesFilters
+from il_supermarket_parsers.utils import DumpFile
 from abc import ABC
 import json
 
@@ -73,24 +74,24 @@ class BaseFileConverter(ABC):
             )
         )
 
-    def _load_column_config(self, json_key):
+    def load_column_config(self, json_key):
         with open("il_supermarket_parsers/conf/processing.json") as file:
             return json.load(file)[json_key]
 
-    def read(self, dump_file):
+    def read(self, dump_file:DumpFile):
 
-        if dump_file.file_type == FileTypesFilters.PRICE_FILE:
+        if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE.name:
             parser = self.price_parser
             settings = "price"
-        elif dump_file.file_type == FileTypesFilters.PRICE_FULL_FILE:
+        elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE.name:
             parser = self.pricefull_parser
             settings = "pricefull"
 
-        elif dump_file.file_type == FileTypesFilters.PROMO_FILE:
+        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE.name:
             parser = self.promo_parsers
             settings = "price"
 
-        elif dump_file.file_type == FileTypesFilters.PROMO_FULL_FILE:
+        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE.name:
             parser = self.promofull_parser
             settings = "pricefull"
 
@@ -98,4 +99,4 @@ class BaseFileConverter(ABC):
             parser = self.stores_parser
             settings = "store"
 
-        return parser.convert(parser, **self._load_column_config(settings))
+        return parser.convert(dump_file.completed_file_path, **self.load_column_config(settings))
