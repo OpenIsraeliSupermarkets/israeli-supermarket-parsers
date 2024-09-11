@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class DumpFile:
+    file_path:str
     file_name:str
     extracted_store_number:str
     extracted_chain_id:str
@@ -24,7 +25,7 @@ class DataLoader:
         self.empty_store_id = empty_store_id
 
     @classmethod
-    def _file_name_to_components(cls,file_name, empty_store_id="0000") -> None:
+    def _file_name_to_components(cls,path,file_name, empty_store_id="0000") -> None:
         try:
             file_name, store_number, date, *_ = file_name.split(".")[
                 0
@@ -39,7 +40,15 @@ class DataLoader:
         if file_type == "storesfull":
             file_type = "stores"
 
-        datetime.datetime.strptime(date, "%Y%m%d%H%M")
+        return DumpFile(
+            file_path=path,
+            file_name = file_name,
+            extracted_store_number=store_number,
+            extracted_chain_id=chain_id,
+            extracted_date=datetime.datetime.strptime(date, "%Y%m%d%H%M"),
+            detected_filetype=file_type,         
+        )
+        
 
     @classmethod
     def _find_file_type_and_chain_id(cls,file_name):
@@ -109,20 +118,20 @@ class DataLoader:
                     )
                 )
 
-        dumps_details = pd.DataFrame(
-            files,
-            columns=[
-                "file",
-                "full_path",
-                "chain_id",
-                "file_type",
-                "branch_store_id",
-                "update_date",
-                "store_name",
-            ],
-        )
-        dumps_details["branch_store_id"] = (
-            dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
-        )
-        dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
-        return dumps_details
+        # dumps_details = pd.DataFrame(
+        #     files,
+        #     columns=[
+        #         "file",
+        #         "full_path",
+        #         "chain_id",
+        #         "file_type",
+        #         "branch_store_id",
+        #         "update_date",
+        #         "store_name",
+        #     ],
+        # )
+        # dumps_details["branch_store_id"] = (
+        #     dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
+        # )
+        # dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
+        return files
