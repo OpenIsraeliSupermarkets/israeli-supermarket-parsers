@@ -1,0 +1,128 @@
+{
+    "promo":{
+        "missing_columns_default_values":{
+            "additionalrestrictions": "not_apply",
+            "clubs": "not_apply",
+            "discountrate": "not_apply",
+            "discounttype": "not_apply",
+            "minqty": "not_apply",
+            "promotiondescription": "not_apply",
+            "weightunit": "not_apply",
+            "promotionstarthour": "not_apply",
+            "promotionupdatedate": "not_apply",
+            "minnoofitemofered": "not_apply",
+            "promotionendhour": "not_apply",
+            "isweightedpromo": "not_apply",
+            "promotionitems": "not_apply",
+            "promotionenddate": "not_apply",
+            "promotionstartdate": "not_apply",
+            "promotiondetails": "not_apply",
+            "isgiftitem": "not_apply",
+            "itemcode": "not_apply",
+            "priceupdatedate": "not_apply",
+            "discountedpricepermida": "not_apply",
+            "discountedprice": "not_apply",
+            "minpurchaseamnt": "not_apply",
+            "maxqty": "not_apply",
+            "remarks": "not_apply",
+            "remark": "not_apply",
+            "giftsitems": "not_apply",
+            "additionalscoupon": "not_apply",
+            "clubid": "not_apply",
+            "additionalsgiftcount": "not_apply",
+            "minpurchaseamount": "not_apply",
+            "additionalstotals": "not_apply",
+            "additionalsminbasketamount": "not_apply",
+            "minnoofitemsoffered": "not_apply",
+            "itemtype": "not_apply"
+        },
+        "columns_to_remove":[],
+        "columns_to_rename":{}
+    },
+    "promofull":{
+        "missing_columns_default_values":{
+            "additionalrestrictions": "not_apply",
+            "clubs": "not_apply",
+            "discountrate": "not_apply",
+            "discounttype": "not_apply",
+            "minqty": "not_apply",
+            "promotiondescription": "not_apply",
+            "weightunit": "not_apply",
+            "promotionstarthour": "not_apply",
+            "promotionupdatedate": "not_apply",
+            "minnoofitemofered": "not_apply",
+            "promotionendhour": "not_apply",
+            "isweightedpromo": "not_apply",
+            "promotionitems": "not_apply",
+            "promotionenddate": "not_apply",
+            "promotionstartdate": "not_apply",
+            "promotiondetails": "not_apply",
+            "isgiftitem": "not_apply",
+            "itemcode": "not_apply",
+            "priceupdatedate": "not_apply",
+            "discountedpricepermida": "not_apply",
+            "discountedprice": "not_apply",
+            "minpurchaseamnt": "not_apply",
+            "maxqty": "not_apply",
+            "remarks": "not_apply",
+            "remark": "not_apply",
+            "giftsitems": "not_apply",
+            "additionalscoupon": "not_apply",
+            "clubid": "not_apply",
+            "additionalsgiftcount": "not_apply",
+            "minpurchaseamount": "not_apply",
+            "additionalstotals": "not_apply",
+            "additionalsminbasketamount": "not_apply",
+            "minnoofitemsoffered": "not_apply",
+            "itemtype": "not_apply"
+        },
+        "columns_to_remove":[],
+        "columns_to_rename":{}
+    },
+    "price":{
+        "missing_columns_default_values":{
+            "itemid": "not_apply",
+            "itemtype": "not_apply",
+            "lastupdatedate": "unknown",
+            "lastupdatetime": "unknown"
+        },
+        "columns_to_remove":[],
+        "columns_to_rename":{
+            "blsweighted": "bisweighted",
+            "itemnm": "itemname",
+            "manufactureitemdescription": "manufactureritemdescription",
+            "manufacturename": "manufacturername",
+            "unitmeasure": "unitofmeasure"
+        }
+    },
+    "pricefull":{
+        "missing_columns_default_values":{
+            "itemid": "not_apply",
+            "itemtype": "not_apply",
+            "lastupdatedate": "unknown",
+            "lastupdatetime": "unknown"
+        },
+        "columns_to_remove":[],
+        "columns_to_rename":{
+            "blsweighted": "bisweighted",
+            "itemnm": "itemname",
+            "manufactureitemdescription": "manufactureritemdescription",
+            "manufacturename": "manufacturername",
+            "unitmeasure": "unitofmeasure"
+        }
+    },
+    "stores":{
+        "missing_columns_default_values":{
+            "subchainid": "not_apply",
+            "subchainname": "not_apply",
+            "chainid": "<TAKE IT FROM INSTANCE>",
+            "lastupdatedate": "unknown",
+            "lastupdatetime": "unknown",
+            "doclastupdatedate": "unknown",
+            "doclastupdatetime": "unknown"
+        },
+        "columns_to_remove":["latitude", "longitude"],
+        "columns_to_rename":{}
+    }
+    
+}
