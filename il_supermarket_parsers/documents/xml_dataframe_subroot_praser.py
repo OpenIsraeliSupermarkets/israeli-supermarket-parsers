@@ -23,7 +23,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
 
-    def _phrse(self, root, file, root_store, no_content, row_limit=None,**kwarg):
+    def _phrse(self, root, file, root_store, no_content, row_limit=None, **kwarg):
         """parse file to data frame"""
 
         cols = ["file_id"] + list(root_store.keys())
