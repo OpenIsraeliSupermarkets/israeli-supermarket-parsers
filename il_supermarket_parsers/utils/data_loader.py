@@ -83,7 +83,7 @@ class DataLoader:
                 ignore_reason = "is file and not folder"
             if self.store_names and store_name not in self.store_names:
                 ignore_reason = "not in requested chains to scan"
-
+            
             if ignore_reason:
                 Logger.warning(f"Ignoreing file {store_folder}, {ignore_reason}")
                 continue
@@ -99,6 +99,9 @@ class DataLoader:
                     )
                 if "null" in xml.lower():
                     ignore_file_reseaon = ignore_file_reseaon + " null file "
+
+                if os.path.getsize(os.path.join(store_folder,xml)) == 0:
+                    ignore_file_reseaon = "file is empty."
 
                 if len(ignore_file_reseaon) > 0:
                     Logger.warning(
