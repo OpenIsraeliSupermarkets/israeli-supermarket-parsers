@@ -1,6 +1,6 @@
 import pandas as pd
-from kniot_parser.utils.multi_prcoessing import MultiProcessor, ProcessJob
-from kniot_parser.utils import read_dump_folder
+from il_supermarket_parsers.utils.multi_prcoessing import MultiProcessor, ProcessJob
+from il_supermarket_parsers.utils import read_dump_folder
 from .unified_converter import UnifiedConverter
 
 

@@ -1,4 +1,4 @@
-from kniot_parser.documents import (
+from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
 )
 from .base import BaseFileConverter

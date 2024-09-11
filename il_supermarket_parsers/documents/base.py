@@ -1,4 +1,4 @@
-from kniot_parser.utils import build_value, get_root
+from il_supermarket_parsers.utils import build_value, get_root
 from abc import ABC, abstractmethod
 
 

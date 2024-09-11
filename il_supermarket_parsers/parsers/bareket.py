@@ -1,5 +1,5 @@
-from kniot_parser.engines import BigIdBranchesFileConverter
-from kniot_parser.documents import XmlDataFrameConverter
+from il_supermarket_parsers.engines import BigIdBranchesFileConverter
+from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class BareketFileConverter(BigIdBranchesFileConverter):

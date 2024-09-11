@@ -1,4 +1,4 @@
-from kniot_parser.utils import Logger
+from il_supermarket_parsers.utils import Logger
 from .parsers.all_files_parsers import (
     BareketFileConverter,
     DefualtFileConverter,
