@@ -10,10 +10,10 @@ class MahsaniAShukPromoFileConverter(BigIDFileConverter):
 
     def __init__(self):
         super().__init__()
-        self.stores = XmlDataFrameConverter(
+        self.stores_parser = XmlDataFrameConverter(
             full_data_snapshot=True, list_key="Branches", id_field="StoreID", roots=[]
         )
-        self.promo = XmlDataFrameConverter(
+        self.promo_parser = XmlDataFrameConverter(
             list_key="Sales",
             id_field=[
                 "ItemCode",
@@ -26,7 +26,7 @@ class MahsaniAShukPromoFileConverter(BigIDFileConverter):
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
-        self.promofull = XmlDataFrameConverter(
+        self.promofull_parser = XmlDataFrameConverter(
             list_key="Sales",
             id_field=[
                 "ItemCode",

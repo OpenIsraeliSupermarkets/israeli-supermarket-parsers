@@ -5,7 +5,7 @@ from kniot_parser.documents import XmlDataFrameConverter
 class VictoryFileConverter(BigIdBranchesFileConverter):
     def __init__(self):
         super().__init__()
-        self.promofull = XmlDataFrameConverter(
+        self.promofull_parser = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="Sales",
             id_field=["ItemCode", "PromotionID"],

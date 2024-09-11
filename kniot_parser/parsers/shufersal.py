@@ -6,7 +6,7 @@ class ShufersalFileConverter(BaseFileConverter):
     def __init__(self) -> None:
         super().__init__()
 
-        self.stores = XmlDataFrameConverter(
+        self.stores_parser = XmlDataFrameConverter(
             full_data_snapshot=True,
             list_key="STORES",
             id_field=["STOREID"],
