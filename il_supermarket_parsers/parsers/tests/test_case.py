@@ -1,4 +1,3 @@
-
 import unittest
 import os
 import uuid
@@ -36,21 +35,15 @@ def make_test_case(scraper_enum, parser_enum, store_id):
                 self._delete_folder_and_sub_folder(download_path)
                 os.removedirs(download_path)
 
-
-        def _parser_validate(
-            self,
-            scraper_enum,
-            dump_path="temp"
-        ):
+        def _parser_validate(self, scraper_enum, dump_path="temp"):
             self._delete_download_folder(dump_path)
             os.makedirs(dump_path)
 
             init_scraper_function = ParserFactory.get(scraper_enum)
-            
+
             df = init_scraper_function(folder_name=dump_path)
 
             assert df.shape[0] > 0
-
 
         def _get_temp_folder(self):
             """get a temp folder to download the files into"""
@@ -59,47 +52,46 @@ def make_test_case(scraper_enum, parser_enum, store_id):
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
             get_sample_data(
-                            "samples_store", 
-                            FileTypesFilters.STORE_FILE.name,
-                            enabled_scrapers=[self.scraper_enum.name]
-                            )
+                "samples_store",
+                FileTypesFilters.STORE_FILE.name,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
             self._parser_validate(parser_enum, "samples_store", limit=1)
 
         def test_parsing_promo(self):
             """scrape one file and make sure it exists"""
             get_sample_data(
-                            "samples_promo", 
-                            FileTypesFilters.PROMO_FILE.name,
-                            enabled_scrapers=[self.scraper_enum.name]
-                            )
+                "samples_promo",
+                FileTypesFilters.PROMO_FILE.name,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
             self._parser_validate(parser_enum, "samples_promo", limit=1)
 
         def test_parsing_promo_all(self):
             """scrape one file and make sure it exists"""
             get_sample_data(
-                            "samples_promo_all", 
-                            FileTypesFilters.PROMO_FULL_FILE.name,
-                            enabled_scrapers=[self.scraper_enum.name]
-                            )
+                "samples_promo_all",
+                FileTypesFilters.PROMO_FULL_FILE.name,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
             self._parser_validate(parser_enum, "samples_promo_all", limit=1)
 
         def test_parsing_prices(self):
             """scrape one file and make sure it exists"""
             get_sample_data(
-                            "samples_prices", 
-                            FileTypesFilters.PRICE_FILE.name,
-                            enabled_scrapers=[self.scraper_enum.name]
-                            )
+                "samples_prices",
+                FileTypesFilters.PRICE_FILE.name,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
             self._parser_validate(parser_enum, "samples_prices", limit=1)
 
         def test_parsing_prices_all(self):
             """scrape one file and make sure it exists"""
             get_sample_data(
-                            "samples_prices_all", 
-                            FileTypesFilters.PRICE_FULL_FILE.name,
-                            enabled_scrapers=[self.scraper_enum.name]
-                            )
+                "samples_prices_all",
+                FileTypesFilters.PRICE_FULL_FILE.name,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
             self._parser_validate(parser_enum, "samples_prices_all", limit=1)
-
 
     return TestScapers

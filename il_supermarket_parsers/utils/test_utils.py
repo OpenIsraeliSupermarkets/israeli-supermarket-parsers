@@ -2,13 +2,15 @@ import os
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 
 
-def get_sample_data(dump_folder_name, filter_type=None,enabled_scrapers=None):
+def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None):
     """get data to scrape"""
     if not os.path.exists(dump_folder_name):
         if filter_type:
             task = ScarpingTask(
-                dump_folder_name=dump_folder_name, limit=10, files_types=[filter_type],
-                enabled_scrapers=enabled_scrapers if enabled_scrapers else None
+                dump_folder_name=dump_folder_name,
+                limit=10,
+                files_types=[filter_type],
+                enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
             )
             task.start()
         else:
@@ -18,7 +20,7 @@ def get_sample_data(dump_folder_name, filter_type=None,enabled_scrapers=None):
 
 def get_sample_store_data():
     """get only store to scrape"""
-    return 
+    return
 
 
 def get_sample_price_data():
