@@ -26,7 +26,7 @@ class BaseFileConverter:
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             )
         )
-        self.promofull: XmlBaseConverter = (
+        self.promofull_parser: XmlBaseConverter = (
             promofull_parser
             if promofull_parser
             else XmlDataFrameConverter(
@@ -37,7 +37,7 @@ class BaseFileConverter:
                 date_columns=["PromotionUpdateDate"],
             )
         )
-        self.stores: XmlBaseConverter = (
+        self.stores_parser: XmlBaseConverter = (
             stores_parser
             if stores_parser
             else SubRootedXmlDataFrameConverter(
@@ -53,7 +53,7 @@ class BaseFileConverter:
                 },
             )
         )
-        self.price: XmlBaseConverter = (
+        self.price_parsers: XmlBaseConverter = (
             price_parser
             if price_parser
             else XmlDataFrameConverter(
@@ -62,7 +62,7 @@ class BaseFileConverter:
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             )
         )
-        self.promo: XmlBaseConverter = (
+        self.promo_parsers: XmlBaseConverter = (
             promo_parser
             if promo_parser
             else XmlDataFrameConverter(
@@ -72,7 +72,3 @@ class BaseFileConverter:
                 date_columns=["PromotionUpdateDate"],
             )
         )
-
-    def get(self, file_type):
-        """get parser by file type"""
-        return getattr(self, file_type)
