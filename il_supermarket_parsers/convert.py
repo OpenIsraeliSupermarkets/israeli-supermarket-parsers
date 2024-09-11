@@ -15,6 +15,7 @@ class StoreParseingPipeline:
         self.database = MongoDb(self.store_enum.name)
 
     def process(self):
+        parser = ParserFactory.get(self.store_enum.name)
         data = DataLoader(self.folder, store_names=[self.store_enum.name])
 
     def convert(self, full_path, file_type, update_date):
