@@ -66,4 +66,4 @@ class XmlDataFrameConverter(XmlBaseConverter):
         if self.float_columns and not data_frame.empty:
             for column in self.float_columns:
                 data_frame[column] = pd.to_numeric(data_frame[column])
-        return self._normlize_columns(data_frame.fillna("NOT_APPLY"))
+        return data_frame.fillna("NOT_APPLY")

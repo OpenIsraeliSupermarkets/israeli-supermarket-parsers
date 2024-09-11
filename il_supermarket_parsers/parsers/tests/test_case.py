@@ -3,7 +3,7 @@ import os
 import uuid
 from il_supermarket_scarper.utils import FileTypesFilters
 from il_supermarket_parsers.parser_factroy import ParserFactory
-from il_supermarket_parsers.utils import get_sample_data
+from il_supermarket_parsers.utils import get_sample_data,DataLoader
 
 
 def make_test_case(scraper_enum, parser_enum):
@@ -47,13 +47,13 @@ def make_test_case(scraper_enum, parser_enum):
         def _parser_validate(self, parser_enum, file_type, dump_path="temp"):
             self._refresh_download_folder(dump_path,file_type)
 
-            init_parser_function = ParserFactory.get(parser_enum.name)
+            parser = parser_enum.value()
 
-            parser = init_parser_function()
-            df = parser.read()
+            for file in DataLoader(folder=dump_path).load():
+                df = parser.read(file)
 
-            assert df.shape[0] > 0
-            # TBD: add validation on the dataframe columns
+                assert df.shape[0] > 0
+                # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
 
         def _get_temp_folder(self):
             """get a temp folder to download the files into"""
@@ -61,7 +61,7 @@ def make_test_case(scraper_enum, parser_enum):
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(parser_enum,FileTypesFilters.STORE_FILE.name, "samples_store")
+            self._parser_validate(parser_enum, FileTypesFilters.STORE_FILE.name, "samples_store")
 
         def test_parsing_promo(self):
             """scrape one file and make sure it exists"""

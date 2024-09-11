@@ -115,7 +115,7 @@
             "unitmeasure": "unitofmeasure"
         }
     },
-    "stores":{
+    "store":{
         "full_data_snapshot":true,
         "missing_columns_default_values":{
             "subchainid": "not_apply",

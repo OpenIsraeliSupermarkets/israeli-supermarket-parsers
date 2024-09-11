@@ -1,14 +1,14 @@
 import os
 import re
 import datetime
-import pandas as pd
+from il_supermarket_scarper import FileTypesFilters
 from . import Logger
  
 from dataclasses import dataclass
 
 @dataclass
 class DumpFile:
-    file_path:str
+    completed_file_path:str
     file_name:str
     extracted_store_number:str
     extracted_chain_id:str
@@ -24,49 +24,52 @@ class DataLoader:
         self.files_types = files_types
         self.empty_store_id = empty_store_id
 
-    @classmethod
-    def _file_name_to_components(cls,path,file_name, empty_store_id="0000") -> None:
+    def _file_name_to_components(self, store_folder, file_name, empty_store_id="0000") -> None:
         try:
-            file_name, store_number, date, *_ = file_name.split(".")[
+            predix_file_name, store_number, date, *_ = file_name.split(".")[
                 0
             ].split("-")
         except ValueError:
             # global files
-            file_name, date, *_ = file_name.split(".")[0].split("-")
+            predix_file_name, date, *_ = file_name.split(".")[0].split("-")
             store_number = empty_store_id
 
-        file_type, chain_id = cls._find_file_type_and_chain_id(file_name)
-
-        if file_type == "storesfull":
-            file_type = "stores"
+        file_type, chain_id = self._find_file_type_and_chain_id(predix_file_name)
 
         return DumpFile(
-            file_path=path,
-            file_name = file_name,
+            completed_file_path=os.path.join(store_folder,file_name),
+            file_name = predix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
             extracted_date=datetime.datetime.strptime(date, "%Y%m%d%H%M"),
             detected_filetype=file_type,         
         )
-        
+    
+    @classmethod
+    def get_enum(cls,extracted_string):
+        for type in FileTypesFilters:
+            if FileTypesFilters.is_file_from_type(extracted_string,type.name):
+                return type
 
+        raise ValueError(f"{extracted_string} is not recognized")
+
+        
     @classmethod
     def _find_file_type_and_chain_id(cls,file_name):
         """get the file type"""
         lower_file_name = file_name.lower()
         match = re.search(r"\d", lower_file_name)
         index = match.start()
-        return lower_file_name[:index], lower_file_name[index:]
+        return cls.get_enum(lower_file_name[:index]), lower_file_name[index:]
 
-    def read_dump_folder(self,folder, store_names=None, files_types=None, empty_store_id=0000):
+    def load(self):
         """load details about the files in the folder"""
-        files_in_dir = os.listdir(folder)
+        files_in_dir = os.listdir(self.folder)
 
-        files_types = files_types if files_types else ["xml"]
         files = []
         for store_name in files_in_dir:
             #
-            store_folder = os.path.join(folder, store_name)
+            store_folder = os.path.join(self.folder, store_name)
 
             # ignore list
             ignore_reason = None
@@ -74,7 +77,7 @@ class DataLoader:
                 ignore_reason = " contains '.'"
             if os.path.isfile(store_folder):
                 ignore_reason = "is file and not folder"
-            if store_names and store_name not in store_names:
+            if self.store_names and store_name not in self.store_names:
                 ignore_reason = "not in requested chains to scan"
 
             if ignore_reason:
@@ -86,9 +89,9 @@ class DataLoader:
                 # skip files that are not xml
                 ignore_file_reseaon = ""
                 extension = xml.split(".")[-1]
-                if extension not in files_types:
+                if extension != 'xml':
                     ignore_file_reseaon = (
-                        ignore_file_reseaon + f"file type not in {files_types}"
+                        ignore_file_reseaon + f"file type not in {extension}"
                     )
                 if "null" in xml.lower():
                     ignore_file_reseaon = ignore_file_reseaon + " null file "
@@ -97,25 +100,8 @@ class DataLoader:
                     Logger.warning(f"Ignoreing file {store_folder}, {ignore_file_reseaon}.")
                     continue
 
-                (
-                    file_name,
-                    store_number,
-                    date,
-                    file_type,
-                    chain_id,
-                ) = self._file_name_to_components(xml, empty_store_id=empty_store_id)
-                full_path = os.path.join(store_folder, xml)
-
                 files.append(
-                    (
-                        file_name,
-                        full_path,
-                        chain_id,
-                        file_type,
-                        store_number,
-                        date,
-                        store_name,
-                    )
+                    self._file_name_to_components(store_folder, xml, empty_store_id=self.empty_store_id)
                 )
 
         # dumps_details = pd.DataFrame(

@@ -40,10 +40,15 @@ class XmlBaseConverter(ABC):
         """parse file to data frame"""
         root, root_store = get_root(file, self.list_key, self.roots)
 
-        return self._phrse(
+        data = self._phrse(
             root, file, root_store, no_content, row_limit=row_limit, **kwarg
         )
+        return self._normlize_columns(data,**kwarg)
 
     @abstractmethod
     def _phrse(self, root, file, root_store, no_content, row_limit=None, **kwarg):
+        pass
+
+    @abstractmethod
+    def _normlize_columns(self,data):
         pass
