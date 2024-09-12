@@ -13,7 +13,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         columns_to_rename,
         date_columns=[],
         float_columns=[],
-        empty_value="NOT_APPLY"
+        empty_value="NOT_APPLY",
         **kwarg,
     ):
         if date_columns and not data.empty:

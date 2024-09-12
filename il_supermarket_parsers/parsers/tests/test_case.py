@@ -1,8 +1,7 @@
 import unittest
 import os
-import uuid
+import pandas as pd
 from il_supermarket_scarper.utils import FileTypesFilters
-from il_supermarket_parsers.parser_factroy import ParserFactory
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
 
 
@@ -55,11 +54,17 @@ def make_test_case(scraper_enum, parser_enum):
 
             files = DataLoader(folder=sub_folder).load()
             assert len(files) > 1, "no files downloaded"
+
+            dfs = []
             for file in files:
                 df = parser.read(file)
 
-                assert df.shape[0] > 0
+                assert df.shape[0] > 0, f"File {file} is empty"
+                assert df.isna().all().all(), f"File {file} contains NaN"
                 # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
+
+                dfs.append(df)
+            pd.concat(dfs).to_csv(index=False)
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
