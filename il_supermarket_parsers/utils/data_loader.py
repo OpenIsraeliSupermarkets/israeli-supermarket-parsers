@@ -9,8 +9,9 @@ from dataclasses import dataclass
 
 @dataclass
 class DumpFile:
-    completed_file_path: str
+    store_folder: str
     file_name: str
+    predix_file_name:str
     extracted_store_number: str
     extracted_chain_id: str
     extracted_date: datetime.datetime
@@ -43,8 +44,9 @@ class DataLoader:
         file_type, chain_id = self._find_file_type_and_chain_id(predix_file_name)
 
         return DumpFile(
-            completed_file_path=os.path.join(store_folder, file_name),
-            file_name=predix_file_name,
+            file_name=file_name,
+            store_folder=store_folder,
+            predix_file_name=predix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
             extracted_date=datetime.datetime.strptime(date, "%Y%m%d%H%M"),
@@ -132,4 +134,4 @@ class DataLoader:
         #     dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
         # )
         # dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
-        return sorted(files,by=lambda x:x['update_date'])
+        return sorted(files,key=lambda x:x.extracted_date)

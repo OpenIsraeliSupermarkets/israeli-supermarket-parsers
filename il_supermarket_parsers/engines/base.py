@@ -7,6 +7,7 @@ from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_parsers.utils import DumpFile
 from abc import ABC
 import json
+import os
 
 
 class BaseFileConverter(ABC):
@@ -102,5 +103,6 @@ class BaseFileConverter(ABC):
             raise ValueError("Something want wrong")
 
         return parser.convert(
-            dump_file.completed_file_path, **self.load_column_config(settings)
+            dump_file.store_folder, dump_file.file_name
+            , **self.load_column_config(settings)
         )
