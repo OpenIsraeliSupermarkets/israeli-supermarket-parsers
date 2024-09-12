@@ -13,6 +13,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         columns_to_rename,
         date_columns=[],
         float_columns=[],
+        empty_value="NOT_APPLY"
         **kwarg,
     ):
         if date_columns and not data.empty:
@@ -22,7 +23,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         if float_columns and not data.empty:
             for column in float_columns:
                 data[column] = pd.to_numeric(data[column])
-        data = data.fillna("NOT_APPLY")
+        data = data.fillna(empty_value)
 
         #
         for column, fill_value in missing_columns_default_values.items():
@@ -41,8 +42,8 @@ class XmlDataFrameConverter(XmlBaseConverter):
         rows = []
 
         add_columns = True
-        if not root and "Super-Pharm" in file:
-            return pd.DataFrame()  # shufersal don't add count=0
+        # if not root and "Super-Pharm" in file:
+        #     return pd.DataFrame()  # shufersal don't add count=0
 
         elements = root.getchildren()
         if len(elements) == 0:
