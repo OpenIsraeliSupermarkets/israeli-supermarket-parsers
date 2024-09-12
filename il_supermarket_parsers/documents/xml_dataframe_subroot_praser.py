@@ -23,10 +23,19 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
 
-    def _phrse(self, root, found_folder, file_name, root_store, no_content, row_limit=None, **kwarg):
+    def _phrse(
+        self,
+        root,
+        found_folder,
+        file_name,
+        root_store,
+        no_content,
+        row_limit=None,
+        **kwarg,
+    ):
         """parse file to data frame"""
 
-        cols = ["found_folder","file_id"] + list(root_store.keys())
+        cols = ["found_folder", "file_id"] + list(root_store.keys())
         rows = []
 
         add_columns = True
@@ -44,7 +53,11 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 sub_root_store[k] = sub_elem.find(k).text
 
             for elem in sub_elem.find(self.list_sub_key):
-                values = {"found_folder":found_folder,"file_name": file_name, **sub_root_store}
+                values = {
+                    "found_folder": found_folder,
+                    "file_name": file_name,
+                    **sub_root_store,
+                }
                 for name in elem.getchildren():
                     tag = name.tag
                     if add_columns:

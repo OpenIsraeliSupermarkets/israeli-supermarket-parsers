@@ -11,12 +11,12 @@ from dataclasses import dataclass
 class DumpFile:
     store_folder: str
     file_name: str
-    predix_file_name:str
+    predix_file_name: str
     extracted_store_number: str
     extracted_chain_id: str
     extracted_date: datetime.datetime
     detected_filetype: str
-    data:str = None
+    data: str = None
 
 
 class DataLoader:
@@ -86,7 +86,7 @@ class DataLoader:
                 ignore_reason = "is file and not folder"
             if self.store_names and store_name not in self.store_names:
                 ignore_reason = "not in requested chains to scan"
-            
+
             if ignore_reason:
                 Logger.warning(f"Ignoreing file {store_folder}, {ignore_reason}")
                 continue
@@ -103,7 +103,7 @@ class DataLoader:
                 if "null" in xml.lower():
                     ignore_file_reseaon = ignore_file_reseaon + " null file "
 
-                if os.path.getsize(os.path.join(store_folder,xml)) == 0:
+                if os.path.getsize(os.path.join(store_folder, xml)) == 0:
                     ignore_file_reseaon = "file is empty."
 
                 if len(ignore_file_reseaon) > 0:
@@ -134,4 +134,4 @@ class DataLoader:
         #     dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
         # )
         # dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
-        return sorted(files,key=lambda x:x.extracted_date)
+        return sorted(files, key=lambda x: x.extracted_date)

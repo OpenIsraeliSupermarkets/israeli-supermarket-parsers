@@ -2,6 +2,7 @@ from il_supermarket_parsers.utils import build_value, get_root
 from abc import ABC, abstractmethod
 import os
 
+
 class XmlBaseConverter(ABC):
     """parser the xml docuement"""
 
@@ -13,7 +14,7 @@ class XmlBaseConverter(ABC):
         columns_to_renames=None,
         columns_to_drop=None,
         mandatory_columns=None,
-        **additional_constant
+        **additional_constant,
     ):
         self.list_key = list_key
         self.roots = roots
@@ -36,18 +37,37 @@ class XmlBaseConverter(ABC):
     def build_value(self, name, no_content):
         return build_value(name, self.additional_constant, no_content=no_content)
 
-    def convert(self, found_store, file_name, no_content="NO-CONTENT", row_limit=None, **kwarg):
+    def convert(
+        self, found_store, file_name, no_content="NO-CONTENT", row_limit=None, **kwarg
+    ):
         """parse file to data frame"""
-        root, root_store = get_root(os.path.join(found_store, file_name), self.list_key, self.roots)
+        root, root_store = get_root(
+            os.path.join(found_store, file_name), self.list_key, self.roots
+        )
         assert root, f"can't find {self.list_key}"
 
         data = self._phrse(
-            root, found_store, file_name, root_store, no_content, row_limit=row_limit, **kwarg
+            root,
+            found_store,
+            file_name,
+            root_store,
+            no_content,
+            row_limit=row_limit,
+            **kwarg,
         )
         return self._normlize_columns(data, **kwarg)
 
     @abstractmethod
-    def _phrse(self, root, found_store, file_name, root_store, no_content, row_limit=None, **kwarg):
+    def _phrse(
+        self,
+        root,
+        found_store,
+        file_name,
+        root_store,
+        no_content,
+        row_limit=None,
+        **kwarg,
+    ):
         pass
 
     @abstractmethod
