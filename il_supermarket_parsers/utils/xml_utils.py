@@ -56,4 +56,3 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
             )
             if possible_root is not None:
                 return possible_root
-

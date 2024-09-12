@@ -103,6 +103,7 @@ class BaseFileConverter(ABC):
             raise ValueError("Something want wrong")
 
         return parser.convert(
-            dump_file.store_folder, dump_file.file_name
-            , **self.load_column_config(settings)
+            dump_file.store_folder,
+            dump_file.file_name,
+            **self.load_column_config(settings)
         )

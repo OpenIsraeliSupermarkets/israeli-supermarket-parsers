@@ -37,8 +37,17 @@ class XmlDataFrameConverter(XmlBaseConverter):
         data = data.drop(columns=columns_to_remove, errors="ignore")
         return data.rename(columns=columns_to_rename)
 
-    def _phrse(self, root, found_folder, file_name, root_store, no_content, row_limit=None, **kwarg):
-        cols = ["found_folder","file_id"] + list(root_store.keys())
+    def _phrse(
+        self,
+        root,
+        found_folder,
+        file_name,
+        root_store,
+        no_content,
+        row_limit=None,
+        **kwarg,
+    ):
+        cols = ["found_folder", "file_id"] + list(root_store.keys())
         rows = []
 
         add_columns = True
@@ -54,7 +63,11 @@ class XmlDataFrameConverter(XmlBaseConverter):
 
         for elem in elements:
 
-            values = {"found_folder":found_folder,"file_name": file_name, **root_store}
+            values = {
+                "found_folder": found_folder,
+                "file_name": file_name,
+                **root_store,
+            }
             for name in elem.getchildren():
                 tag = name.tag
                 if add_columns:
@@ -71,5 +84,3 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 break
 
         return pd.DataFrame(rows, columns=cols)
-
-

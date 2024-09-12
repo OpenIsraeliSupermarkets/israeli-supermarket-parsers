@@ -17,12 +17,13 @@ class StoreParseingPipeline:
 
     def process(self):
         parser = self.store_enum.value()
-        for file in DataLoader(self.folder, store_names=[self.store_enum.name],files_types=[self.file_type]).load():
+        for file in DataLoader(
+            self.folder,
+            store_names=[self.store_enum.name],
+            files_types=[self.file_type],
+        ).load():
             file.data = parser.read(file)
             yield file
-
-
-
 
     def convert(self, full_path, file_type, update_date):
         """convert xml to database"""

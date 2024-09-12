@@ -38,15 +38,15 @@ def make_test_case(scraper_enum, parser_enum):
             if os.path.isdir(download_path) and self.refresh:
                 self._delete_folder_and_sub_folder(download_path)
                 os.removedirs(download_path)
-            
+
             get_sample_data(
-                    download_path,
-                    filter_type=file_type,
-                    enabled_scrapers=[self.scraper_enum.name],
-                )
+                download_path,
+                filter_type=file_type,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
 
         def _parser_validate(self, parser_enum, file_type, dump_path="temp"):
-            """ test the subcase"""
+            """test the subcase"""
             sub_folder = self._get_temp_folder(dump_path)
             self._refresh_download_folder(sub_folder, file_type)
 
@@ -67,10 +67,15 @@ def make_test_case(scraper_enum, parser_enum):
             joined = pd.concat(dfs)
 
             folders = []
-            for source in joined['found_folder'].unique():
+            for source in joined["found_folder"].unique():
                 folders.append(os.path.split(source)[1])
-            
-            joined.to_csv(os.path.join(self.folder_name,file_type+"_"+ "_".join(folders) +".csv"),index=False)
+
+            joined.to_csv(
+                os.path.join(
+                    self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
+                ),
+                index=False,
+            )
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
