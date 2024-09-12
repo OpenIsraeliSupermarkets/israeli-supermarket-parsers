@@ -39,6 +39,7 @@ class XmlBaseConverter(ABC):
     def convert(self, file, no_content="NO-CONTENT", row_limit=None, **kwarg):
         """parse file to data frame"""
         root, root_store = get_root(file, self.list_key, self.roots)
+        assert root, f"can't find {self.list_key}"
 
         data = self._phrse(
             root, file, root_store, no_content, row_limit=row_limit, **kwarg

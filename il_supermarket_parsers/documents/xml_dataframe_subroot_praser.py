@@ -30,6 +30,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         rows = []
 
         add_columns = True
+
+        if root is None:
+            print()
         elements = root.getchildren()
         if len(elements) == 0:
             raise ValueError(f"{self.list_key} is wrong")

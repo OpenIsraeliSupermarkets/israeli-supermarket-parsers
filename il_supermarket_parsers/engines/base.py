@@ -80,24 +80,26 @@ class BaseFileConverter(ABC):
 
     def read(self, dump_file: DumpFile):
 
-        if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE.name:
+        if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
             parser = self.price_parser
             settings = "price"
-        elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE.name:
+        elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
             parser = self.pricefull_parser
             settings = "pricefull"
 
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE.name:
+        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
             parser = self.promo_parsers
             settings = "price"
 
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE.name:
+        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             parser = self.promofull_parser
             settings = "pricefull"
 
-        else:
+        elif dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
             parser = self.stores_parser
             settings = "store"
+        else:
+            raise ValueError("Something want wrong")
 
         return parser.convert(
             dump_file.completed_file_path, **self.load_column_config(settings)
