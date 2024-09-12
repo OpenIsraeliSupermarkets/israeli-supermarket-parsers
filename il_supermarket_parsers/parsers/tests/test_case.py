@@ -54,7 +54,9 @@ def make_test_case(scraper_enum, parser_enum):
 
             parser = parser_enum.value()
 
-            for file in DataLoader(folder=sub_folder).load():
+            files = DataLoader(folder=sub_folder).load()
+            assert len(files) == 1, "no files downloaded"
+            for file in files:
                 df = parser.read(file)
 
                 assert df.shape[0] > 0
