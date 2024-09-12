@@ -15,6 +15,7 @@ class DumpFile:
     extracted_chain_id: str
     extracted_date: datetime.datetime
     detected_filetype: str
+    data:str = None
 
 
 class DataLoader:
@@ -131,4 +132,4 @@ class DataLoader:
         #     dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
         # )
         # dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
-        return files
+        return sorted(files,by=lambda x:x['update_date'])
