@@ -39,9 +39,8 @@ def make_test_case(scraper_enum, parser_enum):
             if os.path.isdir(download_path) and self.refresh:
                 self._delete_folder_and_sub_folder(download_path)
                 os.removedirs(download_path)
-
-            if not os.path.isdir(download_path):
-                get_sample_data(
+            
+            get_sample_data(
                     download_path,
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
@@ -55,7 +54,7 @@ def make_test_case(scraper_enum, parser_enum):
             parser = parser_enum.value()
 
             files = DataLoader(folder=sub_folder).load()
-            assert len(files) == 1, "no files downloaded"
+            assert len(files) > 1, "no files downloaded"
             for file in files:
                 df = parser.read(file)
 

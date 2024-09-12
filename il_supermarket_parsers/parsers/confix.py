@@ -6,7 +6,7 @@ class CofixFileConverter(BaseFileConverter):
 
     def __init__(self) -> None:
         super().__init__(
-            price_parsers=XmlDataFrameConverter(
+            price_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field=["ItemCode", "PriceUpdateDate", "ItemId"],
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
