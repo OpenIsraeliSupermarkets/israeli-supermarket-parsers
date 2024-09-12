@@ -9,21 +9,24 @@ class StoreParseingPipeline:
     processing a store data
     """
 
-    def __init__(self, folder, store_enum) -> None:
+    def __init__(self, folder, store_enum, file_type) -> None:
         self.store_enum = store_enum
+        self.file_type = file_type
         self.folder = folder
-        self.database = MongoDb(self.store_enum.name)
+        self.database = FileStore(self.store_enum.name)
 
     def process(self):
-        parser = ParserFactory.get(self.store_enum.name)
-        data = DataLoader(self.folder, store_names=[self.store_enum.name])
+        parser = self.store_enum.value()
+        for file in DataLoader(self.folder, store_names=[self.store_enum.name],files_types=[self.file_type]).load():
+            file.data = parser.read(file)
+            yield file
+
+
+
 
     def convert(self, full_path, file_type, update_date):
         """convert xml to database"""
         #
-
-        xml = UnifiedConverter(self.store_name, file_type)
-
         try:
             id_field_name = xml.get_key_column()
 
