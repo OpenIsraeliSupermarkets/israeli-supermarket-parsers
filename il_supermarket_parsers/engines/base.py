@@ -90,7 +90,7 @@ class BaseFileConverter(ABC):
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
             parser = self.promo_parsers
-            settings = "prompo"
+            settings = "promo"
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             parser = self.promofull_parser
