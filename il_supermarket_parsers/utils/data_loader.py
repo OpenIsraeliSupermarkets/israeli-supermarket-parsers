@@ -18,6 +18,9 @@ class DumpFile:
     detected_filetype: str
     data: str = None
 
+    def get_full_path(self):
+        return os.path.join(self.store_folder, self.file_name)
+
 
 class DataLoader:
 

@@ -42,8 +42,6 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
     if root.tag == key_to_find:
         return root
 
-    if root is None:
-        print()
     root_children = root.getchildren()
 
     for sub in root_children:
