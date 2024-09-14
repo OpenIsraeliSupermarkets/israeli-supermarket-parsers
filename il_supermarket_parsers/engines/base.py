@@ -55,7 +55,7 @@ class BaseFileConverter(ABC):
                 },
             )
         )
-        self.price_parsers: XmlBaseConverter = (
+        self.price_parser: XmlBaseConverter = (
             price_parser
             if price_parser
             else XmlDataFrameConverter(
@@ -90,11 +90,11 @@ class BaseFileConverter(ABC):
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
             parser = self.promo_parsers
-            settings = "price"
+            settings = "prompo"
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             parser = self.promofull_parser
-            settings = "pricefull"
+            settings = "promofull"
 
         elif dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
             parser = self.stores_parser
