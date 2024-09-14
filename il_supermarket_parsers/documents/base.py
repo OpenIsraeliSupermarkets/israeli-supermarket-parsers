@@ -44,7 +44,6 @@ class XmlBaseConverter(ABC):
         root, root_store = get_root(
             os.path.join(found_store, file_name), self.list_key, self.roots
         )
-        assert root, f"can't find {self.list_key}"
 
         data = self._phrse(
             root,
