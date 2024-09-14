@@ -64,25 +64,34 @@ def make_test_case(scraper_enum, parser_enum):
             dfs = []
             for file in files:
                 df = parser.read(file)
-
+                
+                # none empty file
                 if os.path.getsize(file.get_full_path()) > 256:
+
+                    # should contain data
                     assert df.shape[0] > 0, f"File {file} is empty"
-                # assert df.isna().all().all(), f"File {file} contains NaN"
-                # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
+                    # assert df.isna().all().all(), f"File {file} contains NaN"
+                    # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
 
-                dfs.append(df)
-            joined = pd.concat(dfs)
+                    dfs.append(df)
 
-            folders = []
-            for source in joined["found_folder"].unique():
-                folders.append(os.path.split(source)[1])
+                else:
+                    assert df.shape[0] == 0
+            
 
-            joined.to_csv(
-                os.path.join(
-                    self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
-                ),
-                index=False,
-            )
+            if dfs:
+                joined = pd.concat(dfs)
+
+                folders = []
+                for source in joined["found_folder"].unique():
+                    folders.append(os.path.split(source)[1])
+
+                joined.to_csv(
+                    os.path.join(
+                        self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
+                    ),
+                    index=False,
+                )
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
