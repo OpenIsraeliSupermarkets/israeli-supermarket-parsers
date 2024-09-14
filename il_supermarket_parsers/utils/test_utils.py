@@ -2,18 +2,20 @@ import os
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 
 
-def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None):
+def get_sample_data(
+    dump_folder_name, filter_type=None, enabled_scrapers=None, limit=10
+):
     """get data to scrape"""
     if filter_type:
         task = ScarpingTask(
             dump_folder_name=dump_folder_name,
-            limit=10,
+            limit=limit,
             files_types=[filter_type],
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
         )
         task.start()
     else:
-        ScarpingTask(dump_folder_name=dump_folder_name, limit=10).start()
+        ScarpingTask(dump_folder_name=dump_folder_name, limit=limit).start()
     return dump_folder_name
 
 
