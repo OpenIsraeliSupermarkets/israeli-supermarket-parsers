@@ -51,10 +51,14 @@ def make_test_case(scraper_enum, parser_enum):
             self._refresh_download_folder(sub_folder, file_type)
 
             parser = parser_enum.value()
-            
+
             # TBD: add option to take the folder from enum
             # TBD: FileType, add function get enum by filter
-            files = DataLoader(folder=sub_folder,store_names=[self.scraper_enum.value().chain],files_types=[file_type]).load()
+            files = DataLoader(
+                folder=sub_folder,
+                store_names=[self.scraper_enum.value().chain],
+                files_types=[file_type],
+            ).load()
             assert len(files) > 1, "no files downloaded"
 
             dfs = []
