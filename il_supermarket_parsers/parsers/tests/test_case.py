@@ -59,7 +59,7 @@ def make_test_case(scraper_enum, parser_enum):
                 store_names=[self.scraper_enum.value().chain],
                 files_types=[file_type],
             ).load()
-            assert len(files) > 1, "no files downloaded"
+            assert len(files) > 0, "no files downloaded"
 
             dfs = []
             for file in files:
