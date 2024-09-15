@@ -64,7 +64,7 @@ def make_test_case(scraper_enum, parser_enum):
             dfs = []
             for file in files:
                 df = parser.read(file)
-                
+
                 # none empty file
                 if os.path.getsize(file.get_full_path()) > 256:
 
@@ -77,7 +77,6 @@ def make_test_case(scraper_enum, parser_enum):
 
                 else:
                     assert df.shape[0] == 0
-            
 
             if dfs:
                 joined = pd.concat(dfs)

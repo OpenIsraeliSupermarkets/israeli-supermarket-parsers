@@ -10,3 +10,4 @@ database/
 logging.log
 *.xml
 *.csv
+.env
