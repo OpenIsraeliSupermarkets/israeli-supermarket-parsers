@@ -28,5 +28,8 @@ FROM base as dev
 RUN pip install black
 RUN pip install pylint
 
+FROM base as test
+RUN python -m pip install . ".[test]"
+CMD python -m pytest .
 
 ENTRYPOINT ["python3", "main.py"]
