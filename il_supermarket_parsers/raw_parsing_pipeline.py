@@ -5,7 +5,7 @@ import pandas as pd
 
 class RawParseingPipeline:
     """
-    processing a store data
+    processing files to dataframe
     """
 
     def __init__(self, folder, store_enum, file_type) -> None:
