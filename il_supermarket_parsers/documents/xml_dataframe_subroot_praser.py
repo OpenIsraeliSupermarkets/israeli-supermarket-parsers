@@ -35,7 +35,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     ):
         """parse file to data frame"""
 
-        cols = ["found_folder", "file_id"] + list(root_store.keys())
+        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
 
         add_columns = True
