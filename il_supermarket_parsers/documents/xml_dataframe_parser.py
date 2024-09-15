@@ -47,7 +47,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         row_limit=None,
         **kwarg,
     ):
-        cols = ["found_folder", "file_id"] + list(root_store.keys())
+        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
 
         add_columns = True
