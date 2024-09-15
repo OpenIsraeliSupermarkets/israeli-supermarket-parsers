@@ -43,7 +43,7 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
         return root
 
     root_children = root.getchildren()
-    result = None
+
     for sub in root_children:
         # collect attributes
         if len(sub.getchildren()) == 0 and sub.tag in attributes_to_collect:
@@ -53,6 +53,4 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
                 sub, key_to_find, attributes_to_collect, collected
             )
             if possible_root is not None:
-                result = possible_root
-
-    return result
+                return possible_root
