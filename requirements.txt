@@ -3,3 +3,4 @@ lxml==5.2.1
 pymongo==4.0.2
 il-supermarket-scraper==0.4.2
 pytest
+kaggle==1.6.17

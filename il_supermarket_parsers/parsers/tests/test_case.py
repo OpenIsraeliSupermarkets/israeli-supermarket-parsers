@@ -1,8 +1,7 @@
 import unittest
 import os
-import uuid
+import pandas as pd
 from il_supermarket_scarper.utils import FileTypesFilters
-from il_supermarket_parsers.parser_factroy import ParserFactory
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
 
 
@@ -40,25 +39,58 @@ def make_test_case(scraper_enum, parser_enum):
                 self._delete_folder_and_sub_folder(download_path)
                 os.removedirs(download_path)
 
-            if not os.path.isdir(download_path):
-                get_sample_data(
-                    download_path,
-                    filter_type=file_type,
-                    enabled_scrapers=[self.scraper_enum.name],
-                )
+            get_sample_data(
+                download_path,
+                filter_type=file_type,
+                enabled_scrapers=[self.scraper_enum.name],
+            )
 
         def _parser_validate(self, parser_enum, file_type, dump_path="temp"):
-            """ test the subcase"""
+            """test the subcase"""
             sub_folder = self._get_temp_folder(dump_path)
             self._refresh_download_folder(sub_folder, file_type)
 
             parser = parser_enum.value()
 
-            for file in DataLoader(folder=sub_folder).load():
+            # TBD: add option to take the folder from enum
+            # TBD: FileType, add function get enum by filter
+            files = DataLoader(
+                folder=sub_folder,
+                store_names=[self.scraper_enum.value().chain],
+                files_types=[file_type],
+            ).load()
+            assert len(files) > 0, "no files downloaded"
+
+            dfs = []
+            for file in files:
                 df = parser.read(file)
 
-                assert df.shape[0] > 0
-                # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
+                # none empty file
+                if os.path.getsize(file.get_full_path()) > 256:
+
+                    # should contain data
+                    assert df.shape[0] > 0, f"File {file} is empty"
+                    # assert df.isna().all().all(), f"File {file} contains NaN"
+                    # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
+
+                    dfs.append(df)
+
+                else:
+                    assert df.shape[0] == 0
+
+            if dfs:
+                joined = pd.concat(dfs)
+
+                folders = []
+                for source in joined["found_folder"].unique():
+                    folders.append(os.path.split(source)[1])
+
+                joined.to_csv(
+                    os.path.join(
+                        self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
+                    ),
+                    index=False,
+                )
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
