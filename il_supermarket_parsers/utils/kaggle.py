@@ -1,10 +1,10 @@
 import os
-import kaggle
-from kaggle.api.kaggle_api_extended import KaggleApi
+
 
 
 class KaggleDatasetManager:
     def __init__(self, username=None, key=None):
+        from kaggle.api.kaggle_api_extended  import KaggleApi
         self.api = KaggleApi()
         if username and key:
             os.environ["KAGGLE_USERNAME"] = username
