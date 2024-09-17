@@ -4,7 +4,8 @@ FROM node:20-bookworm as base
 WORKDIR /usr/src/app
 ARG PY_VERSION="3.11.0"
 
-RUN apt-get install python3-pip -y && \
+RUN apt-get update && \
+    apt-get install python3-pip -y && \
     apt-get install dieharder -y && \
     apt-get install wget -y && \
     apt-get clean && \
@@ -25,8 +26,7 @@ RUN pip install -r requirements.txt
 
 FROM base as dev
 
-RUN pip install black
-RUN pip install pylint
+RUN pip install -r requirements-dev.txt
 
 FROM base as test
 RUN python -m pip install . ".[test]"
