@@ -25,6 +25,9 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
+FROM base as prod
+CMD python main.py
+
 FROM base as dev
 
 RUN pip install -r requirements-dev.txt
@@ -32,5 +35,3 @@ RUN pip install -r requirements-dev.txt
 FROM base as test
 RUN python -m pip install . ".[test]"
 CMD python -m pytest .
-
-ENTRYPOINT ["python3", "main.py"]
