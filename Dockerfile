@@ -33,5 +33,7 @@ FROM base as dev
 RUN pip install -r requirements-dev.txt
 
 FROM base as test
+VOLUME ["/usr/src/app/temp"]
+
 RUN python -m pip install . ".[test]"
 CMD python -m pytest .
