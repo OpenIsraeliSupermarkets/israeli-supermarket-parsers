@@ -38,5 +38,5 @@ jobs:
     - name: Test with pytest
       run: |
            mkdir -p temp &&
-           docker rm test-run &&
-           docker run --rm -v ./temp:/usr/src/app/temp --name test-run erlichsefi/israeli-supermarket-parsers:test 
+           docker rm parsers-test-runner &&
+           docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test 
