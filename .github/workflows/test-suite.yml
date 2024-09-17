@@ -36,4 +36,6 @@ jobs:
     - name: Build with Docker
       run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
     - name: Test with pytest
-      run: docker run --rm --name test-run erlichsefi/israeli-supermarket-parsers:test
+      run: |
+           mkdir -p temp &&
+           docker run --rm -v ./temp:/usr/src/app/temp --name test-run erlichsefi/israeli-supermarket-parsers:test 
