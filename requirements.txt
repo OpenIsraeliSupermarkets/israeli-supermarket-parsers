@@ -1,6 +1,6 @@
 pandas
 lxml==5.2.1
 pymongo==4.6.3
-il-supermarket-scraper==0.4.3
+il-supermarket-scraper==0.4.4
 pytest
 kaggle==1.6.17
