@@ -12,10 +12,11 @@ def get_sample_data(
             limit=limit,
             files_types=[filter_type],
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
+            lookup_in_db=True
         )
         task.start()
     else:
-        ScarpingTask(dump_folder_name=dump_folder_name, limit=limit).start()
+        ScarpingTask(dump_folder_name=dump_folder_name, limit=limit,lookup_in_db=True).start()
     return dump_folder_name
 
 
