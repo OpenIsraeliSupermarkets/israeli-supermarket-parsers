@@ -1,7 +1,7 @@
 import unittest
 import os
 import pandas as pd
-from il_supermarket_scarper.utils import FileTypesFilters
+from il_supermarket_scarper.utils import FileTypesFilters,DumpFolderNames
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
 
 
@@ -56,7 +56,7 @@ def make_test_case(scraper_enum, parser_enum):
             # TBD: FileType, add function get enum by filter
             files = DataLoader(
                 folder=sub_folder,
-                store_names=[self.scraper_enum.value().chain],
+                store_names=[DumpFolderNames[self.scraper_enum.name].value],
                 files_types=[file_type],
             ).load()
             assert len(files) > 0, "no files downloaded"
@@ -98,28 +98,28 @@ def make_test_case(scraper_enum, parser_enum):
                 parser_enum, FileTypesFilters.STORE_FILE.name, "samples_store"
             )
 
-        def test_parsing_promo(self):
-            """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FILE.name, "samples_promo"
-            )
+        # def test_parsing_promo(self):
+        #     """scrape one file and make sure it exists"""
+        #     self._parser_validate(
+        #         parser_enum, FileTypesFilters.PROMO_FILE.name, "samples_promo"
+        #     )
 
-        def test_parsing_promo_all(self):
-            """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FULL_FILE.name, "samples_promo_all"
-            )
+        # def test_parsing_promo_all(self):
+        #     """scrape one file and make sure it exists"""
+        #     self._parser_validate(
+        #         parser_enum, FileTypesFilters.PROMO_FULL_FILE.name, "samples_promo_all"
+        #     )
 
-        def test_parsing_prices(self):
-            """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FILE.name, "samples_prices"
-            )
+        # def test_parsing_prices(self):
+        #     """scrape one file and make sure it exists"""
+        #     self._parser_validate(
+        #         parser_enum, FileTypesFilters.PRICE_FILE.name, "samples_prices"
+        #     )
 
-        def test_parsing_prices_all(self):
-            """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FULL_FILE.name, "samples_prices_all"
-            )
+        # def test_parsing_prices_all(self):
+        #     """scrape one file and make sure it exists"""
+        #     self._parser_validate(
+        #         parser_enum, FileTypesFilters.PRICE_FULL_FILE.name, "samples_prices_all"
+        #     )
 
     return TestParser

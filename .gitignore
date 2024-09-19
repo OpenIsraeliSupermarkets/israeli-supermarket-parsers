@@ -11,3 +11,4 @@ logging.log
 *.xml
 *.csv
 .env
+status/
