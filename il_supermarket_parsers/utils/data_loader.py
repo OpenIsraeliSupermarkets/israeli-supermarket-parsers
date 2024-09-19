@@ -57,20 +57,12 @@ class DataLoader:
         )
 
     @classmethod
-    def get_enum(cls, extracted_string):
-        for type in FileTypesFilters:
-            if FileTypesFilters.is_file_from_type(extracted_string, type.name):
-                return type
-
-        raise ValueError(f"{extracted_string} is not recognized")
-
-    @classmethod
     def _find_file_type_and_chain_id(cls, file_name):
         """get the file type"""
         lower_file_name = file_name.lower()
         match = re.search(r"\d", lower_file_name)
         index = match.start()
-        return cls.get_enum(lower_file_name[:index]), lower_file_name[index:]
+        return FileTypesFilters.get_type_from_file(lower_file_name[:index]), lower_file_name[index:]
 
     def load(self):
         """load details about the files in the folder"""
