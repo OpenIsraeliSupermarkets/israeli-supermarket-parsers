@@ -10,7 +10,7 @@ def count_tag_in_xml(xml_file_path,tag_to_count):
     def count_tag_recursive(element):
         count = 0
         # If the current element tag is "x", increase the count
-        if element.tag == tag_to_count:
+        if element.tag.lower() == tag_to_count.lower():
             count += 1
         # Recurse through all children elements
         for child in element:
