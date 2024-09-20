@@ -24,14 +24,9 @@ class XmlBaseConverter(ABC):
         self.columns_to_drop = columns_to_drop
         self.mandatory_columns = mandatory_columns
 
-    # def get_id(self):
-    #     """get the id in each entery of the list"""
-    #     if isinstance(self.id_field, list):
-    #         return self.id_field
-    #     return [self.id_field]
 
     @abstractmethod
-    def validate_succussful_extraction(self, data):
+    def validate_succussful_extraction(self, data, source_file):
        """validate column requested"""
 
     def build_value(self, name, no_content):
@@ -41,8 +36,9 @@ class XmlBaseConverter(ABC):
         self, found_store, file_name, no_content="NO-CONTENT", row_limit=None, **kwarg
     ):
         """parse file to data frame"""
+        source_file = os.path.join(found_store, file_name)
         root, root_store = get_root(
-            os.path.join(found_store, file_name), self.list_key, self.roots
+            source_file, self.list_key, self.roots
         )
 
         data = self._phrse(
@@ -55,7 +51,7 @@ class XmlBaseConverter(ABC):
             **kwarg,
         )
 
-
+        self.validate_succussful_extraction(data,source_file)
         return self._normlize_columns(data, **kwarg)
 
     @abstractmethod

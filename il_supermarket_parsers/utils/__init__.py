@@ -10,7 +10,7 @@ from .test_utils import (
     get_all_scrapers_names,
 )
 from il_supermarket_scarper import FileTypesFilters
-from .xml_utils import get_root, build_value
+from .xml_utils import get_root, build_value, count_tag_in_xml
 from il_supermarket_parsers.utils.test_utils import get_sample_data
 from .data_loader import DataLoader, DumpFile
 from .kaggle import KaggleDatasetManager

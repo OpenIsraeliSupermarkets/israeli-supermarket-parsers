@@ -10,7 +10,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         list_key,
         id_field,
         roots=None,
-        sub_roots=None,
+        sub_roots=[],
         list_sub_key="",
         **additional_constant,
     ):
@@ -22,6 +22,13 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         )
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
+
+
+    def validate_succussful_extraction(self,data,source_file):
+        super().validate_succussful_extraction(data,source_file)
+        for root in self.sub_roots:
+            if root not in data.columns:
+                raise ValueError(f"parse error, columns {root} missing from {data.columns}")
 
     def _phrse(
         self,
@@ -35,10 +42,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     ):
         """parse file to data frame"""
 
-        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
-
-        add_columns = True
 
         if root is None:
             raise ValueError(f"{self.list_key} is wrong")
@@ -57,8 +61,6 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 }
                 for name in list(elem):
                     tag = name.tag
-                    if add_columns:
-                        cols.append(tag)
                     value = self.build_value(name, no_content=no_content)
 
                     if value == no_content:
@@ -70,4 +72,4 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 if row_limit and len(rows) >= row_limit:
                     break
 
-        return pd.DataFrame(rows, columns=cols)
+        return pd.DataFrame(rows)
