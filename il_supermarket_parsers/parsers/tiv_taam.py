@@ -2,7 +2,7 @@ from il_supermarket_parsers.engines import BigIdBranchesFileConverter
 from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
-class BareketFileConverter(BigIdBranchesFileConverter):
+class TivTaamFileConverter(BigIdBranchesFileConverter):
 
     def __init__(self):
         super().__init__(

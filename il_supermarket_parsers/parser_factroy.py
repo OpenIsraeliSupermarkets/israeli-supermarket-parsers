@@ -13,7 +13,7 @@ class ParserFactory(Enum):
     DOR_ALON = all_parsers.BaseFileConverter
     GOOD_PHARM = all_parsers.BaseFileConverter
     HAZI_HINAM = all_parsers.BaseFileConverter
-    HET_COHEN = all_parsers.BaseFileConverter
+    HET_COHEN = all_parsers.HetChoenFileConverter
     KESHET = all_parsers.BaseFileConverter
     KING_STORE = all_parsers.BaseFileConverter
     MAAYAN_2000 = all_parsers.BaseFileConverter
@@ -35,7 +35,7 @@ class ParserFactory(Enum):
     SUPER_SAPIR = all_parsers.BaseFileConverter
     FRESH_MARKET_AND_SUPER_DOSH = all_parsers.BaseFileConverter
     QUIK = all_parsers.BaseFileConverter
-    TIV_TAAM = all_parsers.BaseFileConverter
+    TIV_TAAM = all_parsers.TivTaamFileConverter
     VICTORY = all_parsers.VictoryFileConverter
     YELLOW = all_parsers.BaseFileConverter
     YOHANANOF = all_parsers.BaseFileConverter

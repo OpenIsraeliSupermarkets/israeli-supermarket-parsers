@@ -40,11 +40,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         add_columns = True
 
-        elements = root.getchildren()
-        if len(elements) == 0:
+        if root is None:
             raise ValueError(f"{self.list_key} is wrong")
 
-        for sub_elem in elements:
+        for sub_elem in list(root):
             sub_root_store = root_store.copy()
 
             for k in self.sub_roots:
@@ -56,7 +55,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                     "file_name": file_name,
                     **sub_root_store,
                 }
-                for name in elem.getchildren():
+                for name in list(elem):
                     tag = name.tag
                     if add_columns:
                         cols.append(tag)
