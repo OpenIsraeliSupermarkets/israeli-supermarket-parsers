@@ -10,8 +10,8 @@ class ParserFactory(Enum):
     BAREKET = all_parsers.BareketFileConverter
     YAYNO_BITAN = all_parsers.BaseFileConverter
     COFIX = all_parsers.CofixFileConverter
-    DOR_ALON = all_parsers.BaseFileConverter
-    GOOD_PHARM = all_parsers.BaseFileConverter
+    DOR_ALON = all_parsers.CofixFileConverter
+    GOOD_PHARM = all_parsers.CofixFileConverter
     HAZI_HINAM = all_parsers.BaseFileConverter
     HET_COHEN = all_parsers.HetChoenFileConverter
     KESHET = all_parsers.BaseFileConverter
@@ -33,7 +33,7 @@ class ParserFactory(Enum):
     SUPER_PHARM = all_parsers.SuperPharmFileConverter
     SUPER_YUDA = all_parsers.BaseFileConverter
     SUPER_SAPIR = all_parsers.BaseFileConverter
-    FRESH_MARKET_AND_SUPER_DOSH = all_parsers.BaseFileConverter
+    FRESH_MARKET_AND_SUPER_DOSH = all_parsers.CofixFileConverter
     QUIK = all_parsers.BaseFileConverter
     TIV_TAAM = all_parsers.TivTaamFileConverter
     VICTORY = all_parsers.VictoryFileConverter

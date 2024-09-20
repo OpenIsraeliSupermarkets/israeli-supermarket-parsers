@@ -76,7 +76,7 @@ def make_test_case(scraper_enum, parser_enum):
                     dfs.append(df)
 
                 else:
-                    assert df.shape[0] == 0
+                    assert df.shape[0] == 1
 
             if dfs:
                 joined = pd.concat(dfs)

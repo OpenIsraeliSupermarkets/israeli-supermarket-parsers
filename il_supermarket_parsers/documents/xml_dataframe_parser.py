@@ -47,7 +47,10 @@ class XmlDataFrameConverter(XmlBaseConverter):
         if self.id_field not in data.columns:
             raise ValueError(f"parse error, id {self.id_field} missing from {data.columns}")
 
-        if data.shape[0] != count_tag_in_xml(source_file,self.id_field):
+        # if there is an empty file
+        # we expected it to reuturn none
+        tag_count = count_tag_in_xml(source_file,self.id_field)
+        if data.shape[0] != max(tag_count,1):
             raise ValueError(f"missing data")
 
         keys_not_used = set(collect_unique_keys_from_xml(source_file)) - collect_unique_columns_from_nested_json(data) - set(self.ignore_column)
@@ -70,7 +73,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
     ):
         rows = []
 
-        add_columns = True
         # if not root and "Super-Pharm" in file:
         #     return pd.DataFrame()  # shufersal don't add count=0
 
@@ -78,11 +80,9 @@ class XmlDataFrameConverter(XmlBaseConverter):
             raise ValueError(f"{self.list_key} is wrong")
 
         elements = list(root)
-        if elements is None:
-            if root.attrib.get("Count", None) == "0":
-                return pd.DataFrame()
-            else:
-                raise ValueError(f"{self.list_key} is wrong")
+        if len(root) == 0 :
+            columns = [self.id_field] + self.roots
+            return pd.DataFrame([root_store],columns=columns)
 
         for elem in elements:
 
