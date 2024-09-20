@@ -1,5 +1,6 @@
 import pandas as pd
 from .base import XmlBaseConverter
+from il_supermarket_parsers.utils import count_tag_in_xml
 
 
 class XmlDataFrameConverter(XmlBaseConverter):
@@ -37,13 +38,18 @@ class XmlDataFrameConverter(XmlBaseConverter):
         data = data.drop(columns=columns_to_remove, errors="ignore")
         return data.rename(columns=columns_to_rename)
 
-    def validate_succussful_extraction(self,data):
+    def validate_succussful_extraction(self,data, source_file):
         for root in self.roots:
             if root not in data.columns:
                 raise ValueError(f"parse error, columns {root} missing from {data.columns}")
             
         if self.id_field not in data.columns:
             raise ValueError(f"parse error, id {self.id_field} missing from {data.columns}")
+
+        if data.shape[0] != count_tag_in_xml(source_file,self.id_field):
+            raise ValueError(f"missing data")
+
+
 
 
     def _phrse(
@@ -88,6 +94,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
 
                 if value == no_content:
                     print(f"for value {name} found no content!")
+
                 values[tag] = value
             rows.append(values.copy())
             add_columns = False

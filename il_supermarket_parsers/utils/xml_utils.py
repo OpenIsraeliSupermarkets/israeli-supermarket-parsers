@@ -1,6 +1,26 @@
 import xml.etree.ElementTree as ET
 
 
+def count_tag_in_xml(xml_file_path,tag_to_count):
+    # Parse the XML file
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+
+    # Recursive function to count "x" tags
+    def count_tag_recursive(element):
+        count = 0
+        # If the current element tag is "x", increase the count
+        if element.tag == tag_to_count:
+            count += 1
+        # Recurse through all children elements
+        for child in element:
+            count += count_tag_recursive(child)
+        return count
+
+    # Start counting from the root
+    return count_tag_recursive(root)
+    
+
 def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
 
