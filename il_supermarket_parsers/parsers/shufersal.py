@@ -8,8 +8,6 @@ class ShufersalFileConverter(BaseFileConverter):
             stores_parser=XmlDataFrameConverter(
                 list_key="STORES",
                 id_field=["STOREID"],
-                roots=["ChainId", "ChainName", "LASTUPDATEDATE"],
-                renames={"LASTUPDATEDATE": "DocLASTUPDATEDATE"},
-                chainid="7290027600007",
+                roots="ChainId",
             )
         )

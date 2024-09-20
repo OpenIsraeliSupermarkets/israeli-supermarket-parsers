@@ -7,7 +7,7 @@ class VictoryFileConverter(BigIdBranchesFileConverter):
         super().__init__()
         self.promofull_parser = XmlDataFrameConverter(
             list_key="Sales",
-            id_field=["ItemCode", "PromotionID"],
+            id_field="PromotionID",
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
