@@ -62,7 +62,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
         row_limit=None,
         **kwarg,
     ):
-        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
 
         add_columns = True
@@ -88,8 +87,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
             }
             for name in list(elem):
                 tag = name.tag
-                if add_columns:
-                    cols.append(tag)
                 value = self.build_value(name, no_content=no_content)
 
                 if value == no_content:
@@ -102,4 +99,4 @@ class XmlDataFrameConverter(XmlBaseConverter):
             if row_limit and len(rows) >= row_limit:
                 break
 
-        return pd.DataFrame(rows, columns=cols)
+        return pd.DataFrame(rows)
