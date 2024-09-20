@@ -30,9 +30,9 @@ class XmlBaseConverter(ABC):
     #         return self.id_field
     #     return [self.id_field]
 
-    # def get_constant(self, value):
-    #     """get constant"""
-    #     return self.additional_constant.get(value, None)
+    @abstractmethod
+    def validate_succussful_extraction(self, data):
+       """validate column requested"""
 
     def build_value(self, name, no_content):
         return build_value(name, self.additional_constant, no_content=no_content)
@@ -54,6 +54,8 @@ class XmlBaseConverter(ABC):
             row_limit=row_limit,
             **kwarg,
         )
+
+
         return self._normlize_columns(data, **kwarg)
 
     @abstractmethod

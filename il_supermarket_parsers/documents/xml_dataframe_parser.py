@@ -37,6 +37,15 @@ class XmlDataFrameConverter(XmlBaseConverter):
         data = data.drop(columns=columns_to_remove, errors="ignore")
         return data.rename(columns=columns_to_rename)
 
+    def validate_succussful_extraction(self,data):
+        for root in self.roots:
+            if root not in data.columns:
+                raise ValueError(f"parse error, columns {root} missing from {data.columns}")
+            
+        if self.id_field not in data.columns:
+            raise ValueError(f"parse error, id {self.id_field} missing from {data.columns}")
+
+
     def _phrse(
         self,
         root,
