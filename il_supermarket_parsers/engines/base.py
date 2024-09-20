@@ -26,8 +26,10 @@ class BaseFileConverter(ABC):
             if pricefull_parser
             else XmlDataFrameConverter(
                 list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate"],
+                id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=['XmlDocVersion', 'DllVerNo']
+
             )
         )
         self.promofull_parser: XmlBaseConverter = (
@@ -35,9 +37,11 @@ class BaseFileConverter(ABC):
             if promofull_parser
             else XmlDataFrameConverter(
                 list_key="Promotions",
-                id_field=["PromotionId"],
+                id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
+                ignore_column=['XmlDocVersion', 'DllVerNo']
+
             )
         )
         self.stores_parser: XmlBaseConverter = (
@@ -46,13 +50,11 @@ class BaseFileConverter(ABC):
             else SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
                 sub_roots=["SubChainId", "SubChainName"],
-                id_field=["StoreId"],
+                id_field="StoreId",
                 list_sub_key="Stores",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                renames={
-                    "LastUpdateDate": "DocLastUpdateDate",
-                    "LastUpdateTime": "DocLastUpdateTime",
-                },
+                ignore_column=['XmlDocVersion', 'DllVerNo']
+
             )
         )
         self.price_parser: XmlBaseConverter = (
@@ -60,8 +62,9 @@ class BaseFileConverter(ABC):
             if price_parser
             else XmlDataFrameConverter(
                 list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate"],
+                id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=['XmlDocVersion', 'DllVerNo']
             )
         )
         self.promo_parsers: XmlBaseConverter = (
@@ -69,9 +72,11 @@ class BaseFileConverter(ABC):
             if promo_parser
             else XmlDataFrameConverter(
                 list_key="Promotions",
-                id_field=["PromotionId", "PromotionUpdateDate"],
+                id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
+                ignore_column=['XmlDocVersion', 'DllVerNo']
+
             )
         )
 
