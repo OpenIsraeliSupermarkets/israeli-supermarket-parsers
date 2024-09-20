@@ -9,27 +9,27 @@ class SuperPharmFileConverter(BigIDFileConverter):
         super().__init__(
             promofull_parser=XmlDataFrameConverter(
                 list_key="Details",
-                id_field=["PromotionId", "PriceUpdateDate", "ItemCode"],
+                id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             promo_parser=XmlDataFrameConverter(
                 list_key="Details",
-                id_field=["PromotionId", "PriceUpdateDate", "ItemCode"],
+                id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             pricefull_parser=XmlDataFrameConverter(
                 list_key="Details",
-                id_field=["ItemCode"],
+                id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             price_parser=XmlDataFrameConverter(
                 list_key="Details",
-                id_field=["ItemCode", "PriceUpdateDate"],
+                id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             stores_parser=XmlDataFrameConverter(
                 list_key="Details",
-                id_field=["StoreId"],
+                id_field="StoreId",
                 roots=["ChainId", "SubChainId"],
             ),
         )

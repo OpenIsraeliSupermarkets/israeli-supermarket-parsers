@@ -7,12 +7,12 @@ class SalachDabachFileConverter(BaseFileConverter):
         super().__init__(
             price_parser=XmlDataFrameConverter(
                 list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate", "ItemId"],
+                id_field="ItemId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             pricefull_parser=XmlDataFrameConverter(
                 list_key="Items",
-                id_field=["ItemCode", "PriceUpdateDate", "ItemId"],
+                id_field="ItemId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
         )

@@ -8,7 +8,7 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
         super().__init__(
             promofull_parser=XmlDataFrameConverter(
                 list_key="Sales",
-                id_field=["PromotionID", "ItemCode"],
+                id_field="PromotionID",
                 roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 date_columns=["PriceUpdateDate"],
             ),
