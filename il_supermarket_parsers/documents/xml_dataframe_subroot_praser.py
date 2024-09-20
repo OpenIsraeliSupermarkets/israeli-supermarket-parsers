@@ -51,7 +51,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         if len(root) == 0 :
             columns = self.sub_roots + [self.id_field] + self.roots
-            return pd.DataFrame([root_store],columns=columns)
+            return pd.DataFrame(columns=columns)
         
         for sub_elem in list(root):
             sub_root_store = root_store.copy()
