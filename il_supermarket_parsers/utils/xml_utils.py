@@ -42,11 +42,10 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
     if root.tag == key_to_find:
         return root
 
-    root_children = root.getchildren()
 
-    for sub in root_children:
+    for sub in list(root):
         # collect attributes
-        if len(sub.getchildren()) == 0 and sub.tag in attributes_to_collect:
+        if len(list(sub)) == 0 and sub.tag in attributes_to_collect:
             collected[sub.tag] = sub.text
         else:
             possible_root = _get_root(

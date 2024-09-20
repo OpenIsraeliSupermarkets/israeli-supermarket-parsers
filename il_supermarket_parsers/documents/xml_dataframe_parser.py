@@ -54,8 +54,11 @@ class XmlDataFrameConverter(XmlBaseConverter):
         # if not root and "Super-Pharm" in file:
         #     return pd.DataFrame()  # shufersal don't add count=0
 
-        elements = root.getchildren()
-        if len(elements) == 0:
+        if root is None:
+            raise ValueError(f"{self.list_key} is wrong")
+
+        elements = list(root)
+        if elements is None:
             if root.attrib.get("Count", None) == "0":
                 return pd.DataFrame()
             else:
@@ -68,7 +71,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 "file_name": file_name,
                 **root_store,
             }
-            for name in elem.getchildren():
+            for name in list(elem):
                 tag = name.tag
                 if add_columns:
                     cols.append(tag)
