@@ -14,31 +14,5 @@ class MahsaniAShukPromoFileConverter(BigIDFileConverter):
                 list_key="Branches",
                 id_field="StoreID",
                 roots=[],
-            ),
-            promo_parser=XmlDataFrameConverter(
-                list_key="Sales",
-                id_field=[
-                    "ItemCode",
-                    "PriceUpdateDate",
-                    "ClubID",
-                    "ItemType",
-                    "RewardType",
-                    "PromotionID",
-                ],
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                date_columns=["PriceUpdateDate"],
-            ),
-            promofull_parser=XmlDataFrameConverter(
-                list_key="Sales",
-                id_field=[
-                    "ItemCode",
-                    "PriceUpdateDate",
-                    "ClubID",
-                    "ItemType",
-                    "RewardType",
-                    "PromotionID",
-                ],
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                date_columns=["PriceUpdateDate"],
-            ),
+            )
         )

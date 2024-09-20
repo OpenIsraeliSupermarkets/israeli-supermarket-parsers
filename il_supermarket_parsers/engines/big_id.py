@@ -48,7 +48,7 @@ class BigIDFileConverter(BaseFileConverter):
                 if promofull_parser
                 else XmlDataFrameConverter(
                     list_key="Sales",
-                    id_field="PromotionId",
+                    id_field="PromotionID",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 )
             ),
@@ -57,7 +57,7 @@ class BigIDFileConverter(BaseFileConverter):
                 if stores_parser
                 else XmlDataFrameConverter(
                     list_key="Sales",
-                    id_field="PromotionId",
+                    id_field="PromotionID",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 )
             ),
