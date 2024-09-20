@@ -17,4 +17,14 @@ class BareketFileConverter(BigIdBranchesFileConverter):
                 id_field="StoreId",
                 roots=["ChainId","ChainName","LastUpdateDate","LastUpdateTime"],
             ),
+            price_parser=XmlDataFrameConverter(
+                list_key="Items",
+                id_field=["ItemCode", "PriceUpdateDate", "ItemId"],
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+            ),
+            pricefull_parser=XmlDataFrameConverter(
+                list_key="Items",
+                id_field=["ItemCode", "PriceUpdateDate", "ItemId"],
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+            ),
         )
