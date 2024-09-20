@@ -12,7 +12,7 @@ class ParserFactory(Enum):
     COFIX = all_parsers.CofixFileConverter
     DOR_ALON = all_parsers.CofixFileConverter
     GOOD_PHARM = all_parsers.CofixFileConverter
-    HAZI_HINAM = all_parsers.BaseFileConverter
+    HAZI_HINAM = all_parsers.CofixFileConverter
     HET_COHEN = all_parsers.HetChoenFileConverter
     KESHET = all_parsers.BaseFileConverter
     KING_STORE = all_parsers.BaseFileConverter
