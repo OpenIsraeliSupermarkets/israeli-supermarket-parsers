@@ -1,6 +1,6 @@
 import pandas as pd
 from .base import XmlBaseConverter
-from il_supermarket_parsers.utils import count_tag_in_xml
+from il_supermarket_parsers.utils import count_tag_in_xml,collect_unique_keys_from_xml,collect_unique_columns_from_nested_json
 
 
 class XmlDataFrameConverter(XmlBaseConverter):
@@ -38,6 +38,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         data = data.drop(columns=columns_to_remove, errors="ignore")
         return data.rename(columns=columns_to_rename)
 
+
     def validate_succussful_extraction(self,data, source_file):
         for root in self.roots:
             if root not in data.columns:
@@ -48,6 +49,11 @@ class XmlDataFrameConverter(XmlBaseConverter):
 
         if data.shape[0] != count_tag_in_xml(source_file,self.id_field):
             raise ValueError(f"missing data")
+
+        keys_not_used = set(collect_unique_keys_from_xml(source_file)) - collect_unique_columns_from_nested_json(data)
+        if len(keys_not_used) > 0:
+            raise ValueError(f"there is data we didn't get {keys_not_used}")
+
 
 
 
@@ -94,7 +100,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
 
                 values[tag] = value
             rows.append(values.copy())
-            add_columns = False
 
             if row_limit and len(rows) >= row_limit:
                 break

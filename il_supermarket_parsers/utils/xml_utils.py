@@ -20,6 +20,29 @@ def count_tag_in_xml(xml_file_path,tag_to_count):
     # Start counting from the root
     return count_tag_recursive(root)
     
+def collect_unique_keys_from_xml(xml_file_path):
+    # Parse the XML file
+    # Parse the XML file
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+
+    # Set to store unique keys that have values
+    keys_with_values = set()
+
+    # Recursive function to collect keys with values
+    def collect_keys_recursive(element):
+        # Check if the element has a non-empty text value
+        if element.text and element.text.strip():
+            # Add the current element's tag to the set
+            keys_with_values.add(element.tag)
+        # Recurse through all child elements
+        for child in element:
+            collect_keys_recursive(child)
+
+    # Start collecting keys from the root
+    collect_keys_recursive(root)
+    
+    return keys_with_values
 
 def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
@@ -37,14 +60,9 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
             keys.append(item.tag)
             normaled_keys.append(item.tag.lower())
 
-        if len(set(normaled_keys)) != 1:
-            # we will create a dict and sort it
-            content = dict(zip(keys, content))
-            content = {k: v for k, v in sorted(content.items())}
-        else:
-            # we will create a list, sort by the string value
-            # we don't care what is the order- just that they are in the same order.
-            content = sorted(content, key=str)
+        content = dict(zip(keys, content))
+        content = {k: v for k, v in sorted(content.items())}
+
     return content
 
 

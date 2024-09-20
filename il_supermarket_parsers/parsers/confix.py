@@ -1,5 +1,5 @@
 from il_supermarket_parsers.engines import BaseFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter,SubRootedXmlDataFrameConverter
+from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class CofixFileConverter(BaseFileConverter):
