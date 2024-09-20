@@ -12,12 +12,14 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         roots=None,
         sub_roots=[],
         list_sub_key="",
+        ignore_column=[],
         **additional_constant,
     ):
         super().__init__(
-            list_key,
-            id_field,
-            roots,
+            list_key=list_key,
+            id_field=id_field,
+            roots=roots,
+            ignore_column=ignore_column,
             additional_constant=additional_constant,
         )
         self.sub_roots = sub_roots
