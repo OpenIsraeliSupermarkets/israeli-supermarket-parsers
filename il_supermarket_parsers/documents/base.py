@@ -11,18 +11,14 @@ class XmlBaseConverter(ABC):
         list_key,
         id_field,
         roots=None,
-        columns_to_renames=None,
-        columns_to_drop=None,
-        mandatory_columns=None,
+        ignore_column=[],
         **additional_constant,
     ):
         self.list_key = list_key
         self.roots = roots
         self.id_field = id_field
-        self.columns_to_renames = columns_to_renames
+        self.ignore_column = ignore_column
         self.additional_constant = additional_constant
-        self.columns_to_drop = columns_to_drop
-        self.mandatory_columns = mandatory_columns
 
 
     @abstractmethod

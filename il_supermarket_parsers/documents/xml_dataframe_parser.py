@@ -50,7 +50,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         if data.shape[0] != count_tag_in_xml(source_file,self.id_field):
             raise ValueError(f"missing data")
 
-        keys_not_used = set(collect_unique_keys_from_xml(source_file)) - collect_unique_columns_from_nested_json(data)
+        keys_not_used = set(collect_unique_keys_from_xml(source_file)) - collect_unique_columns_from_nested_json(data) - set(self.ignore_column)
         if len(keys_not_used) > 0:
             raise ValueError(f"there is data we didn't get {keys_not_used}")
 
