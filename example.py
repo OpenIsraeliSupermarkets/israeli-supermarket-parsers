@@ -13,6 +13,7 @@ if __name__ == "__main__":
         lookup_in_db=True
     ).start()
     scraper = ConvertingTask(
+        enabled_parsers=[ScraperFactory.BAREKET.name],
         data_folder="dumps",
         multiprocessing=multiprocessing
     ).start()

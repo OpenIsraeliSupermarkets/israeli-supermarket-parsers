@@ -23,7 +23,9 @@ class RawParseingPipeline:
             store_names=[self.store_name],
             files_types=[self.file_type],
         ).load():
-            file.data = parser_class.read(file)
+            
+            parser = parser_class()
+            file.data = parser.read(file)
             data_frames.append(file.data)
 
         create_csv = os.path.join(

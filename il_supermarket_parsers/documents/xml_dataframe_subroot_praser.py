@@ -69,11 +69,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                     tag = name.tag
                     value = self.build_value(name, no_content=no_content)
 
-                    if value == no_content:
-                        print(f"for value {name} found no content!")
+                    # if value == no_content:
+                    #     print(f"for value {name} found no content!")
                     values[tag] = value
                 rows.append(values.copy())
-                add_columns = False
 
                 if row_limit and len(rows) >= row_limit:
                     break
