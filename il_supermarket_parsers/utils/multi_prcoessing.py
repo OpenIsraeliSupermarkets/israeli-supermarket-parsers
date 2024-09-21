@@ -82,12 +82,10 @@ class MultiProcessor:
         tasks_to_accomplish.close()
         tasks_to_accomplish.join_thread()
 
-        # self.wait_to_finish(tasks_accomplished, size)
-
         results = []
         while not tasks_accomplished.empty() or len(results) < size:
-            file_to_delete = tasks_accomplished.get(True)
-            results.append(file_to_delete)
+            output = tasks_accomplished.get(True)
+            results.append(output)
 
         assert len(results) == size, f"{len(results)} vs {size}"
 
