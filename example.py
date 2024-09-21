@@ -3,13 +3,15 @@ from il_supermarket_scarper import ScarpingTask,ScraperFactory
 if __name__ == "__main__":
 
 
+    multiprocessing = 1
 
     ScarpingTask(
         enabled_scrapers=[ScraperFactory.BAREKET.name], #download one from each 
         limit=1,
-        multiprocessing=2
+        multiprocessing=multiprocessing,
+        lookup_in_db=True
     ).start()
     scraper = ConvertingTask(
         data_folder="dumps",
-        multiprocessing=2
+        multiprocessing=multiprocessing
     ).start()
