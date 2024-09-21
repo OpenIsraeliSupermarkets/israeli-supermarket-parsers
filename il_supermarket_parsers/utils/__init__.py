@@ -14,4 +14,3 @@ from .xml_utils import get_root, build_value, count_tag_in_xml, collect_unique_k
 from .dataframe_utils import collect_unique_columns_from_nested_json
 from il_supermarket_parsers.utils.test_utils import get_sample_data
 from .data_loader import DataLoader, DumpFile
-from .kaggle import KaggleDatasetManager
