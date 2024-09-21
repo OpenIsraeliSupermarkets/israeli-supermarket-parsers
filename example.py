@@ -10,6 +10,6 @@ if __name__ == "__main__":
         multiprocessing=2
     ).start()
     scraper = ConvertingTask(
-        dump_folder_name="dumps",
+        data_folder="dumps",
         multiprocessing=2
     ).start()
