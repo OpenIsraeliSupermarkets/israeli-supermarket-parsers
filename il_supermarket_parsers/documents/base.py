@@ -48,7 +48,7 @@ class XmlBaseConverter(ABC):
         )
 
         self.validate_succussful_extraction(data,source_file)
-        return self._normlize_columns(data, **kwarg)
+        return data#self._normlize_columns(data, **kwarg)
 
     @abstractmethod
     def _phrse(
