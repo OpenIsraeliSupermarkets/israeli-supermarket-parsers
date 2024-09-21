@@ -1,5 +1,5 @@
 import os
-from .utils import DataLoader, KaggleDatasetManager
+from .utils import DataLoader
 import pandas as pd
 
 
@@ -12,7 +12,6 @@ class RawParseingPipeline:
         self.store_enum = store_enum
         self.file_type = file_type
         self.folder = folder
-        self.database = KaggleDatasetManager()
 
     def process(self):
         parser = self.store_enum.value()
@@ -33,7 +32,7 @@ class RawParseingPipeline:
             create_csv,
             index=False,
         )
-        self.database.upload_to_dataset("israeli-supermarkets-2024", create_csv)
+        return create_csv
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""

@@ -19,7 +19,7 @@ class UploadRawToKaggle(ProcessJob):
         parser_name = kwargs.pop("type")
         parser_enum = ParserFactory.get(parser_name)
 
-        RawParseingPipeline(drop_folder, parser_enum, file_type).process()
+        return RawParseingPipeline(drop_folder, parser_enum, file_type).process()
 
 
 class ParallelParser(MultiProcessor):
