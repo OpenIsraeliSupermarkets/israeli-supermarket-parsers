@@ -6,9 +6,8 @@ if __name__ == "__main__":
         enabled_scrapers=None, #download one from each 
         limit=1,
         multiprocessing=2
-    )
+    ).start()
     scraper = ConvertingTask(
         dump_folder_name="dumps",
         multiprocessing=2
-    )
-    scraper.start()
+    ).start()
