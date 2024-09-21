@@ -3,7 +3,7 @@ from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactor
 
 
 def get_sample_data(
-    dump_folder_name, filter_type=None, enabled_scrapers=None, limit=10
+    dump_folder_name, filter_type=None, enabled_scrapers=None, limit=2
 ):
     """get data to scrape"""
     if filter_type:
