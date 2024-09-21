@@ -80,9 +80,9 @@ class BaseFileConverter(ABC):
             )
         )
 
-    def load_column_config(self, json_key):
-        with open("il_supermarket_parsers/conf/processing.json") as file:
-            return json.load(file)[json_key]
+    # def load_column_config(self, json_key):
+    #     with open("il_supermarket_parsers/conf/processing.json") as file:
+    #         return json.load(file)[json_key]
 
     def read(self, dump_file: DumpFile):
 
@@ -110,5 +110,5 @@ class BaseFileConverter(ABC):
         return parser.convert(
             dump_file.store_folder,
             dump_file.file_name,
-            **self.load_column_config(settings)
+            #**self.load_column_config(settings)
         )
