@@ -4,6 +4,7 @@ from .utils.logger import Logger
 from .parser_factroy import ParserFactory
 from .utils import FileTypesFilters
 import itertools
+import os
 
 
 class RawProcessing(ProcessJob):
@@ -39,6 +40,7 @@ class ParallelParser(MultiProcessor):
     def get_arguments_list(self):
         """create list of arguments"""
 
+        os.makedirs(self.output_folder,exist_ok=True)
         all_parsers = self.enabled_parsers if self.enabled_parsers else ParserFactory.all_parsers_name()
         all_file_types = self.enabled_file_types if self.enabled_file_types else FileTypesFilters.all_types()
         params_order = ["store_enum", "file_type", "data_folder","output_folder"]
