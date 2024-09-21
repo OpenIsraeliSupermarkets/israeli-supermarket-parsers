@@ -7,6 +7,7 @@ if __name__ == "__main__":
 
     ScarpingTask(
         enabled_scrapers=[ScraperFactory.BAREKET.name], #download one from each 
+        dump_folder_name="dumps",
         limit=1,
         multiprocessing=multiprocessing,
         lookup_in_db=True
