@@ -17,18 +17,20 @@ class RawProcessing(ProcessJob):
         drop_folder = kwargs.pop("data_folder")
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
+        output_folder = kwargs.pop("output_folder")
 
-        return RawParseingPipeline(drop_folder, parser_name, file_type).process()
+        return RawParseingPipeline(drop_folder, parser_name, file_type,output_folder).process()
 
 
 class ParallelParser(MultiProcessor):
     """run insert task on parallel"""
 
-    def __init__(self, data_folder, enabled_parsers=None,enabled_file_types=None, multiprocessing=6):
+    def __init__(self, data_folder, enabled_parsers=None,enabled_file_types=None, multiprocessing=6,output_folder="output"):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
         self.enabled_parsers = enabled_parsers
         self.enabled_file_types = enabled_file_types
+        self.output_folder = output_folder
 
     def task_to_execute(self):
         """the task to execute"""
@@ -39,10 +41,10 @@ class ParallelParser(MultiProcessor):
 
         all_parsers = self.enabled_parsers if self.enabled_parsers else ParserFactory.all_parsers_name()
         all_file_types = self.enabled_file_types if self.enabled_file_types else FileTypesFilters.all_types()
-        params_order = ["store_enum", "file_type", "data_folder"]
+        params_order = ["store_enum", "file_type", "data_folder","output_folder"]
         combinations = list(
             itertools.product(
-                all_parsers, all_file_types, [self.data_folder]
+                all_parsers, all_file_types, [self.data_folder],[self.output_folder]
             )
         )
         task_can_executed_indepentlly = [
