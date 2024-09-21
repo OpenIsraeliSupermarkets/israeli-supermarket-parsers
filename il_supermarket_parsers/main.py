@@ -6,17 +6,19 @@ class ConvertingTask:
     """main convert task"""
 
     def __init__(
-        self, data_folder="dumps",enabled_parsers=None, multiprocessing=6
+        self, data_folder="dumps",enabled_parsers=None, multiprocessing=6, output_folder="output"
     ):
         Logger.info(
             f"Starting Parser, data_folder={data_folder},"
             f"number_of_processes={multiprocessing}"
             f"parsers = {enabled_parsers}"
+            f"output_folder={output_folder}"
         )
         self.runner = ParallelParser(
             data_folder,
             enabled_parsers=enabled_parsers,
             multiprocessing=multiprocessing,
+            output_folder=output_folder
         )
 
     def start(self):

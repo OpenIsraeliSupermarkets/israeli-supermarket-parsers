@@ -9,10 +9,11 @@ class RawParseingPipeline:
     processing files to dataframe
     """
 
-    def __init__(self, folder, store_name, file_type) -> None:
+    def __init__(self, folder, store_name, file_type, output_folder) -> None:
         self.store_name = store_name
         self.file_type = file_type
         self.folder = folder
+        self.output_folder = output_folder
 
     def process(self):
         parser_class = ParserFactory.get(self.store_name)
@@ -29,7 +30,7 @@ class RawParseingPipeline:
             data_frames.append(file.data)
 
         create_csv = os.path.join(
-            self.folder, self.file_type + "_" + self.store_name.lower() + ".csv"
+            self.output_folder, self.file_type.lower() + "_" + self.store_name.lower() + ".csv"
         )
 
         if data_frames:
