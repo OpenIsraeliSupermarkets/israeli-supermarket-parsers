@@ -12,3 +12,5 @@ logging.log
 *.csv
 .env
 status/
+build/
+il_supermarket_parsers.egg-info/
