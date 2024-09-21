@@ -97,8 +97,8 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 tag = name.tag
                 value = self.build_value(name, no_content=no_content)
 
-                if value == no_content:
-                    print(f"for value {name} found no content!")
+                # if value == no_content:
+                #     print(f"for value {name} found no content!")
 
                 values[tag] = value
             rows.append(values.copy())

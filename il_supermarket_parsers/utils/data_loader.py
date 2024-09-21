@@ -2,6 +2,7 @@ import os
 import re
 import datetime
 from il_supermarket_scarper import FileTypesFilters
+from il_supermarket_scarper.utils import DumpFolderNames
 from . import Logger
 
 from dataclasses import dataclass
@@ -67,6 +68,7 @@ class DataLoader:
     def load(self):
         """load details about the files in the folder"""
         files_in_dir = os.listdir(self.folder)
+        stores_folders = [DumpFolderNames[enum].value for enum in self.store_names]
 
         files = []
         for store_name in files_in_dir:
@@ -79,7 +81,7 @@ class DataLoader:
                 ignore_reason = " contains '.'"
             if os.path.isfile(store_folder):
                 ignore_reason = "is file and not folder"
-            if self.store_names and store_name not in self.store_names:
+            if self.store_names and store_name not in stores_folders:
                 ignore_reason = "not in requested chains to scan"
 
             if ignore_reason:

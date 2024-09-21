@@ -24,9 +24,11 @@ class RawProcessing(ProcessJob):
 class ParallelParser(MultiProcessor):
     """run insert task on parallel"""
 
-    def __init__(self, data_folder, multiprocessing=6):
+    def __init__(self, data_folder, enabled_parsers=None,enabled_file_types=None, multiprocessing=6):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
+        self.enabled_parsers = enabled_parsers
+        self.enabled_file_types = enabled_file_types
 
     def task_to_execute(self):
         """the task to execute"""
@@ -35,8 +37,8 @@ class ParallelParser(MultiProcessor):
     def get_arguments_list(self):
         """create list of arguments"""
 
-        all_parsers = ParserFactory.all_parsers_name()
-        all_file_types = FileTypesFilters.all_types()
+        all_parsers = self.enabled_parsers if self.enabled_parsers else ParserFactory.all_parsers_name()
+        all_file_types = self.enabled_file_types if self.enabled_file_types else FileTypesFilters.all_types()
         params_order = ["store_enum", "file_type", "data_folder"]
         combinations = list(
             itertools.product(
