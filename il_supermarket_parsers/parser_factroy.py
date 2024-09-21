@@ -1,10 +1,39 @@
 import random
-import os
-from enum import Enum
 import il_supermarket_parsers.parsers as all_parsers
 
+from enum import Enum
 
-class ParserFactory(Enum):
+class DuplicateValueEnum:
+    _members = {}
+    
+    def __init_subclass__(cls, **kwargs):
+        cls._members = {}
+        for key, value in cls.__dict__.items():
+            if not key.startswith('_'):
+                if key in cls._members:
+                    raise ValueError(f"Duplicate key found: {key}")
+                cls._members[key] = value
+
+    @classmethod
+    def keys(cls):
+        """Return all unique keys (names)"""
+        return list(cls._members.keys())
+
+    @classmethod
+    def values(cls):
+        """Return all values (including duplicates)"""
+        return list(cls._members.values())
+
+    @classmethod
+    def get(cls, key):
+        """Get the value by key"""
+        return cls._members.get(key)
+
+    def __getitem__(cls, key):
+        return cls.get(key)
+
+
+class ParserFactory(DuplicateValueEnum):
     """all parsers avaliabe"""
 
     BAREKET = all_parsers.BareketFileConverter
@@ -46,10 +75,10 @@ class ParserFactory(Enum):
         """get all the scarpers and filter disabled scrapers"""
         return list(cls)
 
-    @classmethod
-    def all_active(cls):
-        """get all the scarpers and filter disabled scrapers"""
-        return (member for member in cls)
+    # @classmethod
+    # def all_active(cls):
+    #     """get all the scarpers and filter disabled scrapers"""
+    #     return (member for member in cls)
 
     @classmethod
     def sample(cls, n=1):
@@ -59,21 +88,19 @@ class ParserFactory(Enum):
     @classmethod
     def all_parsers(cls):
         """list all parsers possible to use"""
-        return [e.value for e in ParserFactory.all_active()]
+        return list(ParserFactory._members.values())
 
     @classmethod
     def all_parsers_name(cls):
         """get the class name of all listed parsers"""
-        return [e.name for e in ParserFactory.all_active()]
+        return list(ParserFactory._members.keys())
 
     @classmethod
     def get(cls, class_name):
         """get a parsers by class name"""
-        enum = None
-        if isinstance(class_name, ParserFactory):
-            enum = class_name
-        elif class_name in cls.all_parsers_name():
-            enum = getattr(ParserFactory, class_name)
+        value = None
+        if isinstance(class_name, str) and class_name in ParserFactory._members:
+            value = ParserFactory._members[class_name]
         else:
             raise ValueError(f"class_names {class_name} not found")
-        return enum.value
+        return value

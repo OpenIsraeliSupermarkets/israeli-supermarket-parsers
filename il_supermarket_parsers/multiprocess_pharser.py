@@ -16,10 +16,9 @@ class RawProcessing(ProcessJob):
         # take args
         drop_folder = kwargs.pop("data_folder")
         file_type = kwargs.pop("file_type")
-        parser_name = kwargs.pop("type")
-        parser_enum = ParserFactory.get(parser_name)
+        parser_name = kwargs.pop("store_enum")
 
-        return RawParseingPipeline(drop_folder, parser_enum, file_type).process()
+        return RawParseingPipeline(drop_folder, parser_name, file_type).process()
 
 
 class ParallelParser(MultiProcessor):
@@ -37,11 +36,11 @@ class ParallelParser(MultiProcessor):
         """create list of arguments"""
 
         all_parsers = ParserFactory.all_parsers_name()
-        all_file_types = FileTypesFilters.all_full_files()
-        params_order = ["type", "file_type", "data_folder"]
+        all_file_types = FileTypesFilters.all_types()
+        params_order = ["store_enum", "file_type", "data_folder"]
         combinations = list(
             itertools.product(
-                all_parsers, all_file_types, all_file_types, self.data_folder
+                all_parsers, all_file_types, [self.data_folder]
             )
         )
         task_can_executed_indepentlly = [

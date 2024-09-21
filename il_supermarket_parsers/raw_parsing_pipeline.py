@@ -1,4 +1,5 @@
 import os
+from .parser_factroy import ParserFactory
 from .utils import DataLoader
 import pandas as pd
 
@@ -8,31 +9,34 @@ class RawParseingPipeline:
     processing files to dataframe
     """
 
-    def __init__(self, folder, store_enum, file_type) -> None:
-        self.store_enum = store_enum
+    def __init__(self, folder, store_name, file_type) -> None:
+        self.store_name = store_name
         self.file_type = file_type
         self.folder = folder
 
     def process(self):
-        parser = self.store_enum.value()
+        parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
         for file in DataLoader(
             self.folder,
-            store_names=[self.store_enum.name],
+            store_names=[self.store_name],
             files_types=[self.file_type],
         ).load():
-            file.data = parser.read(file)
+            file.data = parser_class.read(file)
             data_frames.append(file.data)
 
         create_csv = os.path.join(
-            self.folder, self.file_type + "_" + self.store_enum.name.lower() + ".csv"
+            self.folder, self.file_type + "_" + self.store_name.lower() + ".csv"
         )
-        pd.concat(data_frames).to_csv(
+
+        if data_frames:
+            pd.concat(data_frames).to_csv(
             create_csv,
             index=False,
-        )
-        return create_csv
+            )
+            return create_csv
+        
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""
