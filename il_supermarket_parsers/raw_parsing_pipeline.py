@@ -2,7 +2,7 @@ import os
 from .parser_factroy import ParserFactory
 from .utils import DataLoader
 import pandas as pd
-
+from tqdm import tqdm
 
 class RawParseingPipeline:
     """
@@ -19,11 +19,13 @@ class RawParseingPipeline:
         parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
-        for file in DataLoader(
+        files_to_process = DataLoader(
             self.folder,
             store_names=[self.store_name],
             files_types=[self.file_type],
-        ).load():
+        ).load()
+
+        for file in tqdm(files_to_process,total=len(files_to_process),desc=f"Processing {self.file_type}@{self.store_name}"):
             
             parser = parser_class()
             file.data = parser.read(file)
