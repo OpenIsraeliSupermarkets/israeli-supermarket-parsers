@@ -14,3 +14,4 @@ logging.log
 status/
 build/
 il_supermarket_parsers.egg-info/
+israeli_supermarket_parsers.egg-info
