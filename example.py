@@ -14,6 +14,7 @@ if __name__ == "__main__":
     ).start()
     scraper = ConvertingTask(
         enabled_parsers=[ScraperFactory.BAREKET.name],
+        files_types=None,
         data_folder="dumps",
         multiprocessing=multiprocessing,
         output_folder="outputs"
