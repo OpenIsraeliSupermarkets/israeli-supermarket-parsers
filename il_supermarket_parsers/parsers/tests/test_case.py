@@ -1,7 +1,7 @@
 import unittest
 import os
 import pandas as pd
-from il_supermarket_scarper.utils import FileTypesFilters,DumpFolderNames
+from il_supermarket_scarper.utils import FileTypesFilters, DumpFolderNames
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
 
 

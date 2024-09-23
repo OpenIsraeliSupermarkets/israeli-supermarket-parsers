@@ -20,10 +20,9 @@ class XmlBaseConverter(ABC):
         self.ignore_column = ignore_column
         self.additional_constant = additional_constant
 
-
     @abstractmethod
     def validate_succussful_extraction(self, data, source_file):
-       """validate column requested"""
+        """validate column requested"""
 
     def build_value(self, name, no_content):
         return build_value(name, self.additional_constant, no_content=no_content)
@@ -33,9 +32,7 @@ class XmlBaseConverter(ABC):
     ):
         """parse file to data frame"""
         source_file = os.path.join(found_store, file_name)
-        root, root_store = get_root(
-            source_file, self.list_key, self.roots
-        )
+        root, root_store = get_root(source_file, self.list_key, self.roots)
 
         data = self._phrse(
             root,
@@ -47,8 +44,8 @@ class XmlBaseConverter(ABC):
             **kwarg,
         )
 
-        self.validate_succussful_extraction(data,source_file)
-        return data#self._normlize_columns(data, **kwarg)
+        self.validate_succussful_extraction(data, source_file)
+        return data  # self._normlize_columns(data, **kwarg)
 
     @abstractmethod
     def _phrse(

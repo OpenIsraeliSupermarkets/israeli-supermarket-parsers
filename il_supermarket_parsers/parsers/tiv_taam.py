@@ -15,6 +15,6 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
             stores_parser=XmlDataFrameConverter(
                 list_key="SubChains",
                 id_field="StoreId",
-                roots=["ChainId","ChainName","LastUpdateDate","LastUpdateTime"],
+                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
             ),
         )

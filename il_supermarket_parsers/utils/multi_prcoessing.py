@@ -19,7 +19,7 @@ class MultiProcessor:
 
     def start_processes(self, static_job, *arg, **kwargs):
         """start the number of processers"""
-        
+
         if self.multiprocessing:
             for index in range(self.multiprocessing):
                 processor = Process(
@@ -74,7 +74,7 @@ class MultiProcessor:
         """execute task"""
         tasks_to_accomplish, size = self.get_tasks_queue()
         results = []
-        
+
         if self.multiprocessing:
             tasks_accomplished = Queue(maxsize=size)
 
@@ -88,7 +88,6 @@ class MultiProcessor:
             tasks_to_accomplish.close()
             tasks_to_accomplish.join_thread()
 
-            
             while not tasks_accomplished.empty() or len(results) < size:
                 output = tasks_accomplished.get(True)
                 results.append(output)
@@ -131,7 +130,10 @@ class ProcessJob:
                     Logger.info(
                         f"{current_process().name}: Placing results for {task_kwargs}."
                     )
-                    tasks_accomplished.put({**task_kwargs,"status":False,"response":file_processed},timeout=5)
+                    tasks_accomplished.put(
+                        {**task_kwargs, "status": False, "response": file_processed},
+                        timeout=5,
+                    )
                     Logger.info(
                         f"{current_process().name}: End processing {task_kwargs}."
                     )
@@ -139,4 +141,4 @@ class ProcessJob:
                     Logger.info(
                         f"{current_process().name}:  failed with {error}, exiting."
                     )
-                    tasks_accomplished.put({**task_kwargs,"status":False}, timeout=5)
+                    tasks_accomplished.put({**task_kwargs, "status": False}, timeout=5)
