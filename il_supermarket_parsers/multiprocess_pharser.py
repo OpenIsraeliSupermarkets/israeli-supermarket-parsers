@@ -26,7 +26,7 @@ class RawProcessing(ProcessJob):
 class ParallelParser(MultiProcessor):
     """run insert task on parallel"""
 
-    def __init__(self, data_folder, enabled_parsers=None,enabled_file_types=None, multiprocessing=6,output_folder="output"):
+    def __init__(self, data_folder, enabled_parsers=None,enabled_file_types=None,multiprocessing=6,output_folder="output"):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
         self.enabled_parsers = enabled_parsers
