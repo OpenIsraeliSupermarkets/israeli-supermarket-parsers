@@ -27,7 +27,7 @@ setup(
         "il_supermarket_parsers.utils",
     ],
     # Needed for dependencies
-    install_requires=required,
+    install_requires=required + ["git+https://github.com/erlichsefi/israeli-supermarket-scarpers.git@dev"],
     tests_require=dev_required,
     extras_require={"test": ["pytest"]},
     # *strongly* suggested for sharing
