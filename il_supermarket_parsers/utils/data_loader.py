@@ -63,7 +63,10 @@ class DataLoader:
         lower_file_name = file_name.lower()
         match = re.search(r"\d", lower_file_name)
         index = match.start()
-        return FileTypesFilters.get_type_from_file(lower_file_name[:index]), lower_file_name[index:]
+        return (
+            FileTypesFilters.get_type_from_file(lower_file_name[:index]),
+            lower_file_name[index:],
+        )
 
     def load(self):
         """load details about the files in the folder"""

@@ -28,8 +28,7 @@ class BaseFileConverter(ABC):
                 list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                ignore_column=['XmlDocVersion', 'DllVerNo']
-
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
         self.promofull_parser: XmlBaseConverter = (
@@ -40,8 +39,7 @@ class BaseFileConverter(ABC):
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
-                ignore_column=['XmlDocVersion', 'DllVerNo']
-
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
         self.stores_parser: XmlBaseConverter = (
@@ -53,8 +51,7 @@ class BaseFileConverter(ABC):
                 id_field="StoreId",
                 list_sub_key="Stores",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                ignore_column=['XmlDocVersion', 'DllVerNo']
-
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
         self.price_parser: XmlBaseConverter = (
@@ -64,7 +61,7 @@ class BaseFileConverter(ABC):
                 list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                ignore_column=['XmlDocVersion', 'DllVerNo']
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
         self.promo_parsers: XmlBaseConverter = (
@@ -75,8 +72,7 @@ class BaseFileConverter(ABC):
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
-                ignore_column=['XmlDocVersion', 'DllVerNo']
-
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
 
@@ -110,5 +106,5 @@ class BaseFileConverter(ABC):
         return parser.convert(
             dump_file.store_folder,
             dump_file.file_name,
-            #**self.load_column_config(settings)
+            # **self.load_column_config(settings)
         )

@@ -3,13 +3,14 @@ import il_supermarket_parsers.parsers as all_parsers
 
 from enum import Enum
 
+
 class DuplicateValueEnum:
     _members = {}
-    
+
     def __init_subclass__(cls, **kwargs):
         cls._members = {}
         for key, value in cls.__dict__.items():
-            if not key.startswith('_'):
+            if not key.startswith("_"):
                 if key in cls._members:
                     raise ValueError(f"Duplicate key found: {key}")
                 cls._members[key] = value

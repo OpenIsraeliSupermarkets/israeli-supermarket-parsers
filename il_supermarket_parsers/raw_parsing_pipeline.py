@@ -4,6 +4,7 @@ from .utils import DataLoader
 import pandas as pd
 from tqdm import tqdm
 
+
 class RawParseingPipeline:
     """
     processing files to dataframe
@@ -25,14 +26,19 @@ class RawParseingPipeline:
             files_types=[self.file_type],
         ).load()
 
-        for file in tqdm(files_to_process,total=len(files_to_process),desc=f"Processing {self.file_type}@{self.store_name}"):
-            
+        for file in tqdm(
+            files_to_process,
+            total=len(files_to_process),
+            desc=f"Processing {self.file_type}@{self.store_name}",
+        ):
+
             parser = parser_class()
             file.data = parser.read(file)
             data_frames.append(file.data)
 
         create_csv = os.path.join(
-            self.output_folder, self.file_type.lower() + "_" + self.store_name.lower() + ".csv"
+            self.output_folder,
+            self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
         )
 
         if data_frames:
@@ -41,7 +47,6 @@ class RawParseingPipeline:
                 index=False,
             )
             return create_csv
-        
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""

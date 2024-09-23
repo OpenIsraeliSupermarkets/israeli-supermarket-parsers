@@ -1,6 +1,10 @@
 import pandas as pd
 from .base import XmlBaseConverter
-from il_supermarket_parsers.utils import count_tag_in_xml,collect_unique_keys_from_xml,collect_unique_columns_from_nested_json
+from il_supermarket_parsers.utils import (
+    count_tag_in_xml,
+    collect_unique_keys_from_xml,
+    collect_unique_columns_from_nested_json,
+)
 
 
 class XmlDataFrameConverter(XmlBaseConverter):
@@ -38,30 +42,33 @@ class XmlDataFrameConverter(XmlBaseConverter):
         data = data.drop(columns=columns_to_remove, errors="ignore")
         return data.rename(columns=columns_to_rename)
 
-
-    def validate_succussful_extraction(self,data, source_file):
+    def validate_succussful_extraction(self, data, source_file):
         # if there is an empty file
         # we expected it to reuturn none
-        tag_count = count_tag_in_xml(source_file,self.id_field)
+        tag_count = count_tag_in_xml(source_file, self.id_field)
 
         if tag_count > 0:
             for root in self.roots:
                 if root not in data.columns:
-                    raise ValueError(f"parse error, columns {root} missing from {data.columns}")
-                
-            if self.id_field not in data.columns:
-                raise ValueError(f"parse error, id {self.id_field} missing from {data.columns}")
+                    raise ValueError(
+                        f"parse error, columns {root} missing from {data.columns}"
+                    )
 
-            if data.shape[0] != max(tag_count,1):
+            if self.id_field not in data.columns:
+                raise ValueError(
+                    f"parse error, id {self.id_field} missing from {data.columns}"
+                )
+
+            if data.shape[0] != max(tag_count, 1):
                 raise ValueError(f"missing data")
 
-            keys_not_used = set(collect_unique_keys_from_xml(source_file)) - collect_unique_columns_from_nested_json(data) - set(self.ignore_column)
+            keys_not_used = (
+                set(collect_unique_keys_from_xml(source_file))
+                - collect_unique_columns_from_nested_json(data)
+                - set(self.ignore_column)
+            )
             if len(keys_not_used) > 0:
                 raise ValueError(f"there is data we didn't get {keys_not_used}")
-
-
-
-
 
     def _phrse(
         self,
@@ -82,7 +89,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
             raise ValueError(f"{self.list_key} is wrong")
 
         elements = list(root)
-        if len(root) == 0 :
+        if len(root) == 0:
             columns = [self.id_field] + self.roots
             return pd.DataFrame(columns=columns)
 

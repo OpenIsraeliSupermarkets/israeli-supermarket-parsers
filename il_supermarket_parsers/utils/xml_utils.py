@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 
-def count_tag_in_xml(xml_file_path,tag_to_count):
+def count_tag_in_xml(xml_file_path, tag_to_count):
     # Parse the XML file
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
@@ -19,7 +19,8 @@ def count_tag_in_xml(xml_file_path,tag_to_count):
 
     # Start counting from the root
     return count_tag_recursive(root)
-    
+
+
 def collect_unique_keys_from_xml(xml_file_path):
     # Parse the XML file
     # Parse the XML file
@@ -41,8 +42,9 @@ def collect_unique_keys_from_xml(xml_file_path):
 
     # Start collecting keys from the root
     collect_keys_recursive(root)
-    
+
     return keys_with_values
+
 
 def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
@@ -79,7 +81,6 @@ def get_root(file, key_to_find, attributes_to_collect):
 def _get_root(root, key_to_find, attributes_to_collect, collected):
     if root.tag == key_to_find:
         return root
-
 
     for sub in list(root):
         # collect attributes

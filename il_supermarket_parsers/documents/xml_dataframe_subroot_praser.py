@@ -25,12 +25,13 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.sub_roots = sub_roots
         self.list_sub_key = list_sub_key
 
-
-    def validate_succussful_extraction(self,data,source_file):
-        super().validate_succussful_extraction(data,source_file)
+    def validate_succussful_extraction(self, data, source_file):
+        super().validate_succussful_extraction(data, source_file)
         for root in self.sub_roots:
             if root not in data.columns:
-                raise ValueError(f"parse error, columns {root} missing from {data.columns}")
+                raise ValueError(
+                    f"parse error, columns {root} missing from {data.columns}"
+                )
 
     def _phrse(
         self,
@@ -49,10 +50,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         if root is None:
             raise ValueError(f"{self.list_key} is wrong")
 
-        if len(root) == 0 :
+        if len(root) == 0:
             columns = self.sub_roots + [self.id_field] + self.roots
             return pd.DataFrame(columns=columns)
-        
+
         for sub_elem in list(root):
             sub_root_store = root_store.copy()
 

@@ -4,7 +4,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 class HetChoenFileConverter(BigIdBranchesFileConverter):
 
- def __init__(self):
+    def __init__(self):
         super().__init__(
             stores_parser=XmlDataFrameConverter(
                 list_key="Branches",
