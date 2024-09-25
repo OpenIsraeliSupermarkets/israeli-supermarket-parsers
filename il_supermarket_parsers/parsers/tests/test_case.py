@@ -63,7 +63,7 @@ def make_test_case(scraper_enum, parser_enum):
 
             dfs = []
             for file in files:
-                df = parser.read(file)
+                df = parser.read(file,run_validation=True)
 
                 # none empty file
                 if os.path.getsize(file.get_full_path()) > 256:
