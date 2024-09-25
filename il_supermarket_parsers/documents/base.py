@@ -24,6 +24,10 @@ class XmlBaseConverter(ABC):
     def validate_succussful_extraction(self, data, source_file):
         """validate column requested"""
 
+    @abstractmethod
+    def reduce_size(self,data):
+        """reduce the size """
+
     def build_value(self, name, no_content):
         return build_value(name, self.additional_constant, no_content=no_content)
 
@@ -43,9 +47,7 @@ class XmlBaseConverter(ABC):
             row_limit=row_limit,
             **kwarg,
         )
-
-        self.validate_succussful_extraction(data, source_file)
-        return data  # self._normlize_columns(data, **kwarg)
+        return self.reduce_size(data)  # self._normlize_columns(data, **kwarg)
 
     @abstractmethod
     def _phrse(

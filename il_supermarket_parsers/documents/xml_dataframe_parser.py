@@ -10,6 +10,12 @@ from il_supermarket_parsers.utils import (
 class XmlDataFrameConverter(XmlBaseConverter):
     """parser the xml docuement"""
 
+
+    def reduce_size(self,data):
+        for col in data.columns:
+            data[col] = data[col].mask(data[col] == data[col].shift())
+        return data
+
     def _normlize_columns(
         self,
         data,
