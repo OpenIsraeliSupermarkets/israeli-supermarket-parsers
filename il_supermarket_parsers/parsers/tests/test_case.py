@@ -84,18 +84,18 @@ def make_test_case(scraper_enum, parser_enum):
                     assert df.shape[0] == 0
 
             if dfs:
-                joined = pd.concat(dfs)
+                pd.concat(dfs)
 
-                folders = []
-                for source in joined["found_folder"].dropna().unique():
-                    folders.append(os.path.split(source)[1])
+                # folders = []
+                # for source in joined["found_folder"].dropna().unique():
+                #     folders.append(os.path.split(source)[1])
 
-                joined.to_csv(
-                    os.path.join(
-                        self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
-                    ),
-                    index=False,
-                )
+                # joined.to_csv(
+                #     os.path.join(
+                #         self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
+                #     ),
+                #     index=False,
+                # )
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
