@@ -1,10 +1,10 @@
 import pandas as pd
-from .base import XmlBaseConverter
 from il_supermarket_parsers.utils import (
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     collect_unique_columns_from_nested_json,
 )
+from .base import XmlBaseConverter
 
 
 class XmlDataFrameConverter(XmlBaseConverter):
@@ -21,10 +21,10 @@ class XmlDataFrameConverter(XmlBaseConverter):
         missing_columns_default_values,
         columns_to_remove,
         columns_to_rename,
-        date_columns=[],
-        float_columns=[],
+        date_columns=None,
+        float_columns=None,
         empty_value="NOT_APPLY",
-        **kwarg,
+        **_,
     ):
         if date_columns and not data.empty:
             for column in date_columns:
@@ -65,7 +65,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 )
 
             if data.shape[0] != max(tag_count, 1):
-                raise ValueError(f"missing data")
+                raise ValueError("missing data")
 
             keys_not_used = (
                 set(collect_unique_keys_from_xml(source_file))

@@ -1,6 +1,7 @@
-from il_supermarket_parsers.utils import build_value, get_root
 from abc import ABC, abstractmethod
 import os
+from il_supermarket_parsers.utils import build_value, get_root
+
 
 
 class XmlBaseConverter(ABC):
@@ -11,13 +12,13 @@ class XmlBaseConverter(ABC):
         list_key,
         id_field,
         roots=None,
-        ignore_column=[],
+        ignore_column=None,
         **additional_constant,
     ):
         self.list_key = list_key
         self.roots = roots
         self.id_field = id_field
-        self.ignore_column = ignore_column
+        self.ignore_column = ignore_column if ignore_column else []
         self.additional_constant = additional_constant
 
     @abstractmethod
@@ -29,6 +30,7 @@ class XmlBaseConverter(ABC):
         """reduce the size"""
 
     def build_value(self, name, no_content):
+        """get the value """
         return build_value(name, self.additional_constant, no_content=no_content)
 
     def convert(
@@ -53,7 +55,7 @@ class XmlBaseConverter(ABC):
     def _phrse(
         self,
         root,
-        found_store,
+        found_folder,
         file_name,
         root_store,
         no_content,
@@ -63,5 +65,13 @@ class XmlBaseConverter(ABC):
         pass
 
     @abstractmethod
-    def _normlize_columns(self, data):
+    def _normlize_columns( self,
+        data,
+        missing_columns_default_values,
+        columns_to_remove,
+        columns_to_rename,
+        date_columns=None,
+        float_columns=None,
+        empty_value="NOT_APPLY",
+        **kwarg):
         pass

@@ -1,5 +1,6 @@
-from .xml_dataframe_parser import XmlDataFrameConverter
 import pandas as pd
+from .xml_dataframe_parser import XmlDataFrameConverter
+
 
 
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
@@ -10,9 +11,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         list_key,
         id_field,
         roots=None,
-        sub_roots=[],
+        sub_roots=None,
         list_sub_key="",
-        ignore_column=[],
+        ignore_column=None,
         **additional_constant,
     ):
         super().__init__(
@@ -22,7 +23,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
             ignore_column=ignore_column,
             additional_constant=additional_constant,
         )
-        self.sub_roots = sub_roots
+        self.sub_roots = sub_roots if sub_roots else []
         self.list_sub_key = list_sub_key
 
     def validate_succussful_extraction(self, data, source_file):
