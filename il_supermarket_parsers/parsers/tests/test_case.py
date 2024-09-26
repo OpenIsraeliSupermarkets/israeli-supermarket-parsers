@@ -87,7 +87,7 @@ def make_test_case(scraper_enum, parser_enum):
                 joined = pd.concat(dfs)
 
                 folders = []
-                for source in joined["found_folder"].unique():
+                for source in joined["found_folder"].dropna().unique():
                     folders.append(os.path.split(source)[1])
 
                 joined.to_csv(
