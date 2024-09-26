@@ -50,7 +50,7 @@ def make_test_case(scraper_enum, parser_enum):
         def _parser_validate(self, file_type):
             
             with tempfile.TemporaryDirectory() as tmpdirname:
-                self.__parser_validate(file_type,tmpdirname)
+                self.__parser_validate(file_type, tmpdirname)
 
         def __parser_validate(self, file_type, dump_path="temp"):
             """test the subcase"""
