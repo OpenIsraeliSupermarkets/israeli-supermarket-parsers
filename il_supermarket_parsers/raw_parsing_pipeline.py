@@ -17,7 +17,7 @@ class RawParseingPipeline:
         self.output_folder = output_folder
 
     def process(self):
-        parser_class = ParserFactory.get(self.store_name)
+        _,parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
         files_to_process = DataLoader(
