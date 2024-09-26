@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import pandas as pd
-from il_supermarket_scarper.utils import FileTypesFilters, DumpFolderNames
+from il_supermarket_scarper.utils import FileTypesFilters
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
 from il_supermarket_parsers.parser_factroy import ParserFactory
 
