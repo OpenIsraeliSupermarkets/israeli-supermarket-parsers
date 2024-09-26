@@ -1,6 +1,6 @@
-from parser_factroy import ParserFactory
+from il_supermarket_parsers.parser_factroy import ParserFactory
 from il_supermarket_scarper.scrappers_factory import ScraperFactory
-from parsers.tests.test_case import make_test_case
+from il_supermarket_parsers.parsers.tests.test_case import make_test_case
 
 
 # @pytest.mark.run(order=1)
