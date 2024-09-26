@@ -4,6 +4,7 @@ import tempfile
 import pandas as pd
 from il_supermarket_scarper.utils import FileTypesFilters, DumpFolderNames
 from il_supermarket_parsers.utils import get_sample_data, DataLoader
+from il_supermarket_parsers.parser_factroy import ParserFactory
 
 
 def make_test_case(scraper_enum, parser_enum):
@@ -15,7 +16,7 @@ def make_test_case(scraper_enum, parser_enum):
         def __init__(self, name) -> None:
             super().__init__(name)
             self.scraper_enum = scraper_enum
-            self.parser_enum = parser_enum
+            self.parser_name, self.parser_class = ParserFactory.get(parser_enum)
             self.folder_name = "temp"
             self.refresh = False
 
@@ -46,23 +47,21 @@ def make_test_case(scraper_enum, parser_enum):
                 enabled_scrapers=[self.scraper_enum.name],
             )
 
-        def _parser_validate(self, parser_enum, file_type):
+        def _parser_validate(self, file_type):
             
             with tempfile.TemporaryDirectory() as tmpdirname:
-                self.__parser_validate(parser_enum, file_type,tmpdirname)
+                self.__parser_validate(file_type,tmpdirname)
 
-        def __parser_validate(self, parser_enum, file_type, dump_path="temp"):
+        def __parser_validate(self, file_type, dump_path="temp"):
             """test the subcase"""
             sub_folder = self._get_temp_folder(dump_path)
             self._refresh_download_folder(sub_folder, file_type)
 
-            parser = parser_enum.value()
+            parser = self.parser_class()
 
-            # TBD: add option to take the folder from enum
-            # TBD: FileType, add function get enum by filter
             files = DataLoader(
                 folder=sub_folder,
-                store_names=[DumpFolderNames[self.scraper_enum.name].value],
+                store_names=[self.parser_name],
                 files_types=[file_type],
             ).load()
             assert len(files) > 0, "no files downloaded"
@@ -101,31 +100,31 @@ def make_test_case(scraper_enum, parser_enum):
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
             self._parser_validate(
-                parser_enum, FileTypesFilters.STORE_FILE.name
+                 FileTypesFilters.STORE_FILE.name
             )
 
         def test_parsing_promo(self):
             """scrape one file and make sure it exists"""
             self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FILE.name
+                FileTypesFilters.PROMO_FILE.name
             )
 
         def test_parsing_promo_all(self):
             """scrape one file and make sure it exists"""
             self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FULL_FILE.name
+                FileTypesFilters.PROMO_FULL_FILE.name
             )
 
         def test_parsing_prices(self):
             """scrape one file and make sure it exists"""
             self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FILE.name
+                FileTypesFilters.PRICE_FILE.name
             )
 
         def test_parsing_prices_all(self):
             """scrape one file and make sure it exists"""
             self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FULL_FILE.name
+                FileTypesFilters.PRICE_FULL_FILE.name
             )
 
     return TestParser
