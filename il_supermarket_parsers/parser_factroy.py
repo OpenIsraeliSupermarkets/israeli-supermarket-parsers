@@ -2,6 +2,8 @@ import random
 import il_supermarket_parsers.parsers as all_parsers
 
 from enum import Enum
+
+
 class DuplicateValueEnum:
     _members = {}
 
@@ -102,8 +104,10 @@ class ParserFactory(DuplicateValueEnum):
             value = ParserFactory._members[class_name]
             name = class_name
         elif class_name in ParserFactory._members.values():
-            value = class_name 
-            name = list(filter(lambda x: x[1] == class_name,ParserFactory._members.items()))[0][0]
+            value = class_name
+            name = list(
+                filter(lambda x: x[1] == class_name, ParserFactory._members.items())
+            )[0][0]
         else:
             raise ValueError(f"class_names {class_name} not found")
         return name, value
