@@ -48,7 +48,7 @@ def make_test_case(scraper_enum, parser_enum):
             )
 
         def _parser_validate(self, file_type):
-            
+
             with tempfile.TemporaryDirectory() as tmpdirname:
                 self.__parser_validate(file_type, tmpdirname)
 
@@ -68,7 +68,7 @@ def make_test_case(scraper_enum, parser_enum):
 
             dfs = []
             for file in files:
-                df = parser.read(file,run_validation=True)
+                df = parser.read(file, run_validation=True)
 
                 # none empty file
                 if os.path.getsize(file.get_full_path()) > 256:
@@ -99,32 +99,22 @@ def make_test_case(scraper_enum, parser_enum):
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                 FileTypesFilters.STORE_FILE.name
-            )
+            self._parser_validate(FileTypesFilters.STORE_FILE.name)
 
         def test_parsing_promo(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                FileTypesFilters.PROMO_FILE.name
-            )
+            self._parser_validate(FileTypesFilters.PROMO_FILE.name)
 
         def test_parsing_promo_all(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                FileTypesFilters.PROMO_FULL_FILE.name
-            )
+            self._parser_validate(FileTypesFilters.PROMO_FULL_FILE.name)
 
         def test_parsing_prices(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                FileTypesFilters.PRICE_FILE.name
-            )
+            self._parser_validate(FileTypesFilters.PRICE_FILE.name)
 
         def test_parsing_prices_all(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                FileTypesFilters.PRICE_FULL_FILE.name
-            )
+            self._parser_validate(FileTypesFilters.PRICE_FULL_FILE.name)
 
     return TestParser

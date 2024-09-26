@@ -80,7 +80,7 @@ class BaseFileConverter(ABC):
     #     with open("il_supermarket_parsers/conf/processing.json") as file:
     #         return json.load(file)[json_key]
 
-    def read(self, dump_file: DumpFile,run_validation=False):
+    def read(self, dump_file: DumpFile, run_validation=False):
 
         if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
             parser = self.price_parser

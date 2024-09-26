@@ -9,13 +9,12 @@ class SalachDabachFileConverter(BaseFileConverter):
                 list_key="Items",
                 id_field="ItemId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                ignore_column=['DllVerNo', 'XmlDocVersion']
+                ignore_column=["DllVerNo", "XmlDocVersion"],
             ),
             pricefull_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field="ItemId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                ignore_column=['DllVerNo', 'XmlDocVersion']
-
+                ignore_column=["DllVerNo", "XmlDocVersion"],
             ),
         )

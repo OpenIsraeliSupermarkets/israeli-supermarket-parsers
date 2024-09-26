@@ -25,8 +25,8 @@ class XmlBaseConverter(ABC):
         """validate column requested"""
 
     @abstractmethod
-    def reduce_size(self,data):
-        """reduce the size """
+    def reduce_size(self, data):
+        """reduce the size"""
 
     def build_value(self, name, no_content):
         return build_value(name, self.additional_constant, no_content=no_content)
