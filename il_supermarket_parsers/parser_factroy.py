@@ -102,8 +102,8 @@ class ParserFactory(DuplicateValueEnum):
             value = ParserFactory._members[class_name]
             name = class_name
         elif class_name in ParserFactory._members.values():
-            value = list(filter(lambda x: x[1] == class_name,ParserFactory._members.items()))[0][0]
-            name = class_name
+            value = class_name 
+            name = list(filter(lambda x: x[1] == class_name,ParserFactory._members.items()))[0][0]
         else:
             raise ValueError(f"class_names {class_name} not found")
         return name, value
