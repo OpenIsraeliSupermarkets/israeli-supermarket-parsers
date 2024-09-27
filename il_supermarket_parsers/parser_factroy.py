@@ -6,7 +6,7 @@ class DuplicateValueEnum:
     _members = {}
 
     def __init_subclass__(cls):
-        """init memebers """
+        """init memebers"""
         cls._members = {}
         for key, value in cls.__dict__.items():
             if not key.startswith("_"):
