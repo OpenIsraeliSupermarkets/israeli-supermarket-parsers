@@ -75,8 +75,6 @@ def make_test_case(scraper_enum, parser_enum):
 
                     # should contain data
                     assert df.shape[0] > 0, f"File {file} is empty"
-                    # assert df.isna().all().all(), f"File {file} contains NaN"
-                    # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
 
                     dfs.append(df)
 

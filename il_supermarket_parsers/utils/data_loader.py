@@ -8,12 +8,12 @@ from . import Logger
 
 
 @dataclass
-class DumpFile:
+class DumpFile:  # pylint: disable=too-many-instance-attributes
     """information about file found from the scraper"""
 
     store_folder: str
     file_name: str
-    predix_file_name: str
+    prefix_file_name: str
     extracted_store_number: str
     extracted_chain_id: str
     extracted_date: datetime.datetime
@@ -39,20 +39,20 @@ class DataLoader:
     def _file_name_to_components(self, store_folder, file_name, empty_store_id="0000"):
         """extract file name components"""
         try:
-            predix_file_name, store_number, date, *_ = file_name.split(".")[0].split(
+            prefix_file_name, store_number, date, *_ = file_name.split(".")[0].split(
                 "-"
             )
         except ValueError:
             # global files
-            predix_file_name, date, *_ = file_name.split(".")[0].split("-")
+            prefix_file_name, date, *_ = file_name.split(".")[0].split("-")
             store_number = empty_store_id
 
-        file_type, chain_id = self._find_file_type_and_chain_id(predix_file_name)
+        file_type, chain_id = self._find_file_type_and_chain_id(prefix_file_name)
 
         return DumpFile(
             file_name=file_name,
             store_folder=store_folder,
-            predix_file_name=predix_file_name,
+            prefix_file_name=prefix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
             extracted_date=datetime.datetime.strptime(date, "%Y%m%d%H%M"),
