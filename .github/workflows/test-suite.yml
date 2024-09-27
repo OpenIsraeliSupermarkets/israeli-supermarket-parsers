@@ -39,4 +39,5 @@ jobs:
       run: |
            mkdir -p temp &&
            docker rm parsers-test-runner || true &&
-           docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test 
+           docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test &&
+           docker builder prune -f
