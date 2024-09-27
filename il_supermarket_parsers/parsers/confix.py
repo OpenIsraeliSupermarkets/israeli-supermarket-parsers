@@ -7,6 +7,7 @@ from il_supermarket_parsers.documents import (
 
 class CofixFileConverter(BaseFileConverter):
     "Confix converter"
+
     def __init__(self) -> None:
         super().__init__(
             price_parser=XmlDataFrameConverter(
