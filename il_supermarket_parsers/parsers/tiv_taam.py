@@ -1,5 +1,5 @@
 from il_supermarket_parsers.engines import BigIdBranchesFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter
+from il_supermarket_parsers.documents import XmlDataFrameConverter, SubRootedXmlDataFrameConverter
 
 
 class TivTaamFileConverter(BigIdBranchesFileConverter):
@@ -7,15 +7,31 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
 
     def __init__(self):
         super().__init__(
-            promofull_parser=XmlDataFrameConverter(
-                list_key="Sales",
-                id_field="PromotionID",
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                date_columns=["PriceUpdateDate"],
+            promo_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
-            stores_parser=XmlDataFrameConverter(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+            ),
+            stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
+                list_sub_key='Stores',
+                sub_roots=["SubChainId",'SubChainName'],
                 id_field="StoreId",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+            ),
+            price_parser=XmlDataFrameConverter(
+                list_key="Items",
+                id_field="ItemCode",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+            ),
+            pricefull_parser=XmlDataFrameConverter(
+                list_key="Items",
+                id_field="ItemCode",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
         )
