@@ -43,6 +43,19 @@ class XmlDataFrameConverter(XmlBaseConverter):
             if len(keys_not_used) > 0:
                 raise ValueError(f"there is data we didn't get {keys_not_used}")
 
+    def list_single_entry(self,elem,found_folder,file_name,**sub_root_store):
+        values = {
+                    "found_folder": found_folder,
+                    "file_name": file_name,
+                    **sub_root_store,
+                }
+        for name in list(elem):
+            tag = name.tag
+            value = self.build_value(name, no_content="")
+
+            values[tag] = value
+        return values.copy()
+    
     def _phrse(
         self,
         root,
@@ -65,17 +78,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
             return pd.DataFrame(columns=columns)
 
         for elem in elements:
-
-            values = {
-                "found_folder": found_folder,
-                "file_name": file_name,
-                **root_store,
-            }
-            for name in list(elem):
-                tag = name.tag
-                value = self.build_value(name, no_content="")
-
-                values[tag] = value
-            rows.append(values.copy())
+            rows.append(self.list_single_entry(elem,found_folder,file_name,**root_store))
 
         return pd.DataFrame(rows)
