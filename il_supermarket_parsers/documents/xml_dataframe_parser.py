@@ -15,38 +15,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
             data[col] = data[col].mask(data[col] == data[col].shift())
         return data
 
-    def _normlize_columns(
-        self,
-        data,
-        missing_columns_default_values,
-        columns_to_remove,
-        columns_to_rename,
-        date_columns=None,
-        float_columns=None,
-        empty_value="NOT_APPLY",
-        **_,
-    ):
-        if date_columns and not data.empty:
-            for column in date_columns:
-                data[column] = pd.to_datetime(data[column])
-
-        if float_columns and not data.empty:
-            for column in float_columns:
-                data[column] = pd.to_numeric(data[column])
-        data = data.fillna(empty_value)
-
-        #
-        for column, fill_value in missing_columns_default_values.items():
-            if column not in data.columns:
-
-                if isinstance(fill_value, str):
-                    data[column] = fill_value
-                else:
-                    data[column] = fill_value()
-
-        data = data.drop(columns=columns_to_remove, errors="ignore")
-        return data.rename(columns=columns_to_rename)
-
     def validate_succussful_extraction(self, data, source_file):
         # if there is an empty file
         # we expected it to reuturn none
@@ -81,8 +49,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
         found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
         **kwarg,
     ):
         rows = []
@@ -107,15 +73,9 @@ class XmlDataFrameConverter(XmlBaseConverter):
             }
             for name in list(elem):
                 tag = name.tag
-                value = self.build_value(name, no_content=no_content)
-
-                # if value == no_content:
-                #     print(f"for value {name} found no content!")
+                value = self.build_value(name, no_content="")
 
                 values[tag] = value
             rows.append(values.copy())
-
-            if row_limit and len(rows) >= row_limit:
-                break
 
         return pd.DataFrame(rows)

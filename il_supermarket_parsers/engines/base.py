@@ -1,13 +1,12 @@
+from abc import ABC
+import os
+from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_parsers.documents import (
     XmlBaseConverter,
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
 )
-from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_parsers.utils import DumpFile
-from abc import ABC
-import json
-import os
 
 
 class BaseFileConverter(ABC):
@@ -76,30 +75,21 @@ class BaseFileConverter(ABC):
             )
         )
 
-    # def load_column_config(self, json_key):
-    #     with open("il_supermarket_parsers/conf/processing.json") as file:
-    #         return json.load(file)[json_key]
-
     def read(self, dump_file: DumpFile, run_validation=False):
-
+        """covert the dump file to the target format according to the filetype"""
         if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
             parser = self.price_parser
-            settings = "price"
         elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
             parser = self.pricefull_parser
-            settings = "pricefull"
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
             parser = self.promo_parsers
-            settings = "promo"
 
         elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             parser = self.promofull_parser
-            settings = "promofull"
 
         elif dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
             parser = self.stores_parser
-            settings = "store"
         else:
             raise ValueError("Something want wrong")
 

@@ -2,7 +2,6 @@ import pandas as pd
 from .xml_dataframe_parser import XmlDataFrameConverter
 
 
-
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     """parser the xml docuement with extra indentations"""
 
@@ -40,8 +39,6 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
         **kwarg,
     ):
         """parse file to data frame"""
@@ -69,14 +66,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 }
                 for name in list(elem):
                     tag = name.tag
-                    value = self.build_value(name, no_content=no_content)
+                    value = self.build_value(name, no_content="")
 
-                    # if value == no_content:
-                    #     print(f"for value {name} found no content!")
                     values[tag] = value
                 rows.append(values.copy())
-
-                if row_limit and len(rows) >= row_limit:
-                    break
 
         return pd.DataFrame(rows)
