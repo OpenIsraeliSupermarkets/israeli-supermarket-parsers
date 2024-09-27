@@ -138,7 +138,7 @@ class ProcessJob:
                     Logger.info(
                         f"{current_process().name}: End processing {task_kwargs}."
                     )
-                except Exception as error:  # ptlint: disable=broad-exception-caught
+                except Exception as error:  # pylint: disable=broad-exception-caught
                     Logger.info(
                         f"{current_process().name}:  failed with {error}, exiting."
                     )
