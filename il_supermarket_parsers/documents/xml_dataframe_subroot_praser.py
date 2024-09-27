@@ -32,7 +32,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 raise ValueError(
                     f"parse error, columns {root} missing from {data.columns}"
                 )
-
+    
     def _phrse(
         self,
         root,
@@ -58,16 +58,6 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 sub_root_store[k] = sub_elem.find(k).text
 
             for elem in sub_elem.find(self.list_sub_key):
-                values = {
-                    "found_folder": found_folder,
-                    "file_name": file_name,
-                    **sub_root_store,
-                }
-                for name in list(elem):
-                    tag = name.tag
-                    value = self.build_value(name, no_content="")
-
-                    values[tag] = value
-                rows.append(values.copy())
+                rows.append(self.list_single_entry(elem,found_folder,file_name,**sub_root_store))
 
         return pd.DataFrame(rows)
