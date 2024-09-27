@@ -18,7 +18,7 @@ class RawParseingPipeline:
 
     def process(self):
         """start processing the files selected in the pipeline input"""
-        _, parser_class = ParserFactory.get(self.store_name)
+        parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
         files_to_process = DataLoader(

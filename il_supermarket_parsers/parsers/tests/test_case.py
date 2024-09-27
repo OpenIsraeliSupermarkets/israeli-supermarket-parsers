@@ -16,7 +16,9 @@ def make_test_case(scraper_enum, parser_enum):
         def __init__(self, name) -> None:
             super().__init__(name)
             self.scraper_enum = scraper_enum
-            self.parser_name, self.parser_class = ParserFactory.get(parser_enum)
+
+            self.parser_class = ParserFactory.get(parser_enum)
+            self.parser_name = parser_enum.name
             self.folder_name = "temp"
             self.refresh = False
 
