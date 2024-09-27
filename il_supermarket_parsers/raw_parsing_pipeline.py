@@ -100,8 +100,10 @@ class RawParseingPipeline:
     #                             # if there exits a document -> found a change
     #                             if existing_doc:
     #                                 print(
-    #                                     f"Found an update for {existing_doc[id_field_name]}: \n"
-    #                                     f"{self.database.diff_document(insert_doc,existing_doc)}\n"
+    #                                     f"Found an update for
+    #                                       {existing_doc[id_field_name]}: \n"
+    #                                     f"{self.database.diff_document
+    #                                       (insert_doc,existing_doc)}\n"
     #                                 )
 
     #                             # insert with new update

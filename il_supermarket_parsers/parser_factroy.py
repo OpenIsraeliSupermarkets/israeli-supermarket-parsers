@@ -52,7 +52,7 @@ class ParserFactory(DuplicateValueEnum):
         return random.sample(cls.all_parsers_name(), n)
 
     @classmethod
-    def all_parsers(cls):
+    def all_parsers_classes(cls):
         """list all parsers possible to use"""
         return list(ParserFactory._members.values())
 
