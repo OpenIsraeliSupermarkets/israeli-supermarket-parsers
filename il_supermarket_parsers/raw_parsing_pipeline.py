@@ -1,8 +1,8 @@
 import os
-from .parser_factroy import ParserFactory
-from .utils import DataLoader
 import pandas as pd
 from tqdm import tqdm
+from .parser_factroy import ParserFactory
+from .utils import DataLoader
 
 
 class RawParseingPipeline:
@@ -17,6 +17,7 @@ class RawParseingPipeline:
         self.output_folder = output_folder
 
     def process(self):
+        """start processing the files selected in the pipeline input"""
         _, parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
@@ -46,7 +47,10 @@ class RawParseingPipeline:
                 create_csv,
                 index=False,
             )
-            return create_csv
+            return {"status": True, "path": create_csv}
+        return {
+            "status": False,
+        }
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""

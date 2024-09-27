@@ -3,7 +3,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class TivTaamFileConverter(BigIdBranchesFileConverter):
-
+    """ טיב טעם"""
     def __init__(self):
         super().__init__(
             promofull_parser=XmlDataFrameConverter(

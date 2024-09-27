@@ -1,8 +1,8 @@
-import pandas as pd
 import json
 
 
 def collect_unique_columns_from_nested_json(df):
+    """collect all json keys (including nested)"""
     # Set to store all unique column names
     unique_columns = set()
 
@@ -28,7 +28,7 @@ def collect_unique_columns_from_nested_json(df):
                 except (ValueError, TypeError):
                     # Skip cells that are not valid JSON
                     continue
-            elif isinstance(cell, dict) or isinstance(cell, list):
+            elif isinstance(cell, (dict, list)):
                 # Directly collect keys if it's already a dict or list
                 collect_keys_recursive(cell)
 

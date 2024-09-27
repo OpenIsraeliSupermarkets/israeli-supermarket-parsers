@@ -30,9 +30,9 @@ def _comapre_values(old_value, new_value):
     """compare two values"""
     if old_value is None and new_value is not None:
         return Action.ADDED
-    elif old_value is not None and new_value is None:
+    if old_value is not None and new_value is None:
         return Action.REMOVED
-    elif old_value is not None and new_value is not None:
+    if old_value is not None and new_value is not None:
         if old_value != new_value:
             return Action.CHANGED
         return Action.SAME

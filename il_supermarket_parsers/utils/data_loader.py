@@ -1,15 +1,16 @@
 import os
 import re
 import datetime
+from dataclasses import dataclass
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
 from . import Logger
 
-from dataclasses import dataclass
-
 
 @dataclass
 class DumpFile:
+    """information about file found from the scraper"""
+
     store_folder: str
     file_name: str
     predix_file_name: str
@@ -20,10 +21,12 @@ class DumpFile:
     data: str = None
 
     def get_full_path(self):
+        """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
 
 
 class DataLoader:
+    """class for loading dump files from the folder"""
 
     def __init__(
         self, folder, store_names=None, files_types=None, empty_store_id=0000
@@ -33,9 +36,8 @@ class DataLoader:
         self.files_types = files_types
         self.empty_store_id = empty_store_id
 
-    def _file_name_to_components(
-        self, store_folder, file_name, empty_store_id="0000"
-    ) -> None:
+    def _file_name_to_components(self, store_folder, file_name, empty_store_id="0000"):
+        """extract file name components"""
         try:
             predix_file_name, store_number, date, *_ = file_name.split(".")[0].split(
                 "-"
@@ -117,21 +119,4 @@ class DataLoader:
                         store_folder, xml, empty_store_id=self.empty_store_id
                     )
                 )
-
-        # dumps_details = pd.DataFrame(
-        #     files,
-        #     columns=[
-        #         "file",
-        #         "full_path",
-        #         "chain_id",
-        #         "file_type",
-        #         "branch_store_id",
-        #         "update_date",
-        #         "store_name",
-        #     ],
-        # )
-        # dumps_details["branch_store_id"] = (
-        #     dumps_details["branch_store_id"].replace("", empty_store_id).astype(int)
-        # )
-        # dumps_details["update_date"] = pd.to_datetime(dumps_details.update_date)
         return sorted(files, key=lambda x: x.extracted_date)
