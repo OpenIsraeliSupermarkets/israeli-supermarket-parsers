@@ -3,7 +3,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class SuperPharmFileConverter(BigIDFileConverter):
-    """for super-pharam"""
+    """סופר פארם"""
 
     def __init__(self):
         super().__init__(

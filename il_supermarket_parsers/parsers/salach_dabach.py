@@ -3,6 +3,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class SalachDabachFileConverter(BaseFileConverter):
+    """סאלח דאבח"""
     def __init__(self) -> None:
         super().__init__(
             price_parser=XmlDataFrameConverter(

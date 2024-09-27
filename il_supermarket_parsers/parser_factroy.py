@@ -1,8 +1,11 @@
 import random
+
 import il_supermarket_parsers.parsers as all_parsers
 
 
 class DuplicateValueEnum:
+    """simulate enum with duplicate values"""
+
     _members = {}
 
     def __init_subclass__(cls):
@@ -29,8 +32,9 @@ class DuplicateValueEnum:
         """Get the value by key"""
         return cls._members.get(key)
 
-    def __getitem__(cls, key):
-        return cls.get(key)
+    def __getitem__(self, key):
+        """get the class"""
+        return self.get(key)
 
 
 class ParserFactory(DuplicateValueEnum):
@@ -91,17 +95,17 @@ class ParserFactory(DuplicateValueEnum):
         return list(ParserFactory._members.keys())
 
     @classmethod
-    def get(cls, class_name):
+    def get(cls, key):
         """get a parsers by class name"""
         value = None
-        if isinstance(class_name, str) and class_name in ParserFactory._members:
-            value = ParserFactory._members[class_name]
-            name = class_name
-        elif class_name in ParserFactory._members.values():
-            value = class_name
+        if isinstance(key, str) and key in ParserFactory._members:
+            value = ParserFactory._members[key]
+            name = key
+        elif key in ParserFactory._members.values():
+            value = key
             name = list(
-                filter(lambda x: x[1] == class_name, ParserFactory._members.items())
+                filter(lambda x: x[1] == key, ParserFactory._members.items())
             )[0][0]
         else:
-            raise ValueError(f"class_names {class_name} not found")
+            raise ValueError(f"class_names {key} not found")
         return name, value

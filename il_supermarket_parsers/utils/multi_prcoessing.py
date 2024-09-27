@@ -6,6 +6,7 @@ from .logger import Logger
 
 
 def task(static_job, *arg, **kwarg):
+    """execute the job"""
     return static_job().processes_job(*arg, **kwarg)
 
 
@@ -35,7 +36,7 @@ class MultiProcessor:
 
             Logger.info(f"Starting process {index}.")
 
-    def wait_to_finish(self, tasks_accomplished, size):
+    def wait_to_finish(self, tasks_accomplished):
         """wait until all finish"""
 
         if self.multiprocessing:

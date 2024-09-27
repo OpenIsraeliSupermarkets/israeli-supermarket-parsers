@@ -3,6 +3,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class VictoryFileConverter(BigIdBranchesFileConverter):
+    """ויקטורי """
     def __init__(self):
         super().__init__()
         self.promofull_parser = XmlDataFrameConverter(

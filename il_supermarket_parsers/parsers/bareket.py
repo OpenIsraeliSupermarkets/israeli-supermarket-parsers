@@ -6,7 +6,7 @@ from il_supermarket_parsers.documents import (
 
 
 class BareketFileConverter(BigIdBranchesFileConverter):
-
+    """Barket converter"""
     def __init__(self):
         super().__init__(
             stores_parser=SubRootedXmlDataFrameConverter(

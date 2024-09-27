@@ -4,8 +4,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 class MahsaniAShukPromoFileConverter(BigIDFileConverter):
     """ "
-    converter to all stores with ID instead of id and
-    'Branches' instead of "Stores"
+    Majsani A Shuk converter
     """
 
     def __init__(self):

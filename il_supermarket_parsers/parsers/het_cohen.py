@@ -3,7 +3,7 @@ from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 
 class HetChoenFileConverter(BigIdBranchesFileConverter):
-
+    """het cohen converter"""
     def __init__(self):
         super().__init__(
             stores_parser=XmlDataFrameConverter(

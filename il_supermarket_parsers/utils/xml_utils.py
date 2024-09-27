@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
+    """recursive count the number of tags from 'tag_to_count' in 'xml_file_path'"""
     # Parse the XML file
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
@@ -22,6 +23,8 @@ def count_tag_in_xml(xml_file_path, tag_to_count):
 
 
 def collect_unique_keys_from_xml(xml_file_path):
+    """find all the unique keys in the xml"""
+
     # Parse the XML file
     # Parse the XML file
     tree = ET.parse(xml_file_path)
@@ -54,16 +57,16 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     if not content:
         content = constant_mapping.get(name.tag, no_content)
     if "\n" in content:
-        normaled_keys = list()  # shufersal as 'ClubId' and 'Clubid", normoalize this
-        keys = list()
-        content = list()
+        normaled_keys = []  # shufersal as 'ClubId' and 'Clubid", normoalize this
+        keys = []
+        content = []
         for item in name.findall("*"):
             content.append(build_value(item, constant_mapping))
             keys.append(item.tag)
             normaled_keys.append(item.tag.lower())
 
         content = dict(zip(keys, content))
-        content = {k: v for k, v in sorted(content.items())}
+        content = dict(sorted(content.items()))
 
     return content
 
@@ -73,7 +76,7 @@ def get_root(file, key_to_find, attributes_to_collect):
     tree = ET.parse(file)
     root = tree.getroot()
     #
-    root_store = dict()
+    root_store = {}
     root = _get_root(root, key_to_find, attributes_to_collect, root_store)
     return root, root_store
 
@@ -92,3 +95,4 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
             )
             if possible_root is not None:
                 return possible_root
+    return None
