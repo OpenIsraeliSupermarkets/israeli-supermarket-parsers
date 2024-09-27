@@ -1,13 +1,12 @@
 import random
 import il_supermarket_parsers.parsers as all_parsers
 
-from enum import Enum
-
 
 class DuplicateValueEnum:
     _members = {}
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls):
+        """init memebers """
         cls._members = {}
         for key, value in cls.__dict__.items():
             if not key.startswith("_"):
@@ -75,11 +74,6 @@ class ParserFactory(DuplicateValueEnum):
     def all_listed_parsers(cls):
         """get all the scarpers and filter disabled scrapers"""
         return list(cls)
-
-    # @classmethod
-    # def all_active(cls):
-    #     """get all the scarpers and filter disabled scrapers"""
-    #     return (member for member in cls)
 
     @classmethod
     def sample(cls, n=1):

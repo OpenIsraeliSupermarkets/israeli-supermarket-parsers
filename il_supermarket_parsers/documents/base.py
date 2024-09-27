@@ -3,7 +3,6 @@ import os
 from il_supermarket_parsers.utils import build_value, get_root
 
 
-
 class XmlBaseConverter(ABC):
     """parser the xml docuement"""
 
@@ -30,12 +29,10 @@ class XmlBaseConverter(ABC):
         """reduce the size"""
 
     def build_value(self, name, no_content):
-        """get the value """
+        """get the value"""
         return build_value(name, self.additional_constant, no_content=no_content)
 
-    def convert(
-        self, found_store, file_name, no_content="NO-CONTENT", row_limit=None, **kwarg
-    ):
+    def convert(self, found_store, file_name, **kwarg):
         """parse file to data frame"""
         source_file = os.path.join(found_store, file_name)
         root, root_store = get_root(source_file, self.list_key, self.roots)
@@ -45,11 +42,9 @@ class XmlBaseConverter(ABC):
             found_store,
             file_name,
             root_store,
-            no_content,
-            row_limit=row_limit,
             **kwarg,
         )
-        return self.reduce_size(data)  # self._normlize_columns(data, **kwarg)
+        return self.reduce_size(data)
 
     @abstractmethod
     def _phrse(
@@ -58,20 +53,6 @@ class XmlBaseConverter(ABC):
         found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
         **kwarg,
     ):
-        pass
-
-    @abstractmethod
-    def _normlize_columns( self,
-        data,
-        missing_columns_default_values,
-        columns_to_remove,
-        columns_to_rename,
-        date_columns=None,
-        float_columns=None,
-        empty_value="NOT_APPLY",
-        **kwarg):
         pass

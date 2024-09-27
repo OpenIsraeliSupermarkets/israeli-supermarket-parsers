@@ -1,10 +1,9 @@
-from .raw_parsing_pipeline import RawParseingPipeline
-from .utils.multi_prcoessing import MultiProcessor, ProcessJob
-from .utils.logger import Logger
-from .parser_factroy import ParserFactory
-from .utils import FileTypesFilters
 import itertools
 import os
+from .raw_parsing_pipeline import RawParseingPipeline
+from .utils.multi_prcoessing import MultiProcessor, ProcessJob
+from .parser_factroy import ParserFactory
+from .utils import FileTypesFilters
 
 
 class RawProcessing(ProcessJob):
