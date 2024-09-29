@@ -1,5 +1,8 @@
 from il_supermarket_parsers.engines import BigIdBranchesFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter, SubRootedXmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    XmlDataFrameConverter,
+    SubRootedXmlDataFrameConverter,
+)
 
 
 class TivTaamFileConverter(BigIdBranchesFileConverter):
@@ -19,8 +22,8 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
             ),
             stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
-                list_sub_key='Stores',
-                sub_roots=["SubChainId",'SubChainName'],
+                list_sub_key="Stores",
+                sub_roots=["SubChainId", "SubChainName"],
                 id_field="StoreId",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
             ),
