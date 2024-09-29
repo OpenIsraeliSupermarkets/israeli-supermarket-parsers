@@ -36,6 +36,16 @@ class DataLoader:
         self.files_types = files_types
         self.empty_store_id = empty_store_id
 
+    def _format_datetime(self, date):
+        """format the datetime"""
+        if len(date) == 12:
+            # if doesn't include seconds
+            return datetime.datetime.strptime(date, "%Y%m%d%H%M")
+        if len(date) == 14:
+            # if include seconds
+            return datetime.datetime.strptime(date, "%Y%m%d%H%M%S")
+        raise ValueError(f"'{date}' format doesn't match any.")
+
     def _file_name_to_components(self, store_folder, file_name, empty_store_id="0000"):
         """extract file name components"""
         try:
@@ -55,7 +65,7 @@ class DataLoader:
             prefix_file_name=prefix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
-            extracted_date=datetime.datetime.strptime(date, "%Y%m%d%H%M"),
+            extracted_date=self._format_datetime(date),
             detected_filetype=file_type,
         )
 

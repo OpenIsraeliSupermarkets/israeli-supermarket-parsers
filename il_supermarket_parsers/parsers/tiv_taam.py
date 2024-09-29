@@ -14,11 +14,13 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
                 list_key="Promotions",
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=["DllVerNo"],
             ),
             promofull_parser=XmlDataFrameConverter(
                 list_key="Promotions",
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=["DllVerNo"],
             ),
             stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
@@ -26,6 +28,7 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
                 sub_roots=["SubChainId", "SubChainName"],
                 id_field="StoreId",
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                ignore_column=["XmlDocVersion"],
             ),
             price_parser=XmlDataFrameConverter(
                 list_key="Items",
