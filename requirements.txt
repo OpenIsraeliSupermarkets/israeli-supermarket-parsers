@@ -2,4 +2,4 @@ pandas==2.2.2
 lxml==5.2.1
 pymongo==4.6.3
 il-supermarket-scraper==0.4.5
-pytest
+tqdm==4.66
