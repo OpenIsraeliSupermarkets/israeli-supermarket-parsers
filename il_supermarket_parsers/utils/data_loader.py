@@ -4,7 +4,7 @@ import datetime
 from dataclasses import dataclass
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
-from . import Logger
+from .logger import Logger
 
 
 @dataclass
