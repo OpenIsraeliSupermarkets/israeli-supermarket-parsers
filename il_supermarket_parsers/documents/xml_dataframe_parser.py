@@ -24,14 +24,14 @@ class XmlDataFrameConverter(XmlBaseConverter):
             for root in self.roots:
                 if root not in data.columns:
                     raise ValueError(
-                        f"parse error for file {source_file},
-                          columns {root} missing from {data.columns}"
+                        f"parse error for file {source_file},"
+                        f"columns {root} missing from {data.columns}"
                     )
 
             if self.id_field not in data.columns:
                 raise ValueError(
-                    f"parse error for file {source_file}, 
-                    id {self.id_field} missing from {data.columns}"
+                    f"parse error for file {source_file}, "
+                    f"id {self.id_field} missing from {data.columns}"
                 )
 
             if data.shape[0] != max(tag_count, 1):

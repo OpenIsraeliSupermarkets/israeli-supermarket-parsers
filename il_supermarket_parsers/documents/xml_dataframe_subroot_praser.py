@@ -26,11 +26,13 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.list_sub_key = list_sub_key
 
     def validate_succussful_extraction(self, data, source_file):
+        """ validation """
         super().validate_succussful_extraction(data, source_file)
         for root in self.sub_roots:
             if root not in data.columns:
                 raise ValueError(
-                    f"parse error, columns {root} missing from {data.columns}"
+                    f"parse error for file {source_file}, "
+                    f"columns {root} missing from {data.columns}"
                 )
 
     def _phrse(
@@ -39,7 +41,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         found_folder,
         file_name,
         root_store,
-        **kwarg,
+        **_,
     ):
         """parse file to data frame"""
 
