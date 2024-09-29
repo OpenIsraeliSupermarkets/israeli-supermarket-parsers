@@ -7,11 +7,16 @@ def count_tag_in_xml(xml_file_path, tag_to_count):
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
 
+    # Function to remove the namespace from an element tag
+    def strip_namespace(tag):
+        # Split the tag by the closing '}' of the namespace and return the tag part
+        return tag.split("}", 1)[-1] if "}" in tag else tag
+
     # Recursive function to count "x" tags
     def count_tag_recursive(element):
         count = 0
         # If the current element tag is "x", increase the count
-        if element.tag.lower() == tag_to_count.lower():
+        if strip_namespace(element.tag).lower() == tag_to_count.lower():
             count += 1
         # Recurse through all children elements
         for child in element:

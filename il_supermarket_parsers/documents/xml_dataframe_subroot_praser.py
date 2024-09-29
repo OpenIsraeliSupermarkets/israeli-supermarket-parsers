@@ -26,7 +26,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.list_sub_key = list_sub_key
 
     def validate_succussful_extraction(self, data, source_file):
-        """ validation """
+        """validation"""
         super().validate_succussful_extraction(data, source_file)
         for root in self.sub_roots:
             if root not in data.columns:
