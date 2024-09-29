@@ -71,18 +71,22 @@ def make_test_case(scraper_enum, parser_enum):
 
             dfs = []
             for file in files:
-                df = parser.read(file, run_validation=True)
 
-                # none empty file
-                if os.path.getsize(file.get_full_path()) > 256:
+                try:
+                    df = parser.read(file, run_validation=True)
 
-                    # should contain data
-                    assert df.shape[0] > 0, f"File {file} is empty"
+                    # none empty file
+                    if os.path.getsize(file.get_full_path()) > 256:
 
-                    dfs.append(df)
+                        # should contain data
+                        assert df.shape[0] > 0, f"File {file} is empty"
 
-                else:
-                    assert df.shape[0] == 0, f"File {file} should be full"
+                        dfs.append(df)
+
+                    else:
+                        assert df.shape[0] == 0, f"File {file} should be full"
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    raise ValueError(f"File {file}, Failed with {e}")
 
             if dfs:
                 pd.concat(dfs)

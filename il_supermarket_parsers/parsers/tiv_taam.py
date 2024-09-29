@@ -34,10 +34,12 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
                 list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=["DllVerNo"],
             ),
             pricefull_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=["DllVerNo"],
             ),
         )
