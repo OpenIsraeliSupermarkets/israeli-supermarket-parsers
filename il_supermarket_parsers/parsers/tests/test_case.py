@@ -47,6 +47,7 @@ def make_test_case(scraper_enum, parser_enum):
                 download_path,
                 filter_type=file_type,
                 enabled_scrapers=[self.scraper_enum.name],
+                limit=5
             )
 
         def _parser_validate(self, file_type):
