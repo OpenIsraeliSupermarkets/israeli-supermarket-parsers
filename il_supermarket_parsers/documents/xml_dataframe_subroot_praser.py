@@ -47,10 +47,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         rows = []
 
-        if root is None:
-            raise ValueError(f"{self.list_key} is wrong")
+        # if root is None:
+        #     raise ValueError(f"{self.list_key} is wrong")
 
-        if len(root) == 0:
+        if root is None or len(root) == 0:
             return pd.DataFrame(columns=self.sub_roots + [self.id_field] + self.roots)
 
         for sub_elem in list(root):

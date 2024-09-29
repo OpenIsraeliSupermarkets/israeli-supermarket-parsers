@@ -75,7 +75,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         #     return pd.DataFrame()  # shufersal don't add count=0
 
         if root is None:
-            raise ValueError(f"{self.list_key} is wrong")
+            return pd.DataFrame()
 
         elements = list(root)
         if len(root) == 0:
