@@ -24,16 +24,16 @@ class XmlDataFrameConverter(XmlBaseConverter):
             for root in self.roots:
                 if root not in data.columns:
                     raise ValueError(
-                        f"parse error, columns {root} missing from {data.columns}"
+                        f"parse error for file {source_file}, columns {root} missing from {data.columns}"
                     )
 
             if self.id_field not in data.columns:
                 raise ValueError(
-                    f"parse error, id {self.id_field} missing from {data.columns}"
+                    f"parse error for file {source_file}, id {self.id_field} missing from {data.columns}"
                 )
 
             if data.shape[0] != max(tag_count, 1):
-                raise ValueError("missing data")
+                raise ValueError(f"for file {source_file}, missing data")
 
             keys_not_used = (
                 set(collect_unique_keys_from_xml(source_file))
@@ -41,7 +41,9 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 - set(self.ignore_column)
             )
             if len(keys_not_used) > 0:
-                raise ValueError(f"there is data we didn't get {keys_not_used}")
+                raise ValueError(
+                    f"for file {source_file}, there is data we didn't get {keys_not_used}"
+                )
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

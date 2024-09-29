@@ -81,21 +81,10 @@ def make_test_case(scraper_enum, parser_enum):
                     dfs.append(df)
 
                 else:
-                    assert df.shape[0] == 0
+                    assert df.shape[0] == 0, f"File {file} should be full"
 
             if dfs:
                 pd.concat(dfs)
-
-                # folders = []
-                # for source in joined["found_folder"].dropna().unique():
-                #     folders.append(os.path.split(source)[1])
-
-                # joined.to_csv(
-                #     os.path.join(
-                #         self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
-                #     ),
-                #     index=False,
-                # )
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
