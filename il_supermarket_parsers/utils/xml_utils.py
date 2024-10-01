@@ -78,7 +78,7 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
 
 def change_xml_encoding(file_path):
     """change the encoding if failing with utf-8"""
-    with open(file_path, "r") as file: #pylint: disable=unspecified-encoding
+    with open(file_path, "r") as file:  # pylint: disable=unspecified-encoding
         # Read the XML file content
         content = file.read()
 
