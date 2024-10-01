@@ -78,17 +78,16 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
 
 def change_xml_encoding(file_path):
     """change the encoding if failing with utf-8"""
-    with open(file_path, "r") as file:  # pylint: disable=unspecified-encoding
+    with open(file_path, "rb") as file:  # pylint: disable=unspecified-encoding
         # Read the XML file content
         content = file.read()
 
     # Replace the encoding declaration in the XML header
-    content = content.replace('encoding="ISO-8859-8"', 'encoding="UTF-8"')
+    content = content.replace('encoding="ISO-8859-8"'.encode("ISO-8859-8"), 'encoding="UTF-8"'.encode("UTF-8"))
 
     # Save the file with the new encoding declaration
-    with open(file_path, "w", encoding="UTF-8") as file:
+    with open(file_path, "wb") as file:
         file.write(content)
-
 
 def get_root(file, key_to_find, attributes_to_collect):
     """get ET root"""
