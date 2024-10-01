@@ -15,7 +15,9 @@ class XmlDataFrameConverter(XmlBaseConverter):
             data[col] = data[col].mask(data[col] == data[col].shift())
         return data
 
-    def validate_succussful_extraction(self, data, source_file, ignore_missing_columns=None):
+    def validate_succussful_extraction(
+        self, data, source_file, ignore_missing_columns=None
+    ):
         # if there is an empty file
         # we expected it to reuturn none
         tag_count = count_tag_in_xml(source_file, self.id_field)
@@ -51,7 +53,6 @@ class XmlDataFrameConverter(XmlBaseConverter):
             )
         assert "found_folder" in data.columns
         assert "file_name" in data.columns
-    
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""
