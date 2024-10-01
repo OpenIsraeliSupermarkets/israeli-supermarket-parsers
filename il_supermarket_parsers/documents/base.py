@@ -21,7 +21,7 @@ class XmlBaseConverter(ABC):
         self.additional_constant = additional_constant
 
     @abstractmethod
-    def validate_succussful_extraction(self, data, source_file):
+    def validate_succussful_extraction(self, data, source_file, ignore_missing_columns=None):
         """validate column requested"""
 
     @abstractmethod
