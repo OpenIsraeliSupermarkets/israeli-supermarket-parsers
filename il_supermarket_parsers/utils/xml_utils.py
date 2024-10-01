@@ -82,12 +82,13 @@ def change_xml_encoding(file_path):
         # Read the XML file content
         content = file.read()
 
+    content = content.decode("ISO-8859-8", errors='replace')    
     # Replace the encoding declaration in the XML header
-    content = content.replace('encoding="ISO-8859-8"'.encode("ISO-8859-8"), 'encoding="UTF-8"'.encode("UTF-8"))
+    # content = content.replace('encoding="ISO-8859-8"'.encode("ISO-8859-8"), 'encoding="UTF-8"'.encode("UTF-8"))
 
     # Save the file with the new encoding declaration
     with open(file_path, "wb") as file:
-        file.write(content)
+        file.write(content.replace('encoding="ISO-8859-8"', 'encoding="UTF-8"').encode("utf-8"))
 
 def get_root(file, key_to_find, attributes_to_collect):
     """get ET root"""
