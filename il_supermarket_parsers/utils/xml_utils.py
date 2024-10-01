@@ -76,9 +76,28 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     return content
 
 
+def change_xml_encoding(file_path):
+    """change the encoding if failing with utf-8"""
+    with open(file_path, "r") as file: #pylint: disable=unspecified-encoding
+        # Read the XML file content
+        content = file.read()
+
+    # Replace the encoding declaration in the XML header
+    content = content.replace('encoding="ISO-8859-8"', 'encoding="UTF-8"')
+
+    # Save the file with the new encoding declaration
+    with open(file_path, "w", encoding="UTF-8") as file:
+        file.write(content)
+
+
 def get_root(file, key_to_find, attributes_to_collect):
     """get ET root"""
-    tree = ET.parse(file)
+    try:
+        tree = ET.parse(file)
+    except ET.ParseError:
+        change_xml_encoding(file)
+        tree = ET.parse(file)
+
     root = tree.getroot()
     #
     root_store = {}
@@ -92,7 +111,11 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
 
     for sub in list(root):
         # collect attributes
-        if len(list(sub)) == 0 and sub.tag in attributes_to_collect:
+        if (
+            len(list(sub)) == 0
+            and attributes_to_collect is not None
+            and sub.tag in attributes_to_collect
+        ):
             collected[sub.tag] = sub.text
         else:
             possible_root = _get_root(
