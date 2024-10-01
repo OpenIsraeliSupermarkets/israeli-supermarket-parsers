@@ -8,7 +8,6 @@ database/
 .ipynb_checkpoints/
 *_cookies.txt
 logging.log
-*.xml
 *.csv
 .env
 status/
