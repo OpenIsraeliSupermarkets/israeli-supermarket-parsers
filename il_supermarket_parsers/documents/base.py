@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List
 import os
 from il_supermarket_parsers.utils import build_value, get_root
 
@@ -8,8 +9,8 @@ class XmlBaseConverter(ABC):
 
     def __init__(
         self,
-        list_key,
-        id_field,
+        list_key:List[str],
+        id_field:str,
         roots=None,
         ignore_column=None,
         **additional_constant,

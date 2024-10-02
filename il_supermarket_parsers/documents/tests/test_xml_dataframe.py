@@ -32,3 +32,20 @@ def test_read_bad_encoding_2():
         ignore_missing_columns=["SubChainId", "ChainId", "BikoretNo", "StoreId"],
     )
     assert df.shape[0] > 0
+
+
+
+def test_3():
+    """test reading files that are the encoding in the file is not correct"""
+
+    converter = XmlDataFrameConverter(list_key="STORES", id_field="STOREID")
+    df = converter.convert(
+        "il_supermarket_parsers/documents/tests",
+        "Stores7290027600007-000-202410020201",
+    )
+    converter.validate_succussful_extraction(
+        df,
+        "il_supermarket_parsers/documents/tests/Stores7290027600007-000-202410020201",
+        ignore_missing_columns=['CHAINID', 'LASTUPDATEDATE'],
+    )
+    assert df.shape[0] > 0

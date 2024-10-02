@@ -37,7 +37,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
             )
 
         if data.shape[0] != max(tag_count, 1):
-            raise ValueError(f"for file {source_file}, missing data")
+            raise ValueError(f"for file {source_file}, missing data, data shape {data.shape} tag count is {tag_count}")
 
         ignore_list = self.ignore_column
         if ignore_missing_columns:
