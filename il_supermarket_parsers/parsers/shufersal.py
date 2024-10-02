@@ -9,7 +9,7 @@ class ShufersalFileConverter(BaseFileConverter):
         super().__init__(
             stores_parser=XmlDataFrameConverter(
                 list_key="STORES",
-                id_field=["STOREID"],
+                id_field="STOREID",
                 roots=["ChainId"],
             )
         )
