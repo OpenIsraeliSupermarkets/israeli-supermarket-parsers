@@ -56,7 +56,7 @@ def make_test_case(scraper_enum, parser_enum):
                 self.__parser_validate(file_type, tmpdirname)
 
         def __parser_validate(self, file_type, dump_path="temp"):
-            """test the subcase"""
+            """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
             self._refresh_download_folder(sub_folder, file_type)
 
