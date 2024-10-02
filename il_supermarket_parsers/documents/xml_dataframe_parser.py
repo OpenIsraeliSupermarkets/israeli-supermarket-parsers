@@ -36,7 +36,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
                 f"id {self.id_field} missing from {data.columns}"
             )
 
-        if data.shape[0] != max(tag_count, 1):
+        if data.shape[0] != tag_count:
             raise ValueError(f"for file {source_file}, missing data, data shape {data.shape} tag count is {tag_count}")
 
         ignore_list = self.ignore_column
@@ -77,16 +77,14 @@ class XmlDataFrameConverter(XmlBaseConverter):
         **kwarg,
     ):
         rows = []
-
-        # if not root and "Super-Pharm" in file:
-        #     return pd.DataFrame()  # shufersal don't add count=0
-
+        columns = [self.id_field] + (self.roots if self.roots else [])
+        
         if root is None:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=columns)
 
         elements = list(root)
         if len(root) == 0:
-            columns = [self.id_field] + self.roots
+            
             return pd.DataFrame(columns=columns)
 
         for elem in elements:
