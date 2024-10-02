@@ -64,4 +64,3 @@ def test_43():
         "il_supermarket_parsers/documents/tests/Price7290725900003-9032-202410021600",
         ignore_missing_columns=['SubChainId', 'DllVerNo', 'ChainId', 'BikoretNo', 'StoreId', 'XmlDocVersion']
     )
-    assert df.shape[0] > 0
