@@ -77,7 +77,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         **kwarg,
     ):
         rows = []
-        columns = [self.id_field] + (self.roots if self.roots else [])
+        columns = [self.id_field,"found_folder","file_name"] + (self.roots if self.roots else []) 
         
         if root is None:
             return pd.DataFrame(columns=columns)
