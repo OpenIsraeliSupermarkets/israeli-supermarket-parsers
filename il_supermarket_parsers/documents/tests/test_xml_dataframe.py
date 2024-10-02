@@ -35,7 +35,7 @@ def test_read_bad_encoding_2():
 
 
 
-def test_3():
+def test_bad_element():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="STORES", id_field="STOREID")
@@ -51,7 +51,7 @@ def test_3():
     assert df.shape[0] > 0
 
 
-def test_43():
+def test_empty_file():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
