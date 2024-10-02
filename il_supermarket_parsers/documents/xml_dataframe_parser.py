@@ -19,7 +19,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
         self, data, source_file, ignore_missing_columns=None
     ):
         # if there is an empty file
-        # we expected it to reuturn none
+        # we expected it to return none
         tag_count = count_tag_in_xml(source_file, self.id_field)
 
         if self.roots and tag_count > 0:

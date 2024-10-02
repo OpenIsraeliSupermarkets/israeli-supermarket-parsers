@@ -110,6 +110,7 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
     if root.tag == key_to_find:
         return root
 
+    found_root = None
     for sub in list(root):
         # collect attributes
         if (
@@ -122,6 +123,8 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
             possible_root = _get_root(
                 sub, key_to_find, attributes_to_collect, collected
             )
+            
+            # we are collecting also the infomration after the root
             if possible_root is not None:
-                return possible_root
-    return None
+                found_root = possible_root
+    return found_root
