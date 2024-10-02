@@ -49,3 +49,19 @@ def test_3():
         ignore_missing_columns=['CHAINID', 'LASTUPDATEDATE'],
     )
     assert df.shape[0] > 0
+
+
+def test_43():
+    """test reading files that are the encoding in the file is not correct"""
+
+    converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
+    df = converter.convert(
+        "il_supermarket_parsers/documents/tests",
+        "Price7290725900003-9032-202410021600",
+    )
+    converter.validate_succussful_extraction(
+        df,
+        "il_supermarket_parsers/documents/tests/Price7290725900003-9032-202410021600",
+        ignore_missing_columns=['SubChainId', 'DllVerNo', 'ChainId', 'BikoretNo', 'StoreId', 'XmlDocVersion']
+    )
+    assert df.shape[0] > 0
