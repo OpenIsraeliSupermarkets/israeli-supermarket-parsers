@@ -123,7 +123,7 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
             possible_root = _get_root(
                 sub, key_to_find, attributes_to_collect, collected
             )
-            
+
             # we are collecting also the infomration after the root
             if possible_root is not None:
                 found_root = possible_root
