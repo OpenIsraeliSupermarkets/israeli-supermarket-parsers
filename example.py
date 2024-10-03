@@ -17,3 +17,5 @@ if __name__ == "__main__":
         multiprocessing=None,
         output_folder="outputs",
     ).start()
+
+    # checkout 'outputs' folder and 'dumps' folder
