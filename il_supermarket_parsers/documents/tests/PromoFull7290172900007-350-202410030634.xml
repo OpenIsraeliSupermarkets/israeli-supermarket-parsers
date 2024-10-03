@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-8" standalone="no" ?>
+<OrderXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Envelope>
+		<ChainId>7290172900007</ChainId>
+		<SubChainId>100</SubChainId>
+		<StoreId>350</StoreId>
+		<BikoretNo>100</BikoretNo>
+	</Envelope>
+</OrderXml>

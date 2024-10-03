@@ -2,8 +2,12 @@ import unittest
 import os
 import tempfile
 import pandas as pd
-from il_supermarket_scarper.utils import FileTypesFilters
-from il_supermarket_parsers.utils import get_sample_data, DataLoader
+from il_supermarket_parsers.utils import (
+    get_sample_data,
+    DataLoader,
+    FileTypesFilters,
+    EMPTY_FILE_TOEHOLD,
+)
 from il_supermarket_parsers.parser_factroy import ParserFactory
 
 
@@ -83,7 +87,7 @@ def make_test_case(scraper_enum, parser_enum):
                     df = parser.read(file, run_validation=True)
 
                     # none empty file
-                    if os.path.getsize(file.get_full_path()) > 256:
+                    if os.path.getsize(file.get_full_path()) > EMPTY_FILE_TOEHOLD:
 
                         # should contain data
                         assert df.shape[0] > 0, f"File {file} is empty"

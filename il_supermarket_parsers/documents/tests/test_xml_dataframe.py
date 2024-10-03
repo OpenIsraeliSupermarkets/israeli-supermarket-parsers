@@ -1,4 +1,6 @@
+import os
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
+from il_supermarket_parsers.utils import EMPTY_FILE_TOEHOLD
 
 
 def test_read_bad_encoding_1():
@@ -70,3 +72,17 @@ def test_empty_file():
             "XmlDocVersion",
         ],
     )
+
+
+def test_empty_size():
+    """test reading files that are the encoding in the file is not correct"""
+
+    empty1 = os.path.getsize(
+        "il_supermarket_parsers/documents/tests/PromoFull7290172900007-350-202410030634.xml",
+    )
+
+    assert empty1 <= EMPTY_FILE_TOEHOLD
+    empty2 = os.path.getsize(
+        "il_supermarket_parsers/documents/tests/Price7290725900003-9032-202410021600",
+    )
+    assert empty2 <= EMPTY_FILE_TOEHOLD
