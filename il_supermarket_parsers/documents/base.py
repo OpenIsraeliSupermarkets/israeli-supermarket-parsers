@@ -9,8 +9,8 @@ class XmlBaseConverter(ABC):
 
     def __init__(
         self,
-        list_key:List[str],
-        id_field:str,
+        list_key: List[str],
+        id_field: str,
         roots=None,
         ignore_column=None,
         **additional_constant,
@@ -59,4 +59,3 @@ class XmlBaseConverter(ABC):
         **kwarg,
     ):
         pass
-

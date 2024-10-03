@@ -10,6 +10,6 @@ class ShufersalFileConverter(BaseFileConverter):
             stores_parser=XmlDataFrameConverter(
                 list_key="STORES",
                 id_field="STOREID",
-                roots=["CHAINID",'LASTUPDATEDATE'],
+                roots=["CHAINID", "LASTUPDATEDATE"],
             )
         )

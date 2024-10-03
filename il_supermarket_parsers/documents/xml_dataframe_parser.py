@@ -37,7 +37,10 @@ class XmlDataFrameConverter(XmlBaseConverter):
             )
 
         if data.shape[0] != tag_count:
-            raise ValueError(f"for file {source_file}, missing data, data shape {data.shape} tag count is {tag_count}")
+            raise ValueError(
+                f"for file {source_file}, missing data,"
+                f"data shape {data.shape} tag count is {tag_count}"
+            )
 
         ignore_list = self.ignore_column
         if ignore_missing_columns:
@@ -77,14 +80,16 @@ class XmlDataFrameConverter(XmlBaseConverter):
         **kwarg,
     ):
         rows = []
-        columns = [self.id_field,"found_folder","file_name"] + (self.roots if self.roots else []) 
-        
+        columns = [self.id_field, "found_folder", "file_name"] + (
+            self.roots if self.roots else []
+        )
+
         if root is None:
             return pd.DataFrame(columns=columns)
 
         elements = list(root)
         if len(root) == 0:
-            
+
             return pd.DataFrame(columns=columns)
 
         for elem in elements:

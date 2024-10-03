@@ -55,7 +55,11 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         rows = []
 
         if root is None or len(root) == 0:
-            return pd.DataFrame(columns=self.sub_roots + [self.id_field,"found_folder","file_name"] + (self.roots if self.roots else []))
+            return pd.DataFrame(
+                columns=self.sub_roots
+                + [self.id_field, "found_folder", "file_name"]
+                + (self.roots if self.roots else [])
+            )
 
         for sub_elem in list(root):
             sub_root_store = root_store.copy()
