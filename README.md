@@ -5,6 +5,14 @@ This is a parser for ALL the supermarket chains listed in the GOV.IL site.
 שקיפות מחירים (השוואת מחירים) - https://www.gov.il/he/departments/legalInfo/cpfta_prices_regulations
 הגדרת הקבצים שהיו צריכים להיות זמינים באתרים - https://www.nevo.co.il/law_html/law01/501_131.htm
 
+
+[![Unit & Integration Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg?event=push)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
+[![CodeQL](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml)
+[![Pylint](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml)
+[![Publish Docker image](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml)
+[![Upload Python Package](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/python-publish.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/python-publish.yml)
+
+
 ## 🤗 Want to support my work?
 <p align="center">
     <a href="https://buymeacoffee.com/erlichsefi" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;">
@@ -26,7 +34,7 @@ What is il_supermarket_parsers?
 -------------
 
 A simple access layer to the data the supermarkets publish.
-You can download the data using https://github.com/erlichsefi/israeli-supermarket-scarpers.
+You can download the data using https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers.
 
 You only need to run the following code to parse all the data currently shared by the supermarkets and was downloaded using the package above.
 
