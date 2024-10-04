@@ -1,6 +1,8 @@
 import os
-from .utils import DataLoader, KaggleDatasetManager
 import pandas as pd
+from tqdm import tqdm
+from .parser_factroy import ParserFactory
+from .utils import DataLoader
 
 
 class RawParseingPipeline:
@@ -8,32 +10,47 @@ class RawParseingPipeline:
     processing files to dataframe
     """
 
-    def __init__(self, folder, store_enum, file_type) -> None:
-        self.store_enum = store_enum
+    def __init__(self, folder, store_name, file_type, output_folder) -> None:
+        self.store_name = store_name
         self.file_type = file_type
         self.folder = folder
-        self.database = KaggleDatasetManager()
+        self.output_folder = output_folder
 
     def process(self):
-        parser = self.store_enum.value()
+        """start processing the files selected in the pipeline input"""
+        parser_class = ParserFactory.get(self.store_name)
 
         data_frames = []
-        for file in DataLoader(
+        files_to_process = DataLoader(
             self.folder,
-            store_names=[self.store_enum.name],
+            store_names=[self.store_name],
             files_types=[self.file_type],
-        ).load():
+        ).load()
+
+        for file in tqdm(
+            files_to_process,
+            total=len(files_to_process),
+            desc=f"Processing {self.file_type}@{self.store_name}",
+        ):
+
+            parser = parser_class()
             file.data = parser.read(file)
             data_frames.append(file.data)
 
         create_csv = os.path.join(
-            self.folder, self.file_type + "_" + self.store_enum.name.lower() + ".csv"
+            self.output_folder,
+            self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
         )
-        pd.concat(data_frames).to_csv(
-            create_csv,
-            index=False,
-        )
-        self.database.upload_to_dataset("israeli-supermarkets-2024", create_csv)
+
+        if data_frames:
+            pd.concat(data_frames).to_csv(
+                create_csv,
+                index=False,
+            )
+            return {"status": True, "path": create_csv}
+        return {
+            "status": False,
+        }
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""
@@ -83,8 +100,10 @@ class RawParseingPipeline:
     #                             # if there exits a document -> found a change
     #                             if existing_doc:
     #                                 print(
-    #                                     f"Found an update for {existing_doc[id_field_name]}: \n"
-    #                                     f"{self.database.diff_document(insert_doc,existing_doc)}\n"
+    #                                     f"Found an update for
+    #                                       {existing_doc[id_field_name]}: \n"
+    #                                     f"{self.database.diff_document
+    #                                       (insert_doc,existing_doc)}\n"
     #                                 )
 
     #                             # insert with new update

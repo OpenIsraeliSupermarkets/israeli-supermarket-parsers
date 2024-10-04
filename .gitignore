@@ -8,6 +8,10 @@ database/
 .ipynb_checkpoints/
 *_cookies.txt
 logging.log
-*.xml
 *.csv
 .env
+status/
+build/
+il_supermarket_parsers.egg-info/
+israeli_supermarket_parsers.egg-info
+temp

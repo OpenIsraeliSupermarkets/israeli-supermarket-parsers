@@ -1,5 +1,5 @@
-from .xml_dataframe_parser import XmlDataFrameConverter
 import pandas as pd
+from .xml_dataframe_parser import XmlDataFrameConverter
 
 
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
@@ -12,16 +12,35 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         roots=None,
         sub_roots=None,
         list_sub_key="",
+        ignore_column=None,
         **additional_constant,
     ):
         super().__init__(
-            list_key,
-            id_field,
-            roots,
+            list_key=list_key,
+            id_field=id_field,
+            roots=roots,
+            ignore_column=ignore_column,
             additional_constant=additional_constant,
         )
-        self.sub_roots = sub_roots
+        self.sub_roots = sub_roots if sub_roots else []
         self.list_sub_key = list_sub_key
+
+    def validate_succussful_extraction(
+        self, data, source_file, ignore_missing_columns=None
+    ):
+        """validation"""
+        super().validate_succussful_extraction(
+            data, source_file, ignore_missing_columns=ignore_missing_columns
+        )
+
+        # if the user asked to include the headers
+        if self.sub_roots:
+            for root in self.sub_roots:
+                if root not in data.columns:
+                    raise ValueError(
+                        f"parse error for file {source_file}, "
+                        f"columns {root} missing from {data.columns}"
+                    )
 
     def _phrse(
         self,
@@ -29,46 +48,30 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
-        **kwarg,
+        **_,
     ):
         """parse file to data frame"""
 
-        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
 
-        add_columns = True
+        if root is None or len(root) == 0:
+            return pd.DataFrame(
+                columns=self.sub_roots
+                + [self.id_field, "found_folder", "file_name"]
+                + (self.roots if self.roots else [])
+            )
 
-        elements = root.getchildren()
-        if len(elements) == 0:
-            raise ValueError(f"{self.list_key} is wrong")
-
-        for sub_elem in elements:
+        for sub_elem in list(root):
             sub_root_store = root_store.copy()
 
             for k in self.sub_roots:
                 sub_root_store[k] = sub_elem.find(k).text
 
             for elem in sub_elem.find(self.list_sub_key):
-                values = {
-                    "found_folder": found_folder,
-                    "file_name": file_name,
-                    **sub_root_store,
-                }
-                for name in elem.getchildren():
-                    tag = name.tag
-                    if add_columns:
-                        cols.append(tag)
-                    value = self.build_value(name, no_content=no_content)
+                rows.append(
+                    self.list_single_entry(
+                        elem, found_folder, file_name, **sub_root_store
+                    )
+                )
 
-                    if value == no_content:
-                        print(f"for value {name} found no content!")
-                    values[tag] = value
-                rows.append(values.copy())
-                add_columns = False
-
-                if row_limit and len(rows) >= row_limit:
-                    break
-
-        return pd.DataFrame(rows, columns=cols)
+        return pd.DataFrame(rows)

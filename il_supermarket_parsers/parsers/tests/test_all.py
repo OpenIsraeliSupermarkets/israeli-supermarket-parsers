@@ -1,214 +1,250 @@
-from il_supermarket_parsers.parser_factroy import ParserFactory
 from il_supermarket_scarper.scrappers_factory import ScraperFactory
+from il_supermarket_parsers.parser_factroy import ParserFactory
 from il_supermarket_parsers.parsers.tests.test_case import make_test_case
 
 
-# @pytest.mark.run(order=1)
 class BareketTestCase(make_test_case(ScraperFactory.BAREKET, ParserFactory.BAREKET)):
-    pass
+    """
+    Test case for Bareket supermarket.
+    """
 
 
-# @pytest.mark.run(order=2)
 class YaynotBitanTestCase(
     make_test_case(ScraperFactory.YAYNO_BITAN, ParserFactory.YAYNO_BITAN)
 ):
-    pass
+    """
+    Test case for Yaynot Bitan supermarket.
+    """
 
 
-# @pytest.mark.run(order=3)
 class CofixTestCase(make_test_case(ScraperFactory.COFIX, ParserFactory.COFIX)):
-    pass
+    """
+    Test case for Cofix supermarket.
+    """
 
 
-# @pytest.mark.run(order=4)
 class DorAlonTestCase(make_test_case(ScraperFactory.DOR_ALON, ParserFactory.DOR_ALON)):
-    pass
+    """
+    Test case for Dor Alon supermarket.
+    """
 
 
-# @pytest.mark.run(order=5)
 class GoodPharmTestCase(
     make_test_case(ScraperFactory.GOOD_PHARM, ParserFactory.GOOD_PHARM)
 ):
-    pass
+    """
+    Test case for Good Pharm supermarket.
+    """
 
 
-# @pytest.mark.run(order=6)
 class HaziHinamTestCase(
     make_test_case(ScraperFactory.HAZI_HINAM, ParserFactory.HAZI_HINAM)
 ):
-    pass
+    """
+    Test case for Hazi Hinam supermarket.
+    """
 
 
-class HetCohen(make_test_case(ScraperFactory.HET_COHEN, ParserFactory.HET_COHEN)):
-    pass
+class HetCohenTestCase(
+    make_test_case(ScraperFactory.HET_COHEN, ParserFactory.HET_COHEN)
+):
+    """
+    Test case for Het Cohen supermarket.
+    """
 
 
-# @pytest.mark.run(order=7)
 class KeshetTestCase(make_test_case(ScraperFactory.KESHET, ParserFactory.KESHET)):
-    pass
+    """
+    Test case for Keshet supermarket.
+    """
 
 
-# @pytest.mark.run(order=8)
 class KingStoreTestCase(
     make_test_case(ScraperFactory.KING_STORE, ParserFactory.KING_STORE)
 ):
-    pass
+    """
+    Test case for King Store supermarket.
+    """
 
 
-# @pytest.mark.run(order=9)
 class Maayan2000TestCase(
     make_test_case(ScraperFactory.MAAYAN_2000, ParserFactory.MAAYAN_2000)
 ):
-    pass
+    """
+    Test case for Maayan 2000 supermarket.
+    """
 
 
-# @pytest.mark.run(order=10)
 class MahsaniAShukTestCase(
     make_test_case(ScraperFactory.MAHSANI_ASHUK, ParserFactory.MAHSANI_ASHUK)
 ):
-    pass
+    """
+    Test case for Mahsani AShuk supermarket.
+    """
 
 
-# @pytest.mark.run(order=12)
 class MegaTestCase(make_test_case(ScraperFactory.MEGA, ParserFactory.MEGA)):
-    pass
+    """
+    Test case for Mega supermarket.
+    """
 
 
-# @pytest.mark.run(order=13)
 class NetivHasefTestCase(
     make_test_case(ScraperFactory.NETIV_HASED, ParserFactory.NETIV_HASED)
 ):
-    pass
+    """
+    Test case for Netiv Hased supermarket.
+    """
 
 
-# @pytest.mark.run(order=13)
 class MeshnatYosef1TestCase(
     make_test_case(ScraperFactory.MESHMAT_YOSEF_1, ParserFactory.MESHMAT_YOSEF_1)
 ):
-    pass
+    """
+    Test case for Meshnat Yosef 1 supermarket.
+    """
 
 
-# @pytest.mark.run(order=13)
 class MeshnatYosef2TestCase(
     make_test_case(ScraperFactory.MESHMAT_YOSEF_2, ParserFactory.MESHMAT_YOSEF_2)
 ):
-    pass
+    """
+    Test case for Meshnat Yosef 2 supermarket.
+    """
 
 
-# @pytest.mark.run(order=14)
 class OsheradTestCase(make_test_case(ScraperFactory.OSHER_AD, ParserFactory.OSHER_AD)):
-    pass
+    """
+    Test case for Osher Ad supermarket.
+    """
 
 
-# @pytest.mark.run(order=15)
 class PolizerTestCase(make_test_case(ScraperFactory.POLIZER, ParserFactory.POLIZER)):
-    pass
+    """
+    Test case for Polizer supermarket.
+    """
 
 
-# @pytest.mark.run(order=16)
 class RamiLevyTestCase(
     make_test_case(ScraperFactory.RAMI_LEVY, ParserFactory.RAMI_LEVY)
 ):
-    pass
+    """
+    Test case for Rami Levy supermarket.
+    """
 
 
-# @pytest.mark.run(order=17)
 class SalachDabachTestCase(
     make_test_case(ScraperFactory.SALACH_DABACH, ParserFactory.SALACH_DABACH)
 ):
-    pass
+    """
+    Test case for Salach Dabach supermarket.
+    """
 
 
-# @pytest.mark.run(order=18)
 class ShefaBarcartAshemTestCase(
     make_test_case(
         ScraperFactory.SHEFA_BARCART_ASHEM, ParserFactory.SHEFA_BARCART_ASHEM
     )
 ):
-    pass
+    """
+    Test case for Shefa Barcart Ashem supermarket.
+    """
 
 
-# @pytest.mark.run(order=19)
 class ShufersalTestCase(
     make_test_case(ScraperFactory.SHUFERSAL, ParserFactory.SHUFERSAL)
 ):
-    pass
+    """
+    Test case for Shufersal supermarket.
+    """
 
 
-# @pytest.mark.run(order=20)
 class ShukAhirTestCase(
     make_test_case(ScraperFactory.SHUK_AHIR, ParserFactory.SHUK_AHIR)
 ):
-    pass
+    """
+    Test case for Shuk Ahir supermarket.
+    """
 
 
-# @pytest.mark.run(order=21)
 class StopMarketTestCase(
     make_test_case(ScraperFactory.STOP_MARKET, ParserFactory.STOP_MARKET)
 ):
-    pass
+    """
+    Test case for Stop Market supermarket.
+    """
 
 
-# @pytest.mark.run(order=22)
 class SuperPharmTestCase(
     make_test_case(ScraperFactory.SUPER_PHARM, ParserFactory.SUPER_PHARM)
 ):
-    pass
+    """
+    Test case for Super Pharm supermarket.
+    """
 
 
-# @pytest.mark.run(order=23)
 class SuperYudaTestCase(
     make_test_case(ScraperFactory.SUPER_YUDA, ParserFactory.SUPER_YUDA)
 ):
-    pass
+    """
+    Test case for Super Yuda supermarket.
+    """
 
 
-# @pytest.mark.run(order=30)
 class SuperSapirTestCase(
     make_test_case(ScraperFactory.SUPER_SAPIR, ParserFactory.SUPER_SAPIR)
 ):
-    pass
+    """
+    Test case for Super Sapir supermarket.
+    """
 
 
-# @pytest.mark.run(order=24)
 class FreshMarketAndSuperDoshTestCase(
     make_test_case(
         ScraperFactory.FRESH_MARKET_AND_SUPER_DOSH,
         ParserFactory.FRESH_MARKET_AND_SUPER_DOSH,
     )
 ):
-    pass
+    """
+    Test case for Fresh Market and Super Dosh supermarket.
+    """
 
 
-# @pytest.mark.run(order=25)
 class QuikTestCase(make_test_case(ScraperFactory.QUIK, ParserFactory.QUIK)):
-    pass
+    """
+    Test case for Quik supermarket.
+    """
 
 
-# @pytest.mark.run(order=25)
 class TivTaamTestCase(make_test_case(ScraperFactory.TIV_TAAM, ParserFactory.TIV_TAAM)):
-    pass
+    """
+    Test case for Tiv Taam supermarket.
+    """
 
 
-# @pytest.mark.run(order=26)
 class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTORY)):
-    pass
+    """
+    Test case for Victory supermarket.
+    """
 
 
-# @pytest.mark.run(order=27)
 class YellowTestCase(make_test_case(ScraperFactory.YELLOW, ParserFactory.YELLOW)):
-    pass
+    """
+    Test case for Yellow convenience store.
+    """
 
 
-# @pytest.mark.run(order=28)
 class YohananofTestCase(
     make_test_case(ScraperFactory.YOHANANOF, ParserFactory.YOHANANOF)
 ):
-    pass
+    """
+    Test case for Yohananof supermarket.
+    """
 
 
-# @pytest.mark.run(order=29)
 class ZolVeBegadolTestCase(
     make_test_case(ScraperFactory.ZOL_VEBEGADOL, ParserFactory.ZOL_VEBEGADOL)
 ):
-    pass
+    """
+    Test case for Zol VeBegadol supermarket.
+    """

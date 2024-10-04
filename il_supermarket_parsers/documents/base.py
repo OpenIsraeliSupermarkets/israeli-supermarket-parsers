@@ -1,6 +1,7 @@
-from il_supermarket_parsers.utils import build_value, get_root
 from abc import ABC, abstractmethod
+from typing import List
 import os
+from il_supermarket_parsers.utils import build_value, get_root
 
 
 class XmlBaseConverter(ABC):
@@ -8,67 +9,53 @@ class XmlBaseConverter(ABC):
 
     def __init__(
         self,
-        list_key,
-        id_field,
+        list_key: List[str],
+        id_field: str,
         roots=None,
-        columns_to_renames=None,
-        columns_to_drop=None,
-        mandatory_columns=None,
+        ignore_column=None,
         **additional_constant,
     ):
         self.list_key = list_key
         self.roots = roots
         self.id_field = id_field
-        self.columns_to_renames = columns_to_renames
+        self.ignore_column = ignore_column if ignore_column else []
         self.additional_constant = additional_constant
-        self.columns_to_drop = columns_to_drop
-        self.mandatory_columns = mandatory_columns
 
-    # def get_id(self):
-    #     """get the id in each entery of the list"""
-    #     if isinstance(self.id_field, list):
-    #         return self.id_field
-    #     return [self.id_field]
+    @abstractmethod
+    def validate_succussful_extraction(
+        self, data, source_file, ignore_missing_columns=None
+    ):
+        """validate column requested"""
 
-    # def get_constant(self, value):
-    #     """get constant"""
-    #     return self.additional_constant.get(value, None)
+    @abstractmethod
+    def reduce_size(self, data):
+        """reduce the size"""
 
     def build_value(self, name, no_content):
+        """get the value"""
         return build_value(name, self.additional_constant, no_content=no_content)
 
-    def convert(
-        self, found_store, file_name, no_content="NO-CONTENT", row_limit=None, **kwarg
-    ):
+    def convert(self, found_store, file_name, **kwarg):
         """parse file to data frame"""
-        root, root_store = get_root(
-            os.path.join(found_store, file_name), self.list_key, self.roots
-        )
+        source_file = os.path.join(found_store, file_name)
+        root, root_store = get_root(source_file, self.list_key, self.roots)
 
         data = self._phrse(
             root,
             found_store,
             file_name,
             root_store,
-            no_content,
-            row_limit=row_limit,
             **kwarg,
         )
-        return self._normlize_columns(data, **kwarg)
+        return self.reduce_size(data)
 
     @abstractmethod
     def _phrse(
         self,
         root,
-        found_store,
+        found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
         **kwarg,
     ):
-        pass
-
-    @abstractmethod
-    def _normlize_columns(self, data):
         pass

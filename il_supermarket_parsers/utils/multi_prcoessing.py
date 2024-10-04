@@ -6,39 +6,43 @@ from .logger import Logger
 
 
 def task(static_job, *arg, **kwarg):
+    """execute the job"""
     return static_job().processes_job(*arg, **kwarg)
 
 
 class MultiProcessor:
     """multi processing"""
 
-    def __init__(self, number_of_processes=6):
-        self.number_of_processes = number_of_processes
+    def __init__(self, multiprocessing=6):
+        self.multiprocessing = multiprocessing
         self.processes = []
         self.files_to_process = None
 
     def start_processes(self, static_job, *arg, **kwargs):
         """start the number of processers"""
 
-        for index in range(self.number_of_processes):
-            processor = Process(
-                name=f"Process {index}",
-                target=task,
-                args=tuple([static_job] + list(arg)),
-                kwargs=kwargs,
-            )
-            self.processes.append(processor)
+        if self.multiprocessing:
+            for index in range(self.multiprocessing):
+                processor = Process(
+                    name=f"Process {index}",
+                    target=task,
+                    args=tuple([static_job] + list(arg)),
+                    kwargs=kwargs,
+                )
+                self.processes.append(processor)
 
-        for processor in self.processes:
-            processor.start()
+            for processor in self.processes:
+                processor.start()
 
             Logger.info(f"Starting process {index}.")
 
-    def wait_to_finish(self, tasks_accomplished, size):
+    def wait_to_finish(self, tasks_accomplished):
         """wait until all finish"""
-        Logger.info("Starting waiting to all processes")
-        while not tasks_accomplished.full():
-            time.sleep(2)
+
+        if self.multiprocessing:
+            Logger.info("Starting waiting to all processes")
+            while not tasks_accomplished.full():
+                time.sleep(2)
 
         Logger.info("Finished waiting to all processes")
 
@@ -70,24 +74,29 @@ class MultiProcessor:
     def execute(self):
         """execute task"""
         tasks_to_accomplish, size = self.get_tasks_queue()
-        tasks_accomplished = Queue(maxsize=size)
-
-        self.start_processes(
-            self.task_to_execute(),
-            tasks_to_accomplish=tasks_to_accomplish,
-            tasks_accomplished=tasks_accomplished,
-        )
-
-        # no more jobs
-        tasks_to_accomplish.close()
-        tasks_to_accomplish.join_thread()
-
-        # self.wait_to_finish(tasks_accomplished, size)
-
         results = []
-        while not tasks_accomplished.empty() or len(results) < size:
-            file_to_delete = tasks_accomplished.get(True)
-            results.append(file_to_delete)
+
+        if self.multiprocessing:
+            tasks_accomplished = Queue(maxsize=size)
+
+            self.start_processes(
+                self.task_to_execute(),
+                tasks_to_accomplish=tasks_to_accomplish,
+                tasks_accomplished=tasks_accomplished,
+            )
+
+            # no more jobs
+            tasks_to_accomplish.close()
+            tasks_to_accomplish.join_thread()
+
+            while not tasks_accomplished.empty() or len(results) < size:
+                output = tasks_accomplished.get(True)
+                results.append(output)
+
+        else:
+            internal_task = self.task_to_execute()
+            while tasks_to_accomplish.qsize() > 0:  # or 'while' instead of 'if'
+                results.append(internal_task().job(**tasks_to_accomplish.get()))
 
         assert len(results) == size, f"{len(results)} vs {size}"
 
@@ -122,14 +131,15 @@ class ProcessJob:
                     Logger.info(
                         f"{current_process().name}: Placing results for {task_kwargs}."
                     )
-                    tasks_accomplished.put(file_processed, True, timeout=5)
+                    tasks_accomplished.put(
+                        {**task_kwargs, "status": False, "response": file_processed},
+                        timeout=5,
+                    )
                     Logger.info(
                         f"{current_process().name}: End processing {task_kwargs}."
                     )
-                except Exception as error:
+                except Exception as error:  # pylint: disable=broad-exception-caught
                     Logger.info(
                         f"{current_process().name}:  failed with {error}, exiting."
                     )
-                    return False
-
-        return True
+                    tasks_accomplished.put({**task_kwargs, "status": False}, timeout=5)
