@@ -1,10 +1,7 @@
-import os
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 
 
-def get_sample_data(
-    dump_folder_name, filter_type=None, enabled_scrapers=None, limit=10
-):
+def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None, limit=3):
     """get data to scrape"""
     if filter_type:
         task = ScarpingTask(
@@ -12,10 +9,13 @@ def get_sample_data(
             limit=limit,
             files_types=[filter_type],
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
+            lookup_in_db=True,
         )
         task.start()
     else:
-        ScarpingTask(dump_folder_name=dump_folder_name, limit=limit).start()
+        ScarpingTask(
+            dump_folder_name=dump_folder_name, limit=limit, lookup_in_db=True
+        ).start()
     return dump_folder_name
 
 
@@ -60,8 +60,9 @@ def get_all_scrapers_names():
     return all_names
 
 
-def get_scraper_name_from_id(chain_id):
-    """get the constractor name from the chain id"""
-    for chain_constractor in ScraperFactory.all_scrapers():
-        if str(chain_id) in (chain_constractor().get_chain_id()):
-            return chain_constractor.__name__
+# def get_scraper_name_from_id(chain_id):
+#     """get the constractor name from the chain id"""
+#     for chain_constractor in ScraperFactory.all_scrapers():
+#         if str(chain_id) in (chain_constractor().get_chain_id()):
+#             return chain_constractor.__name__
+#     raise ValueError(f"chain_id {chain_id} is not recognized ")

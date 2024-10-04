@@ -1,41 +1,75 @@
 import pandas as pd
+from il_supermarket_parsers.utils import (
+    count_tag_in_xml,
+    collect_unique_keys_from_xml,
+    collect_unique_columns_from_nested_json,
+)
 from .base import XmlBaseConverter
 
 
 class XmlDataFrameConverter(XmlBaseConverter):
     """parser the xml docuement"""
 
-    def _normlize_columns(
-        self,
-        data,
-        missing_columns_default_values,
-        columns_to_remove,
-        columns_to_rename,
-        date_columns=[],
-        float_columns=[],
-        empty_value="NOT_APPLY",
-        **kwarg,
+    def reduce_size(self, data):
+        for col in data.columns:
+            data[col] = data[col].mask(data[col] == data[col].shift())
+        return data
+
+    def validate_succussful_extraction(
+        self, data, source_file, ignore_missing_columns=None
     ):
-        if date_columns and not data.empty:
-            for column in date_columns:
-                data[column] = pd.to_datetime(data[column])
+        # if there is an empty file
+        # we expected it to return none
+        tag_count = count_tag_in_xml(source_file, self.id_field)
 
-        if float_columns and not data.empty:
-            for column in float_columns:
-                data[column] = pd.to_numeric(data[column])
-        data = data.fillna(empty_value)
+        if self.roots and tag_count > 0:
+            for root in self.roots:
+                if root not in data.columns:
+                    raise ValueError(
+                        f"parse error for file {source_file},"
+                        f"columns {root} missing from {data.columns}"
+                    )
 
-        #
-        for column, fill_value in missing_columns_default_values.items():
-            if column not in data.columns:
+        if self.id_field not in data.columns:
+            raise ValueError(
+                f"parse error for file {source_file}, "
+                f"id {self.id_field} missing from {data.columns}"
+            )
 
-                if isinstance(fill_value, str):
-                    data[column] = fill_value
-                else:
-                    data[column] = fill_value()
+        if data.shape[0] != tag_count:
+            raise ValueError(
+                f"for file {source_file}, missing data,"
+                f"data shape {data.shape} tag count is {tag_count}"
+            )
 
-        data = data.drop(columns=columns_to_remove, errors="ignore")
-        return data.rename(columns=columns_to_rename)
+        ignore_list = self.ignore_column
+        if ignore_missing_columns:
+            ignore_list = ignore_list + ignore_missing_columns
+        keys_not_used = (
+            set(collect_unique_keys_from_xml(source_file))
+            - collect_unique_columns_from_nested_json(data)
+            - set(ignore_list)
+        )
+        if len(keys_not_used) > 0:
+            raise ValueError(
+                f"for file {source_file}, there is data we didn't get {keys_not_used}"
+            )
+        assert "found_folder" in data.columns
+        assert "file_name" in data.columns
+
+    def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
+        """build a single row"""
+        values = {
+            "found_folder": found_folder,
+            "file_name": file_name,
+            **sub_root_store,
+        }
+        for name in list(elem):
+            tag = name.tag
+            value = self.build_value(name, no_content="")
+
+            values[tag] = value
+        return values.copy()
 
     def _phrse(
         self,
@@ -43,44 +77,24 @@ class XmlDataFrameConverter(XmlBaseConverter):
         found_folder,
         file_name,
         root_store,
-        no_content,
-        row_limit=None,
         **kwarg,
     ):
-        cols = ["found_folder", "file_name"] + list(root_store.keys())
         rows = []
+        columns = [self.id_field, "found_folder", "file_name"] + (
+            self.roots if self.roots else []
+        )
 
-        add_columns = True
-        # if not root and "Super-Pharm" in file:
-        #     return pd.DataFrame()  # shufersal don't add count=0
+        if root is None:
+            return pd.DataFrame(columns=columns)
 
-        elements = root.getchildren()
-        if len(elements) == 0:
-            if root.attrib.get("Count", None) == "0":
-                return pd.DataFrame()
-            else:
-                raise ValueError(f"{self.list_key} is wrong")
+        elements = list(root)
+        if len(root) == 0:
+
+            return pd.DataFrame(columns=columns)
 
         for elem in elements:
+            rows.append(
+                self.list_single_entry(elem, found_folder, file_name, **root_store)
+            )
 
-            values = {
-                "found_folder": found_folder,
-                "file_name": file_name,
-                **root_store,
-            }
-            for name in elem.getchildren():
-                tag = name.tag
-                if add_columns:
-                    cols.append(tag)
-                value = self.build_value(name, no_content=no_content)
-
-                if value == no_content:
-                    print(f"for value {name} found no content!")
-                values[tag] = value
-            rows.append(values.copy())
-            add_columns = False
-
-            if row_limit and len(rows) >= row_limit:
-                break
-
-        return pd.DataFrame(rows, columns=cols)
+        return pd.DataFrame(rows)

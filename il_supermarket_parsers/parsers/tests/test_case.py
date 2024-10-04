@@ -1,8 +1,14 @@
 import unittest
 import os
+import tempfile
 import pandas as pd
-from il_supermarket_scarper.utils import FileTypesFilters
-from il_supermarket_parsers.utils import get_sample_data, DataLoader
+from il_supermarket_parsers.utils import (
+    get_sample_data,
+    DataLoader,
+    FileTypesFilters,
+    EMPTY_FILE_TOEHOLD,
+)
+from il_supermarket_parsers.parser_factroy import ParserFactory
 
 
 def make_test_case(scraper_enum, parser_enum):
@@ -14,7 +20,9 @@ def make_test_case(scraper_enum, parser_enum):
         def __init__(self, name) -> None:
             super().__init__(name)
             self.scraper_enum = scraper_enum
-            self.parser_enum = parser_enum
+
+            self.parser_class = ParserFactory.get(parser_enum)
+            self.parser_name = parser_enum.name
             self.folder_name = "temp"
             self.refresh = False
 
@@ -43,83 +51,75 @@ def make_test_case(scraper_enum, parser_enum):
                 download_path,
                 filter_type=file_type,
                 enabled_scrapers=[self.scraper_enum.name],
+                limit=5,
             )
 
-        def _parser_validate(self, parser_enum, file_type, dump_path="temp"):
-            """test the subcase"""
+        def _parser_validate(self, file_type):
+
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                self.__parser_validate(file_type, tmpdirname)
+
+        def __parser_validate(self, file_type, dump_path="temp"):
+            """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
             self._refresh_download_folder(sub_folder, file_type)
 
-            parser = parser_enum.value()
+            parser = self.parser_class()
 
-            # TBD: add option to take the folder from enum
-            # TBD: FileType, add function get enum by filter
             files = DataLoader(
                 folder=sub_folder,
-                store_names=[self.scraper_enum.value().chain],
+                store_names=[self.parser_name],
                 files_types=[file_type],
             ).load()
-            assert len(files) > 0, "no files downloaded"
+
+            assert (
+                scraper_enum.value().is_validate_scraper_found_no_files(
+                    None,
+                    files_types=file_type,
+                )
+                or len(files) > 0
+            ), "no files downloaded"
 
             dfs = []
             for file in files:
-                df = parser.read(file)
 
-                # none empty file
-                if os.path.getsize(file.get_full_path()) > 256:
+                try:
+                    df = parser.read(file, run_validation=True)
 
-                    # should contain data
-                    assert df.shape[0] > 0, f"File {file} is empty"
-                    # assert df.isna().all().all(), f"File {file} contains NaN"
-                    # assert set(df.columns) & set(parser.load_column_config()['missing_columns_default_values'].keys())
+                    # none empty file
+                    if os.path.getsize(file.get_full_path()) > EMPTY_FILE_TOEHOLD:
 
-                    dfs.append(df)
+                        # should contain data
+                        assert df.shape[0] > 0, f"File {file} is empty"
 
-                else:
-                    assert df.shape[0] == 0
+                        dfs.append(df)
+
+                    else:
+                        assert df.shape[0] == 0, f"File {file} should be full"
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    raise ValueError(f"File {file}, Failed with {e}")
 
             if dfs:
-                joined = pd.concat(dfs)
-
-                folders = []
-                for source in joined["found_folder"].unique():
-                    folders.append(os.path.split(source)[1])
-
-                joined.to_csv(
-                    os.path.join(
-                        self.folder_name, file_type + "_" + "_".join(folders) + ".csv"
-                    ),
-                    index=False,
-                )
+                pd.concat(dfs)
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.STORE_FILE.name, "samples_store"
-            )
+            self._parser_validate(FileTypesFilters.STORE_FILE.name)
 
         def test_parsing_promo(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FILE.name, "samples_promo"
-            )
+            self._parser_validate(FileTypesFilters.PROMO_FILE.name)
 
         def test_parsing_promo_all(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PROMO_FULL_FILE.name, "samples_promo_all"
-            )
+            self._parser_validate(FileTypesFilters.PROMO_FULL_FILE.name)
 
         def test_parsing_prices(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FILE.name, "samples_prices"
-            )
+            self._parser_validate(FileTypesFilters.PRICE_FILE.name)
 
         def test_parsing_prices_all(self):
             """scrape one file and make sure it exists"""
-            self._parser_validate(
-                parser_enum, FileTypesFilters.PRICE_FULL_FILE.name, "samples_prices_all"
-            )
+            self._parser_validate(FileTypesFilters.PRICE_FULL_FILE.name)
 
     return TestParser

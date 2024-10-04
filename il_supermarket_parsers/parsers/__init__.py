@@ -6,3 +6,6 @@ from .salach_dabach import SalachDabachFileConverter
 from .shufersal import ShufersalFileConverter
 from .super_pharm import SuperPharmFileConverter
 from .victory import VictoryFileConverter
+from .het_cohen import HetChoenFileConverter
+from .tiv_taam import TivTaamFileConverter
+from .other import *

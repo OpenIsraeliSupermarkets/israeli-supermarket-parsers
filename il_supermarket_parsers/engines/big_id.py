@@ -21,7 +21,7 @@ class BigIDFileConverter(BaseFileConverter):
                 if pricefull_parser
                 else XmlDataFrameConverter(
                     list_key="Products",
-                    id_field=["ItemCode", "PriceUpdateDate"],
+                    id_field="ItemCode",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 )
             ),
@@ -30,7 +30,7 @@ class BigIDFileConverter(BaseFileConverter):
                 if price_parser
                 else XmlDataFrameConverter(
                     list_key="Products",
-                    id_field=["ItemCode", "PriceUpdateDate"],
+                    id_field="ItemCode",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 )
             ),
@@ -39,9 +39,8 @@ class BigIDFileConverter(BaseFileConverter):
                 if promo_parser
                 else XmlDataFrameConverter(
                     list_key="Sales",
-                    id_field=["ItemCode", "PriceUpdateDate"],
+                    id_field="ItemCode",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                    date_columns=["PriceUpdateDate"],
                 )
             ),
             promofull_parser=(
@@ -49,9 +48,8 @@ class BigIDFileConverter(BaseFileConverter):
                 if promofull_parser
                 else XmlDataFrameConverter(
                     list_key="Sales",
-                    id_field=["PromotionId", "ItemCode"],
+                    id_field="PromotionID",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                    date_columns=["PriceUpdateDate"],
                 )
             ),
             stores_parser=(
@@ -59,9 +57,8 @@ class BigIDFileConverter(BaseFileConverter):
                 if stores_parser
                 else XmlDataFrameConverter(
                     list_key="Sales",
-                    id_field=["ItemCode", "PromotionUpdateDate"],
+                    id_field="PromotionID",
                     roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                    date_columns=["PriceUpdateDate"],
                 )
             ),
         )
