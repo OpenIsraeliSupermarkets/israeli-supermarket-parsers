@@ -87,7 +87,7 @@ def make_test_case(scraper_enum, parser_enum):
                     df = parser.read(file, run_validation=True)
 
                     # none empty file
-                    if os.path.getsize(file.get_full_path()) > 300:
+                    if os.path.getsize(file.get_full_path()) > EMPTY_FILE_TOEHOLD:
 
                         # should contain data
                         assert df.shape[0] > 0, f"File {file} is empty"
