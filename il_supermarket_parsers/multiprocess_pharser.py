@@ -52,7 +52,7 @@ class ParallelParser(MultiProcessor):
         all_parsers = (
             self.enabled_parsers
             if self.enabled_parsers
-            else ParserFactory.all_listed_parsers()
+            else ParserFactory.all_parsers_name()
         )
         all_file_types = (
             self.enabled_file_types
