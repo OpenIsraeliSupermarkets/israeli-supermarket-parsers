@@ -15,3 +15,5 @@ build/
 il_supermarket_parsers.egg-info/
 israeli_supermarket_parsers.egg-info
 temp
+dist/
+il_supermarket_parser.egg-info/

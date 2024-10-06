@@ -4,14 +4,14 @@ from il_supermarket_parsers import ConvertingTask
 if __name__ == "__main__":
 
     ScarpingTask(
-        enabled_scrapers=[ScraperFactory.BAREKET.name],  # download one from each
+        enabled_scrapers=None,  # download one from each
         dump_folder_name="dumps",
         limit=1,
         multiprocessing=None,
         lookup_in_db=True,
     ).start()
     scraper = ConvertingTask(
-        enabled_parsers=[ScraperFactory.BAREKET.name],
+        enabled_parsers=None,
         files_types=None,
         data_folder="dumps",
         multiprocessing=None,
