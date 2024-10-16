@@ -37,4 +37,4 @@ FROM base as test
 VOLUME ["/usr/src/app/temp"]
 
 RUN python -m pip install . ".[test]"
-CMD python -m pytest .
+CMD python -m pytest -n 4
