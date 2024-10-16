@@ -31,7 +31,7 @@ setup(
     tests_require=dev_required,
     extras_require={"test": ["pytest"]},
     # *strongly* suggested for sharing
-    version="0.0.3",
+    version="0.0.4",
     # The license can be anything you like
     license="MIT",
     description="python package that process the data dumped by the israeli supermarket",
