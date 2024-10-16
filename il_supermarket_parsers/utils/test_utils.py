@@ -1,5 +1,6 @@
-from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 import datetime
+from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
+
 
 def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None, limit=3):
     """get data to scrape"""
