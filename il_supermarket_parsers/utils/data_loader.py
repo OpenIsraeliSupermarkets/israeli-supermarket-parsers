@@ -123,10 +123,11 @@ class DataLoader:
                         f"Ignoreing file {store_folder}, {ignore_file_reseaon}."
                     )
                     continue
-
-                files.append(
-                    self._file_name_to_components(
+                
+                dump_file = self._file_name_to_components(
                         store_folder, xml, empty_store_id=self.empty_store_id
                     )
-                )
+                if dump_file.detected_filetype.name in self.files_types:
+                    files.append(dump_file)
+                    
         return sorted(files, key=lambda x: x.extracted_date)
