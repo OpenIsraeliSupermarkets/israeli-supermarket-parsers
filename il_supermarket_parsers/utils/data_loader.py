@@ -17,7 +17,7 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
     extracted_store_number: str
     extracted_chain_id: str
     extracted_date: datetime.datetime
-    detected_filetype: str
+    detected_filetype: FileTypesFilters
     data: str = None
 
     def get_full_path(self):
@@ -123,11 +123,11 @@ class DataLoader:
                         f"Ignoreing file {store_folder}, {ignore_file_reseaon}."
                     )
                     continue
-                
-                dump_file = self._file_name_to_components(
-                        store_folder, xml, empty_store_id=self.empty_store_id
-                    )
+
+                dump_file: DumpFile = self._file_name_to_components(
+                    store_folder, xml, empty_store_id=self.empty_store_id
+                )
                 if dump_file.detected_filetype.name in self.files_types:
                     files.append(dump_file)
-                    
+
         return sorted(files, key=lambda x: x.extracted_date)
