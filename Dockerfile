@@ -3,6 +3,7 @@
 FROM node:20-bookworm as base
 WORKDIR /usr/src/app
 ARG PY_VERSION="3.11.0"
+ENV TZ="Asia/Jerusalem"
 
 RUN apt-get update && \
     apt-get install python3-pip -y && \
@@ -36,4 +37,4 @@ FROM base as test
 VOLUME ["/usr/src/app/temp"]
 
 RUN python -m pip install . ".[test]"
-CMD python -m pytest .
+CMD python -m pytest -n 4

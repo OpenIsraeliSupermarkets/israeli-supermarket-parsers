@@ -36,9 +36,10 @@ jobs:
         df --human-readable
     - name: Build with Docker
       run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
+    - name: Remove all build
+      run: (docker stop parsers-test-runner 2>/dev/null || true) && (docker rm parsers-test-runner 2>/dev/null || true)
     - name: Test with pytest
       run: |
            mkdir -p temp &&
-           docker rm parsers-test-runner || true &&
            docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test &&
            docker builder prune -f

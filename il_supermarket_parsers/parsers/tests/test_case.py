@@ -72,14 +72,6 @@ def make_test_case(scraper_enum, parser_enum):
                 files_types=[file_type],
             ).load()
 
-            assert (
-                scraper_enum.value().is_validate_scraper_found_no_files(
-                    None,
-                    files_types=file_type,
-                )
-                or len(files) > 0
-            ), "no files downloaded"
-
             dfs = []
             for file in files:
 

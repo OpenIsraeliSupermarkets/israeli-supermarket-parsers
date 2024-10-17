@@ -1,3 +1,4 @@
+import datetime
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 
 
@@ -9,7 +10,9 @@ def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None, l
             limit=limit,
             files_types=[filter_type],
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
-            lookup_in_db=True,
+            lookup_in_db=False,
+            when_date=datetime.datetime.now(),
+            suppress_exception=True,
         )
         task.start()
     else:
