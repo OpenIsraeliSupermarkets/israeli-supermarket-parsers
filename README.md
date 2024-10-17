@@ -6,7 +6,7 @@ This is a parser for ALL the supermarket chains listed in the GOV.IL site.
 הגדרת הקבצים שהיו צריכים להיות זמינים באתרים - https://www.nevo.co.il/law_html/law01/501_131.htm
 
 
-[![Unit & Integration Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg?event=push)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
+[![Unit & Integration Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg?branch=main&event=push)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
 [![CodeQL](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml)
 [![Pylint](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml)
 [![Publish Docker image](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml)
