@@ -19,8 +19,11 @@ class RawParseingPipeline:
     def process(self):
         """start processing the files selected in the pipeline input"""
         parser_class = ParserFactory.get(self.store_name)
+        create_csv = os.path.join(
+            self.output_folder,
+            self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
+        )
 
-        data_frames = []
         files_to_process = DataLoader(
             self.folder,
             store_names=[self.store_name],
@@ -32,25 +35,15 @@ class RawParseingPipeline:
             total=len(files_to_process),
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
-
             parser = parser_class()
             file.data = parser.read(file)
-            data_frames.append(file.data)
 
-        create_csv = os.path.join(
-            self.output_folder,
-            self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
-        )
+            if not os.path.exists(create_csv):
+                file.data.to_csv(create_csv, index=False, mode="w", header=True)
+            else:
+                file.data.to_csv(create_csv, index=False, mode="a", header=False)
 
-        if data_frames:
-            pd.concat(data_frames).to_csv(
-                create_csv,
-                index=False,
-            )
-            return {"status": True, "path": create_csv}
-        return {
-            "status": False,
-        }
+        return {"status": True, "path": create_csv}
 
     # def convert(self, full_path, file_type, update_date):
     #     """convert xml to database"""
