@@ -4,7 +4,7 @@ import il_supermarket_parsers.parsers as all_parsers
 
 
 class ParserFactory(Enum):
-    """all parsers avaliabe"""
+    """all parsers available"""
 
     BAREKET = all_parsers.BareketFileConverter
     YAYNO_BITAN = all_parsers.YaynoBitanFileConverter

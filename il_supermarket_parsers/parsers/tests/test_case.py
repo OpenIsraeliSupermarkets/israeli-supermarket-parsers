@@ -8,7 +8,7 @@ from il_supermarket_parsers.utils import (
     FileTypesFilters,
     EMPTY_FILE_TOEHOLD,
 )
-from il_supermarket_parsers.parser_factroy import ParserFactory
+from il_supermarket_parsers.parser_factory  import ParserFactory
 
 
 def make_test_case(scraper_enum, parser_enum):
