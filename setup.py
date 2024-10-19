@@ -29,7 +29,7 @@ setup(
     # Needed for dependencies
     install_requires=required,
     tests_require=dev_required,
-    extras_require={"test": ["pytest","pytest-xdist"]},
+    extras_require={"test": ["pytest", "pytest-xdist"]},
     # *strongly* suggested for sharing
     version="0.0.4",
     # The license can be anything you like
