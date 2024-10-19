@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 from tqdm import tqdm
-from .parser_factroy import ParserFactory
+from .parser_factory  import ParserFactory
 from .utils import DataLoader
 
 
-class RawParseingPipeline:
+class RawParsingPipeline :
     """
     processing files to dataframe
     """

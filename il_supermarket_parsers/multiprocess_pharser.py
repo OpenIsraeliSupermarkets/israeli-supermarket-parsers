@@ -1,8 +1,8 @@
 import itertools
 import os
-from .raw_parsing_pipeline import RawParseingPipeline
-from .utils.multi_prcoessing import MultiProcessor, ProcessJob
-from .parser_factroy import ParserFactory
+from .raw_parsing_pipeline import RawParsingPipeline 
+from .utils.multi_processing  import MultiProcessor, ProcessJob
+from .parser_factory  import ParserFactory
 from .utils import FileTypesFilters
 
 
@@ -19,7 +19,7 @@ class RawProcessing(ProcessJob):
         parser_name = kwargs.pop("store_enum")
         output_folder = kwargs.pop("output_folder")
 
-        return RawParseingPipeline(
+        return RawParsingPipeline (
             drop_folder, parser_name, file_type, output_folder
         ).process()
 
@@ -65,7 +65,7 @@ class ParallelParser(MultiProcessor):
                 all_parsers, all_file_types, [self.data_folder], [self.output_folder]
             )
         )
-        task_can_executed_indepentlly = [
+        task_can_executed_independently = [
             dict(zip(params_order, combo)) for combo in combinations
         ]
-        return task_can_executed_indepentlly
+        return task_can_executed_independently

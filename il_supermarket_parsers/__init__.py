@@ -1,3 +1,3 @@
 from .main import ConvertingTask
-from .parser_factroy import ParserFactory
+from .parser_factory  import ParserFactory
 from .utils import FileTypesFilters
