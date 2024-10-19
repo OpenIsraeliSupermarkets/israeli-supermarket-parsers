@@ -100,7 +100,6 @@ class DataLoader:
                 ignore_reason = "not in requested chains to scan"
 
             if ignore_reason:
-                Logger.warning(f"Ignoring file {store_folder}, {ignore_reason}")
                 continue
             #
             for xml in os.listdir(store_folder):
