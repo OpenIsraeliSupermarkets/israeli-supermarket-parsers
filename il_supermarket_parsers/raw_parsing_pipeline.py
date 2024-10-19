@@ -42,7 +42,7 @@ class RawParseingPipeline:
                 df.to_csv(create_csv, index=False, mode="w", header=True)
             else:
                 df.to_csv(create_csv, index=False, mode="a", header=False)
-                
+
             del df
 
         return {"status": True, "path": create_csv}
