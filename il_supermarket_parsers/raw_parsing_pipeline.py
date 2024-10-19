@@ -36,12 +36,14 @@ class RawParseingPipeline:
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
             parser = parser_class()
-            file.data = parser.read(file)
+            df = parser.read(file)
 
             if not os.path.exists(create_csv):
-                file.data.to_csv(create_csv, index=False, mode="w", header=True)
+                df.to_csv(create_csv, index=False, mode="w", header=True)
             else:
-                file.data.to_csv(create_csv, index=False, mode="a", header=False)
+                df.to_csv(create_csv, index=False, mode="a", header=False)
+                
+            del df
 
         return {"status": True, "path": create_csv}
 
