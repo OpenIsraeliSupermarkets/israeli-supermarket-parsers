@@ -100,27 +100,27 @@ class DataLoader:
                 ignore_reason = "not in requested chains to scan"
 
             if ignore_reason:
-                Logger.warning(f"Ignoreing file {store_folder}, {ignore_reason}")
+                Logger.warning(f"Ignoring file {store_folder}, {ignore_reason}")
                 continue
             #
             for xml in os.listdir(store_folder):
 
                 # skip files that are not xml
-                ignore_file_reseaon = ""
+                ignore_file_reason = ""
                 extension = xml.split(".")[-1]
                 if extension != "xml":
-                    ignore_file_reseaon = (
-                        ignore_file_reseaon + f"file type not in {extension}"
+                    ignore_file_reason = (
+                        ignore_file_reason + f"file type not in {extension}"
                     )
                 if "null" in xml.lower():
-                    ignore_file_reseaon = ignore_file_reseaon + " null file "
+                    ignore_file_reason = ignore_file_reason + " null file "
 
                 if os.path.getsize(os.path.join(store_folder, xml)) == 0:
-                    ignore_file_reseaon = "file is empty."
+                    ignore_file_reason = "file is empty."
 
-                if len(ignore_file_reseaon) > 0:
+                if len(ignore_file_reason) > 0:
                     Logger.warning(
-                        f"Ignoreing file {store_folder}, {ignore_file_reseaon}."
+                        f"Ignoring file {store_folder}, {ignore_file_reason}."
                     )
                     continue
 
