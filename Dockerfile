@@ -28,7 +28,7 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-VOLUME ["/usr/src/app/data"]
+VOLUME ["/usr/src/app/dumps"]
 VOLUME ["/usr/src/app/output"]
 
 
