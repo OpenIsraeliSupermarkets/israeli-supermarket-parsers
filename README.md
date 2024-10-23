@@ -61,6 +61,30 @@ repo directly:
     python3 -m pip install -U https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/main
     
 
+Running Docker
+-----------
+
+Build yourself:
+
+    docker build -t erlichsefi/israeli-supermarket-parsers --target prod .
+
+or pull the existing image from docker hub:
+
+    docker pull erlichsefi/israeli-supermarket-parsers:latest
+
+
+Then running it using:
+
+
+    docker run  -v "./dumps:/usr/src/app/dumps" \
+                -v "./outputs:/usr/src/app/outputs" \
+                -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN" \
+                -e ENABLED_FILE_TYPES="STORE_FILE" \
+                -e LIMIT=1 \
+                erlichsefi/israeli-supermarket-parsers
+
+
+
 Contributing
 ------------
 
