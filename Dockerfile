@@ -1,7 +1,7 @@
 #syntax=docker/dockerfile:1
 
 FROM node:20-bookworm as base
-WORKDIR /usr/src/app
+
 ARG PY_VERSION="3.11.0"
 ENV TZ="Asia/Jerusalem"
 
@@ -22,19 +22,26 @@ ENV PATH="${PYENV_ROOT}/shims:${PYENV_ROOT}/bin:${PATH}"
 RUN pyenv install $PY_VERSION
 RUN pyenv global $PY_VERSION
 
+
+WORKDIR /usr/src/app
 COPY . .
 
 RUN pip install -r requirements.txt
 
+VOLUME ["/usr/src/app/dumps"]
+VOLUME ["/usr/src/app/outputs"]
+
+
 FROM base as prod
 CMD python main.py
+
 
 FROM base as dev
 
 RUN pip install -r requirements-dev.txt
 
+
 FROM base as test
-VOLUME ["/usr/src/app/temp"]
 
 RUN python -m pip install . ".[test]"
 CMD python -m pytest -n 4

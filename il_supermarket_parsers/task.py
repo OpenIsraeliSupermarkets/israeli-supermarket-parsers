@@ -11,7 +11,8 @@ class ConvertingTask:
         enabled_parsers=None,
         files_types=None,
         multiprocessing=6,
-        output_folder="output",
+        limit=None,
+        output_folder="outputs",
     ):
         Logger.info(
             f"Starting Parser, data_folder={data_folder},"
@@ -19,6 +20,7 @@ class ConvertingTask:
             f"parsers = {enabled_parsers}"
             f"files_types = {files_types}"
             f"output_folder={output_folder}"
+            f"limit={limit}"
         )
         self.runner = ParallelParser(
             data_folder,
@@ -27,11 +29,8 @@ class ConvertingTask:
             multiprocessing=multiprocessing,
             output_folder=output_folder,
         )
+        self.limit = limit
 
     def start(self):
         """run the parsing"""
-        return self.runner.execute()
-
-
-if __name__ == "__main__":
-    ConvertingTask()
+        return self.runner.execute(limit=self.limit)
