@@ -6,7 +6,6 @@ from tqdm import tqdm
 from .logger import Logger
 
 
-
 def task(static_job, *arg, **kwarg):
     """execute the job"""
     return static_job().processes_job(*arg, **kwarg)
