@@ -1,10 +1,10 @@
-from il_supermarket_parsers import ConvertingTask, ParserFactory, FileTypesFilters
 import os
+from il_supermarket_parsers import ConvertingTask, ParserFactory, FileTypesFilters
 
 
 def load_params():
     """load params from env variables with validation"""
-    kwargs = {"suppress_exception": True, "lookup_in_db": True}
+    kwargs = {}
 
     # validate scrapers
     enabled_parsers = os.getenv("ENABLED_PARSERS", None)
