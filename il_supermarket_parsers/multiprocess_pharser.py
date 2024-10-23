@@ -69,7 +69,7 @@ class ParallelParser(MultiProcessor):
         ]
         combinations = list(
             itertools.product(
-                limit,
+                [limit],
                 all_parsers,
                 all_file_types,
                 [self.data_folder],

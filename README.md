@@ -78,9 +78,9 @@ Then running it using:
 
     docker run  -v "./dumps:/usr/src/app/dumps" \
                 -v "./output:/usr/src/app/output" \
-                -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN" \   # see: il_supermarket_parsers/parser_factory.py
-                -e ENABLED_FILE_TYPES="STORE_FILE" \          # see: il_supermarket_scarper/utils/file_types.py
-                -e LIMIT=1 \                                  # number of files you would like to try and parser (remove for unlimited)
+                -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN" \
+                -e ENABLED_FILE_TYPES="STORE_FILE" \
+                -e LIMIT=1 \
                 erlichsefi/israeli-supermarket-parsers
 
 
