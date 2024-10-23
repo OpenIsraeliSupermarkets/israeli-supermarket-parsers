@@ -2,8 +2,9 @@ import abc
 import time
 import queue
 from multiprocessing import Queue, Process, current_process
-from .logger import Logger
 from tqdm import tqdm
+from .logger import Logger
+
 
 
 def task(static_job, *arg, **kwarg):
@@ -53,7 +54,7 @@ class MultiProcessor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_arguments_list(self):
+    def get_arguments_list(self, limit=None):
         """create list of arguments"""
         raise NotImplementedError()
 
@@ -61,20 +62,18 @@ class MultiProcessor:
         """post process the results"""
         return results
 
-    def get_tasks_queue(
-        self,
-    ):
+    def get_tasks_queue(self, limit=None):
         """get a queue with all the tasks need to execute"""
 
-        task_can_executed_indepentlly = self.get_arguments_list()
+        task_can_executed_indepentlly = self.get_arguments_list(limit=limit)
         tasks_to_accomplish = Queue()
         for raw in task_can_executed_indepentlly:
             tasks_to_accomplish.put(raw)
         return tasks_to_accomplish, len(task_can_executed_indepentlly)
 
-    def execute(self):
+    def execute(self, limit=None):
         """execute task"""
-        tasks_to_accomplish, size = self.get_tasks_queue()
+        tasks_to_accomplish, size = self.get_tasks_queue(limit=limit)
         results = []
 
         if self.multiprocessing:

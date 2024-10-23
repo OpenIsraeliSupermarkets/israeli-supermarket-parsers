@@ -80,7 +80,7 @@ class DataLoader:
             lower_file_name[index:],
         )
 
-    def load(self):
+    def load(self, limit=None):
         """load details about the files in the folder"""
         files_in_dir = os.listdir(self.folder)
         stores_folders = [DumpFolderNames[enum].value for enum in self.store_names]
@@ -128,5 +128,8 @@ class DataLoader:
                 )
                 if dump_file.detected_filetype.name in self.files_types:
                     files.append(dump_file)
+
+                if limit and len(files) >= limit:
+                    break
 
         return sorted(files, key=lambda x: x.extracted_date)

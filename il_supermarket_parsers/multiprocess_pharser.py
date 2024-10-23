@@ -1,8 +1,8 @@
 import itertools
 import os
-from .raw_parsing_pipeline import RawParsingPipeline 
-from .utils.multi_processing  import MultiProcessor, ProcessJob
-from .parser_factory  import ParserFactory
+from .raw_parsing_pipeline import RawParsingPipeline
+from .utils.multi_processing import MultiProcessor, ProcessJob
+from .parser_factory import ParserFactory
 from .utils import FileTypesFilters
 
 
@@ -18,10 +18,11 @@ class RawProcessing(ProcessJob):
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
         output_folder = kwargs.pop("output_folder")
+        limit = kwargs.pop("limit")
 
-        return RawParsingPipeline (
+        return RawParsingPipeline(
             drop_folder, parser_name, file_type, output_folder
-        ).process()
+        ).process(limit=limit)
 
 
 class ParallelParser(MultiProcessor):
@@ -45,7 +46,7 @@ class ParallelParser(MultiProcessor):
         """the task to execute"""
         return RawProcessing
 
-    def get_arguments_list(self):
+    def get_arguments_list(self, limit=None):
         """create list of arguments"""
 
         os.makedirs(self.output_folder, exist_ok=True)
@@ -59,10 +60,20 @@ class ParallelParser(MultiProcessor):
             if self.enabled_file_types
             else FileTypesFilters.all_types()
         )
-        params_order = ["store_enum", "file_type", "data_folder", "output_folder"]
+        params_order = [
+            "limit",
+            "store_enum",
+            "file_type",
+            "data_folder",
+            "output_folder",
+        ]
         combinations = list(
             itertools.product(
-                all_parsers, all_file_types, [self.data_folder], [self.output_folder]
+                limit,
+                all_parsers,
+                all_file_types,
+                [self.data_folder],
+                [self.output_folder],
             )
         )
         task_can_executed_independently = [
