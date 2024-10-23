@@ -77,7 +77,7 @@ Then running it using:
 
 
     docker run  -v "./dumps:/usr/src/app/dumps" \
-                -v "./output:/usr/src/app/output" \
+                -v "./outputs:/usr/src/app/outputs" \
                 -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN" \
                 -e ENABLED_FILE_TYPES="STORE_FILE" \
                 -e LIMIT=1 \

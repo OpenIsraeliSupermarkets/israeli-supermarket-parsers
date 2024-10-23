@@ -12,7 +12,7 @@ class ConvertingTask:
         files_types=None,
         multiprocessing=6,
         limit=None,
-        output_folder="output",
+        output_folder="outputs",
     ):
         Logger.info(
             f"Starting Parser, data_folder={data_folder},"
