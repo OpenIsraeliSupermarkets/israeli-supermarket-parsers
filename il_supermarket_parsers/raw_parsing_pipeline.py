@@ -1,11 +1,10 @@
 import os
-import pandas as pd
 from tqdm import tqdm
-from .parser_factory  import ParserFactory
+from .parser_factory import ParserFactory
 from .utils import DataLoader
 
 
-class RawParsingPipeline :
+class RawParsingPipeline:
     """
     processing files to dataframe
     """
@@ -16,7 +15,7 @@ class RawParsingPipeline :
         self.folder = folder
         self.output_folder = output_folder
 
-    def process(self):
+    def process(self, limit=None):
         """start processing the files selected in the pipeline input"""
         parser_class = ParserFactory.get(self.store_name)
         create_csv = os.path.join(
@@ -28,7 +27,7 @@ class RawParsingPipeline :
             self.folder,
             store_names=[self.store_name],
             files_types=[self.file_type],
-        ).load()
+        ).load(limit=limit)
 
         for file in tqdm(
             files_to_process,
