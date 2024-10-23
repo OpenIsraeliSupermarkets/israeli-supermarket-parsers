@@ -7,7 +7,7 @@ def load_params():
     kwargs = {"suppress_exception": True, "lookup_in_db": True}
 
     # validate scrapers
-    enabled_parsers = os.getenv("ENABLED_SCRAPERS", None)
+    enabled_parsers = os.getenv("ENABLED_PARSERS", None)
     if enabled_parsers:
         enabled_parsers = enabled_parsers.split(",")
 
@@ -18,7 +18,7 @@ def load_params():
             )
         )
         if not_valid:
-            raise ValueError(f"ENABLED_SCRAPERS contains invalid {not_valid}")
+            raise ValueError(f"ENABLED_PARSERS contains invalid {not_valid}")
 
         kwargs["enabled_parsers"] = enabled_parsers
 
