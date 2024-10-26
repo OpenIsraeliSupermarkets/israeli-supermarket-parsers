@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
@@ -80,3 +81,13 @@ class ParallelParser(MultiProcessor):
             dict(zip(params_order, combo)) for combo in combinations
         ]
         return task_can_executed_independently
+
+    def post(self, results):
+        """post process the results"""
+        with open(
+            os.path.join(self.output_folder, "parser-status.json"),
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(results, file)
+        return super().post(results)
