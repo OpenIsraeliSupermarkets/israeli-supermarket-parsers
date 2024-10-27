@@ -13,6 +13,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for accurate git log
+
+      - name: Fetch main branch
+        run: |
+          # Fetch the main branch to ensure it's available for comparison
+          git fetch origin main
 
       - name: Check for restricted authors in commits
         id: check_commit_authors
