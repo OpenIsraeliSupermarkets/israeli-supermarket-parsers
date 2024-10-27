@@ -1,6 +1,6 @@
 import os
 from il_supermarket_parsers import ConvertingTask, ParserFactory, FileTypesFilters
-
+import json
 
 def load_params():
     """load params from env variables with validation"""
