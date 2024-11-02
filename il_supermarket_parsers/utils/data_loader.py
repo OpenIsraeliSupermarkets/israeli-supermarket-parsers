@@ -2,6 +2,7 @@ import os
 import re
 import datetime
 from dataclasses import dataclass
+from typing import List
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
 from .logger import Logger
@@ -32,8 +33,10 @@ class DataLoader:
         self, folder, store_names=None, files_types=None, empty_store_id=0000
     ) -> None:
         self.folder = folder
-        self.store_names = store_names
-        self.files_types = files_types
+        self.store_names = (
+            store_names if store_names else DumpFolderNames.all_folders_names()
+        )
+        self.files_types = files_types if files_types else FileTypesFilters.all_types()
         self.empty_store_id = empty_store_id
 
     def _format_datetime(self, date):
@@ -76,16 +79,20 @@ class DataLoader:
         match = re.search(r"\d", lower_file_name)
         index = match.start()
         return (
-            FileTypesFilters.get_type_from_file(lower_file_name[:index]),
+            FileTypesFilters.get_type_from_file(
+                lower_file_name[:index].replace("null", "")
+            ),
             lower_file_name[index:],
         )
 
-    def load(self, limit=None):
+    def load(
+        self, limit=None, ignore_null_files=False, ignore_zero_store_id=False
+    ):  # pylint: disable=too-many-branches
         """load details about the files in the folder"""
         files_in_dir = os.listdir(self.folder)
         stores_folders = [DumpFolderNames[enum].value for enum in self.store_names]
 
-        files = []
+        files: List[DumpFile] = []
         for store_name in files_in_dir:
             #
             store_folder = os.path.join(self.folder, store_name)
@@ -111,8 +118,13 @@ class DataLoader:
                     ignore_file_reason = (
                         ignore_file_reason + f"file type not in {extension}"
                     )
-                if "null" in xml.lower():
+                if ignore_null_files and "null" in xml.lower():
                     ignore_file_reason = ignore_file_reason + " null file "
+
+                if ignore_zero_store_id and "0000000000000" in xml:
+                    ignore_file_reason = (
+                        ignore_file_reason + " containing zeros as store id"
+                    )
 
                 if os.path.getsize(os.path.join(store_folder, xml)) == 0:
                     ignore_file_reason = "file is empty."
