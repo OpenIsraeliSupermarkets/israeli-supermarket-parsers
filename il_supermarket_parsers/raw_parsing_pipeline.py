@@ -1,7 +1,8 @@
 import os
+from typing import List
 from tqdm import tqdm
 from .parser_factory import ParserFactory
-from .utils import DataLoader
+from .utils import DataLoader, DumpFile
 
 
 class RawParsingPipeline:
@@ -23,7 +24,7 @@ class RawParsingPipeline:
             self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
         )
 
-        files_to_process = DataLoader(
+        files_to_process: List[DumpFile] = DataLoader(
             self.folder,
             store_names=[self.store_name],
             files_types=[self.file_type],
@@ -34,18 +35,38 @@ class RawParsingPipeline:
             total=len(files_to_process),
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
-            parser = parser_class()
-            df = parser.read(file)
 
-            if not os.path.exists(create_csv):
-                df.to_csv(create_csv, index=False, mode="w", header=True)
-            else:
-                df.to_csv(create_csv, index=False, mode="a", header=False)
+            execution_log = []
+            try:
+                parser = parser_class()
+                df = parser.read(file)
 
-            del df
+                if not os.path.exists(create_csv):
+                    df.to_csv(create_csv, index=False, mode="w", header=True)
+                else:
+                    df.to_csv(create_csv, index=False, mode="a", header=False)
+
+                del df
+
+                execution_log.append(
+                    {
+                        "status": True,
+                        **file.to_dict(),
+                    }
+                )
+
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                execution_log.append(
+                    {
+                        "status": False,
+                        "error": error,
+                        **file.to_dict(),
+                    }
+                )
 
         return {
             "status": True,
+            "execution_log": execution_log,
             "file_was_created": len(files_to_process) > 0,
             "file_created_path": create_csv,
             "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
