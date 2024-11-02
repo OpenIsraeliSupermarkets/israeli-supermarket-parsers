@@ -46,6 +46,7 @@ class RawParsingPipeline:
 
         return {
             "status": True,
+            "file_was_created": len(files_to_process) > 0,
             "file_created_path": create_csv,
             "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
             "store_name": self.store_name,
