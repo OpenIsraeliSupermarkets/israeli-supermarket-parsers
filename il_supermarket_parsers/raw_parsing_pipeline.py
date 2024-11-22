@@ -51,7 +51,7 @@ class RawParsingPipeline:
                 execution_log.append(
                     {
                         "status": True,
-                        **file.to_dict(),
+                        **file.to_log_dict(),
                     }
                 )
 
@@ -60,7 +60,7 @@ class RawParsingPipeline:
                     {
                         "status": False,
                         "error": error,
-                        **file.to_dict(),
+                        **file.to_log_dict(),
                     }
                 )
 
