@@ -25,6 +25,18 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
         """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
 
+    def to_log_dict(self):
+        """return the object as dict"""
+        return {
+            "store_folder": self.store_folder,
+            "file_name": self.file_name,
+            "prefix_file_name": self.prefix_file_name,
+            "extracted_store_number": self.extracted_store_number,
+            "extracted_chain_id": self.extracted_chain_id,
+            "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "detected_filetype": self.detected_filetype.name,
+        }
+
 
 class DataLoader:
     """class for loading dump files from the folder"""
