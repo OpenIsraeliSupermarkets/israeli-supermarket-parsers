@@ -3,13 +3,13 @@ from il_supermarket_parsers import ConvertingTask
 
 if __name__ == "__main__":
 
-    # ScarpingTask(
-    #     enabled_scrapers=None,
-    #     dump_folder_name="dumps",
-    #     limit=1,  # download one from each
-    #     multiprocessing=None,
-    #     lookup_in_db=True,
-    # ).start()
+    ScarpingTask(
+        enabled_scrapers=None,
+        dump_folder_name="dumps",
+        limit=1,  # download one from each
+        multiprocessing=None,
+        lookup_in_db=True,
+    ).start()
     scraper = ConvertingTask(
         enabled_parsers=None,
         files_types=None,
