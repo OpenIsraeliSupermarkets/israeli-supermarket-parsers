@@ -33,8 +33,8 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
             "prefix_file_name": self.prefix_file_name,
             "extracted_store_number": self.extracted_store_number,
             "extracted_chain_id": self.extracted_chain_id,
-            "extracted_date": self.extracted_date,
-            "detected_filetype": self.detected_filetype,
+            "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "detected_filetype": self.detected_filetype.name,
         }
 
 
