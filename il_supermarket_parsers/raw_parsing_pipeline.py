@@ -1,4 +1,6 @@
 import os
+import csv
+
 from typing import List
 import pandas as pd
 from tqdm import tqdm
@@ -17,6 +19,22 @@ class RawParsingPipeline:
         self.folder = folder
         self.output_folder = output_folder
 
+    def append_columns_to_csv(self, existing_file, new_columns):
+        output_file = existing_file.replace(".csv", "_temp.csv")
+        with open(existing_file, "r") as infile, open(output_file, "w+", newline="") as outfile:
+            reader = csv.reader(infile)
+            writer = csv.writer(outfile)
+
+            # Add header
+            header = next(reader)
+            writer.writerow(header + list(new_columns))
+
+            # Add data row-by-row
+            for row in reader:
+                writer.writerow(row + [''] * len(new_columns))
+        os.remove(existing_file)
+        os.rename(output_file, existing_file)
+                
     def process(self, limit=None):
         """start processing the files selected in the pipeline input"""
         parser_class = ParserFactory.get(self.store_name)
@@ -44,14 +62,24 @@ class RawParsingPipeline:
                 df = parser.read(file)
 
                 if not os.path.exists(create_csv):
-                    df.to_csv(create_csv, index=False, mode="w", header=True)
+                    df.iloc[:,3:5].to_csv(create_csv, index=False, mode="w", header=True)
                 else:
                     # align columns
                     existing_df = pd.read_csv(create_csv, nrows=0)
-                    for column in existing_df.columns:
+                    
+                    # if there is missing columns in the existing file, append them
+                    missing_columns = set(df.columns) - set(existing_df.columns)
+                    if missing_columns:
+                        self.append_columns_to_csv(create_csv, missing_columns)
+                    
+                    existing_df = pd.read_csv(create_csv, nrows=0)
+                    # if there is missing columns in the new file, append them
+                    all_columns = list(set(existing_df.columns) - set(df.columns))
+                    for column in all_columns:
                         if column not in df.columns:
                             df[column] = None  # Add missing columns with None values
                     
+                    existing_df = pd.read_csv(create_csv, nrows=0)
                     df[existing_df.columns].to_csv(create_csv, index=False, mode="a", header=False)
 
                 del df
