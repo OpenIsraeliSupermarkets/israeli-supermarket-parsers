@@ -29,14 +29,15 @@ class RawParsingPipeline:
             store_names=[self.store_name],
             files_types=[self.file_type],
         ).load(limit=limit)
-
+        execution_log = []
+        
         for file in tqdm(
             files_to_process,
             total=len(files_to_process),
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
 
-            execution_log = []
+            
             try:
                 parser = parser_class()
                 df = parser.read(file)

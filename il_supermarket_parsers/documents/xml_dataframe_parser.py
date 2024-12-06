@@ -94,7 +94,7 @@ class XmlDataFrameConverter(XmlBaseConverter):
 
         for elem in elements:
             rows.append(
-                self.list_single_entry(elem, found_folder, file_name, **root_store)
+                self.list_single_entry(elem, found_folder=found_folder, file_name=file_name, **root_store)
             )
 
         return pd.DataFrame(rows)
