@@ -1,5 +1,6 @@
 import os
 from typing import List
+import pandas as pd
 from tqdm import tqdm
 from .parser_factory import ParserFactory
 from .utils import DataLoader, DumpFile
@@ -45,7 +46,13 @@ class RawParsingPipeline:
                 if not os.path.exists(create_csv):
                     df.to_csv(create_csv, index=False, mode="w", header=True)
                 else:
-                    df.to_csv(create_csv, index=False, mode="a", header=False)
+                    # align columns
+                    existing_df = pd.read_csv(create_csv, nrows=0)
+                    for column in existing_df.columns:
+                        if column not in df.columns:
+                            df[column] = None  # Add missing columns with None values
+                    
+                    df[existing_df.columns].to_csv(create_csv, index=False, mode="a", header=False)
 
                 del df
 
