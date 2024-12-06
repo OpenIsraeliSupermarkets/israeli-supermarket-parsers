@@ -70,7 +70,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
             for elem in sub_elem.find(self.list_sub_key):
                 rows.append(
                     self.list_single_entry(
-                        elem, found_folder, file_name, **sub_root_store
+                        elem,
+                        found_folder=found_folder,
+                        file_name=file_name,
+                        **sub_root_store,
                     )
                 )
 
