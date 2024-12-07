@@ -64,7 +64,7 @@ class RawParsingPipeline:
                 df = parser.read(file)
 
                 if not os.path.exists(create_csv):
-                    df.iloc[:, 3:5].to_csv(
+                    df.to_csv(
                         create_csv, index=False, mode="w", header=True
                     )
                 else:
