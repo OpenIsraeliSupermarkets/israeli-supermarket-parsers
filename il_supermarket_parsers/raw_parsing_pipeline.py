@@ -64,9 +64,7 @@ class RawParsingPipeline:
                 df = parser.read(file)
 
                 if not os.path.exists(create_csv):
-                    df.to_csv(
-                        create_csv, index=False, mode="w", header=True
-                    )
+                    df.to_csv(create_csv, index=False, mode="w", header=True)
                 else:
                     # align columns
                     existing_df = pd.read_csv(create_csv, nrows=0)

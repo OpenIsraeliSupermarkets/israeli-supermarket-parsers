@@ -168,3 +168,24 @@ class ZolVebegadolFileConverter(BaseFileConverter):
     File converter for Zol Vebegadol supermarket chain.
     Extends: BaseFileConverter
     """
+
+
+class CityMarketGivatayim(CofixFileConverter):
+    """
+    File converter for Dor Alon supermarket chain.
+    Extends: CofixFileConverter
+    """
+
+
+class CityMarketKiryatGat(CofixFileConverter):
+    """
+    File converter for Dor Alon supermarket chain.
+    Extends: CofixFileConverter
+    """
+
+
+class CityMarketShops(CofixFileConverter):
+    """
+    File converter for Dor Alon supermarket chain.
+    Extends: CofixFileConverter
+    """
