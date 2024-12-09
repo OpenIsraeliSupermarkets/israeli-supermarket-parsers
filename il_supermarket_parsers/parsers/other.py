@@ -1,6 +1,6 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from .confix import CofixFileConverter
-
+from il_supermarket_parsers.documents import XmlDataFrameConverter
 
 class YaynoBitanFileConverter(BaseFileConverter):
     """
@@ -182,6 +182,15 @@ class CityMarketKiryatGat(CofixFileConverter):
     File converter for Dor Alon supermarket chain.
     Extends: CofixFileConverter
     """
+    def __init__(self):
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Sales",
+                id_field="PromotionID",
+                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                date_columns=["PriceUpdateDate"],
+            )
+        )
 
 
 class CityMarketShops(CofixFileConverter):
