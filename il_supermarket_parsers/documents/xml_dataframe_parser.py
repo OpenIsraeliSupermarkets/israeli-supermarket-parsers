@@ -4,10 +4,10 @@ from il_supermarket_parsers.utils import (
     collect_unique_keys_from_xml,
     collect_unique_columns_from_nested_json,
 )
-from .base import XmlBaseConverter
+from .base import BaseXMLParser
 
 
-class XmlDataFrameConverter(XmlBaseConverter):
+class XmlDataFrameConverter(BaseXMLParser):
     """parser the xml docuement"""
 
     def reduce_size(self, data):

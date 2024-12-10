@@ -13,6 +13,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         sub_roots=None,
         list_sub_key="",
         ignore_column=None,
+        last_mile=[],
         **additional_constant,
     ):
         super().__init__(
@@ -23,6 +24,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
             additional_constant=additional_constant,
         )
         self.sub_roots = sub_roots if sub_roots else []
+        self.last_mile = last_mile
         self.list_sub_key = list_sub_key
 
     def validate_succussful_extraction(
@@ -66,6 +68,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
             for k in self.sub_roots:
                 sub_root_store[k] = sub_elem.find(k).text
+
+            if self.last_mile:
+                for last in self.last_mile:
+                    sub_elem = sub_elem.find(last)
 
             for elem in sub_elem.find(self.list_sub_key):
                 rows.append(

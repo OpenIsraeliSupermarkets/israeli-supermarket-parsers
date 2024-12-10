@@ -1,6 +1,11 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from .confix import CofixFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    XmlDataFrameConverter,
+    SubRootedXmlDataFrameConverter,
+    ConditionalXmlDataFrameConverter,
+)
+
 
 class YaynoBitanFileConverter(BaseFileConverter):
     """
@@ -170,31 +175,51 @@ class ZolVebegadolFileConverter(BaseFileConverter):
     """
 
 
-class CityMarketGivatayim(CofixFileConverter):
+class CityMarketGivatayim(BaseFileConverter):
     """
     File converter for Dor Alon supermarket chain.
     Extends: CofixFileConverter
     """
 
 
-class CityMarketKiryatGat(CofixFileConverter):
+class CityMarketKiryatGat(BaseFileConverter):
     """
     File converter for Dor Alon supermarket chain.
     Extends: CofixFileConverter
     """
+
+
+class CityMarketShops(BaseFileConverter):
+    """
+    File converter for Dor Alon supermarket chain.
+    Extends: CofixFileConverter
+    """
+
     def __init__(self):
         super().__init__(
-            promofull_parser=XmlDataFrameConverter(
-                list_key="Sales",
-                id_field="PromotionID",
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                date_columns=["PriceUpdateDate"],
-            )
+            promofull_parser=ConditionalXmlDataFrameConverter(
+                try_parser=XmlDataFrameConverter(
+                    list_key="Promotions",
+                    id_field="PromotionId",
+                    roots=["StoreId", "SubChainId", "ChainId"],
+                    date_columns=["PromotionUpdateDate"],
+                    ignore_column=["DllVerNo", "BikoretNo"],
+                ),
+                catch_parser=XmlDataFrameConverter(
+                    list_key="Promotions",
+                    id_field="PromotionId",
+                    roots=[],
+                    date_columns=["PromotionUpdateDate"],
+                    ignore_column=["DllVerNo", "BikoretNo"],
+                ),
+            ),
+            stores_parser=SubRootedXmlDataFrameConverter(
+                list_key="SubChainsXMLObject",
+                sub_roots=["SubChainId", "SubChainName"],
+                id_field="StoreId",
+                list_sub_key="Store",
+                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
+                last_mile=["Stores", "SubChainStoresXMLObject"],
+            ),
         )
-
-
-class CityMarketShops(CofixFileConverter):
-    """
-    File converter for Dor Alon supermarket chain.
-    Extends: CofixFileConverter
-    """
