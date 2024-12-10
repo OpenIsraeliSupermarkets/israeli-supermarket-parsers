@@ -11,6 +11,7 @@ class XmlDataFrameConverter(BaseXMLParser):
     """parser the xml docuement"""
 
     def reduce_size(self, data):
+        """reduce the size"""
         for col in data.columns:
             data[col] = data[col].mask(data[col] == data[col].shift())
         return data
@@ -18,6 +19,7 @@ class XmlDataFrameConverter(BaseXMLParser):
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None
     ):
+        """validate column requested"""
         # if there is an empty file
         # we expected it to return none
         tag_count = count_tag_in_xml(source_file, self.id_field)

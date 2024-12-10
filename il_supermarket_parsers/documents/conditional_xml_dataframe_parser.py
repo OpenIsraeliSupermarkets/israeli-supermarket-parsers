@@ -1,35 +1,33 @@
-import pandas as pd
-from il_supermarket_parsers.utils import (
-    count_tag_in_xml,
-    collect_unique_keys_from_xml,
-    collect_unique_columns_from_nested_json,
-)
+import os
 from .base import XmlBaseConverter
+from ..utils import get_root
 
 
 class ConditionalXmlDataFrameConverter(XmlBaseConverter):
     """parser the xml docuement"""
 
-    def __init__(self, try_parser, catch_parser):
-        self.try_parser = try_parser
-        self.catch_parser = catch_parser
+    def __init__(self, option_a, option_b, root_value):
+        self.option_a = option_a
+        self.option_b = option_b
+        self.root_value = root_value
 
     def convert(self, found_store, file_name, **kwarg):
         """reduce the size"""
-        try:
-            return self.try_parser.convert(found_store, file_name, **kwarg)
-        except:
-            return self.catch_parser.convert(found_store, file_name, **kwarg)
+        root = get_root(os.path.join(found_store, file_name))
+        if root.tag == self.root_value:
+            return self.option_a.convert(found_store, file_name, **kwarg)
+        return self.option_b.convert(found_store, file_name, **kwarg)
 
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None
     ):
         """validate column requested"""
-        try:
-            self.try_parser.validate_succussful_extraction(
+        root = get_root(source_file)
+        if root.tag == self.root_value:
+            self.option_a.validate_succussful_extraction(
                 data, source_file, ignore_missing_columns
             )
-        except ValueError:
-            self.catch_parser.validate_succussful_extraction(
+        else:
+            self.option_b.validate_succussful_extraction(
                 data, source_file, ignore_missing_columns
             )

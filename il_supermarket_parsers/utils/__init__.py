@@ -13,6 +13,7 @@ from .test_utils import (
 from .xml_utils import (
     get_root,
     build_value,
+    get_root_and_search,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
 )

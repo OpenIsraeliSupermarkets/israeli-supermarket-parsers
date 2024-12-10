@@ -53,6 +53,9 @@ class DataLoader:
 
     def _format_datetime(self, date):
         """format the datetime"""
+        if len(date) == 8:
+            # if doesn't include seconds
+            return datetime.datetime.strptime(date, "%Y%m%d")
         if len(date) == 12:
             # if doesn't include seconds
             return datetime.datetime.strptime(date, "%Y%m%d%H%M")

@@ -91,7 +91,7 @@ def change_xml_encoding(file_path):
         )
 
 
-def get_root(file, key_to_find, attributes_to_collect):
+def get_root(file):
     """get ET root"""
     try:
         tree = ET.parse(file)
@@ -99,7 +99,12 @@ def get_root(file, key_to_find, attributes_to_collect):
         change_xml_encoding(file)
         tree = ET.parse(file)
 
-    root = tree.getroot()
+    return tree.getroot()
+
+
+def get_root_and_search(file, key_to_find, attributes_to_collect):
+    """get the root and search for the key"""
+    root = get_root(file)
     #
     root_store = {}
     root = _get_root(root, key_to_find, attributes_to_collect, root_store)
