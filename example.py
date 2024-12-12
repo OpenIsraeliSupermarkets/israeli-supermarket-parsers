@@ -10,7 +10,7 @@ if __name__ == "__main__":
         multiprocessing=None,
         lookup_in_db=True,
     ).start()
-    scraper = ConvertingTask(
+    ConvertingTask(
         enabled_parsers=None,
         files_types=None,
         data_folder="dumps",
