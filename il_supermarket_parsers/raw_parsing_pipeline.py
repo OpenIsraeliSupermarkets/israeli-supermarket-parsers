@@ -1,12 +1,13 @@
 import os
 import csv
+import traceback
 
 from typing import List
 import pandas as pd
 from tqdm import tqdm
 from .parser_factory import ParserFactory
 from .utils import DataLoader, DumpFile
-import traceback
+
 
 
 class RawParsingPipeline:
