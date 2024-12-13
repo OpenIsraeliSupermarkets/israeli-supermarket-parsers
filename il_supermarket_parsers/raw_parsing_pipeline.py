@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 from .parser_factory import ParserFactory
 from .utils import DataLoader, DumpFile
+import traceback
 
 
 class RawParsingPipeline:
@@ -99,7 +100,8 @@ class RawParsingPipeline:
                 execution_log.append(
                     {
                         "status": False,
-                        "error": error,
+                        "error": str(error),
+                        "trace": traceback.format_exc(),
                         **file.to_log_dict(),
                     }
                 )
