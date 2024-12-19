@@ -31,7 +31,7 @@ setup(
     tests_require=dev_required,
     extras_require={"test": ["pytest", "pytest-xdist"]},
     # *strongly* suggested for sharing
-    version="0.1.0",
+    version="0.1.1",
     # The license can be anything you like
     license="MIT",
     description="python package that process the data dumped by the israeli supermarket",
