@@ -9,7 +9,6 @@ from .parser_factory import ParserFactory
 from .utils import DataLoader, DumpFile
 
 
-
 class RawParsingPipeline:
     """
     processing files to dataframe
@@ -54,7 +53,7 @@ class RawParsingPipeline:
             files_types=[self.file_type],
         ).load(limit=limit)
         execution_log = []
-
+        execution_errors = 0
         for file in tqdm(
             files_to_process,
             total=len(files_to_process),
@@ -98,6 +97,7 @@ class RawParsingPipeline:
                 )
 
             except Exception as error:  # pylint: disable=broad-exception-caught
+                execution_errors += 1
                 execution_log.append(
                     {
                         "status": False,
@@ -109,12 +109,14 @@ class RawParsingPipeline:
 
         return {
             "status": True,
-            "execution_log": execution_log,
-            "file_was_created": len(files_to_process) > 0,
-            "file_created_path": create_csv,
-            "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
             "store_name": self.store_name,
             "files_types": self.file_type,
+            "processed_files": len(files_to_process) > 0,
+            "execution_errors": execution_errors > 0,
+            "file_was_created": os.path.exists(create_csv),
+            "file_created_path": create_csv,
+            "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
+            "execution_log": execution_log,
         }
 
     # def convert(self, full_path, file_type, update_date):
