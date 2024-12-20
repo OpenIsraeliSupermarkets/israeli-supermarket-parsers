@@ -23,13 +23,6 @@ class GoodPharmFileConverter(CofixFileConverter):
     """
 
 
-class HaziHinamFileConverter(CofixFileConverter):
-    """
-    File converter for Hazi Hinam supermarket chain.
-    Extends: CofixFileConverter
-    """
-
-
 class KeshetFileConverter(BaseFileConverter):
     """
     File converter for Keshet supermarket chain.
@@ -61,20 +54,6 @@ class MegaFileConverter(BaseFileConverter):
 class NetivHasedFileConverter(BaseFileConverter):
     """
     File converter for Netiv Hased supermarket chain.
-    Extends: BaseFileConverter
-    """
-
-
-class MeshmatYosef1FileConverter(BaseFileConverter):
-    """
-    File converter for Meshmat Yosef 1 supermarket chain.
-    Extends: BaseFileConverter
-    """
-
-
-class MeshmatYosef2FileConverter(BaseFileConverter):
-    """
-    File converter for Meshmat Yosef 2 supermarket chain.
     Extends: BaseFileConverter
     """
 
