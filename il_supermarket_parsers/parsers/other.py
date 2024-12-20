@@ -23,13 +23,6 @@ class GoodPharmFileConverter(CofixFileConverter):
     """
 
 
-class HaziHinamFileConverter(CofixFileConverter):
-    """
-    File converter for Hazi Hinam supermarket chain.
-    Extends: CofixFileConverter
-    """
-
-
 class KeshetFileConverter(BaseFileConverter):
     """
     File converter for Keshet supermarket chain.
