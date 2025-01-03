@@ -66,8 +66,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         for sub_elem in list(root):
             sub_root_store = root_store.copy()
 
-            for k in self.sub_roots:
-                sub_root_store[k] = sub_elem.find(k).text
+            for k in list(sub_elem):
+                if any(k.tag.lower() == s.lower() for s in self.sub_roots):
+                    sub_root_store[k.lower()] = k.text
 
             if self.last_mile:
                 for last in self.last_mile:

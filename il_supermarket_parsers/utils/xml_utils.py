@@ -112,7 +112,7 @@ def get_root_and_search(file, key_to_find, attributes_to_collect):
 
 
 def _get_root(root, key_to_find, attributes_to_collect, collected):
-    if root.tag == key_to_find:
+    if root.tag.lower() == key_to_find.lower():
         return root
 
     found_root = None
@@ -121,9 +121,9 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
         if (
             len(list(sub)) == 0
             and attributes_to_collect is not None
-            and sub.tag in attributes_to_collect
+            and any(sub.tag.lower() == s.lower() for s in attributes_to_collect)
         ):
-            collected[sub.tag] = sub.text
+            collected[sub.tag.lower()] = sub.text
         else:
             possible_root = _get_root(
                 sub, key_to_find, attributes_to_collect, collected
