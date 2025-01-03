@@ -26,16 +26,16 @@ class XmlDataFrameConverter(BaseXMLParser):
 
         if self.roots and tag_count > 0:
             for root in self.roots:
-                if root not in data.columns:
+                if root.lower() not in data.columns:
                     raise ValueError(
                         f"parse error for file {source_file},"
-                        f"columns {root} missing from {data.columns}"
+                        f"columns {root.lower()} missing from {data.columns}"
                     )
 
-        if self.id_field not in data.columns:
+        if self.id_field.lower() not in data.columns:
             raise ValueError(
                 f"parse error for file {source_file}, "
-                f"id {self.id_field} missing from {data.columns}"
+                f"id {self.id_field.lower()} missing from {data.columns}"
             )
 
         if data.shape[0] != tag_count:
@@ -48,9 +48,11 @@ class XmlDataFrameConverter(BaseXMLParser):
         if ignore_missing_columns:
             ignore_list = ignore_list + ignore_missing_columns
         keys_not_used = (
-            set(collect_unique_keys_from_xml(source_file))
-            - collect_unique_columns_from_nested_json(data)
-            - set(ignore_list)
+            set(map(lambda x: x.lower(), collect_unique_keys_from_xml(source_file)))
+            - set(
+                map(lambda x: x.lower(), collect_unique_columns_from_nested_json(data))
+            )
+            - set(map(lambda x: x.lower(), ignore_list))
         )
         if len(keys_not_used) > 0:
             raise ValueError(
@@ -67,7 +69,7 @@ class XmlDataFrameConverter(BaseXMLParser):
             **sub_root_store,
         }
         for name in list(elem):
-            tag = name.tag
+            tag = name.tag.lower()
             value = self.build_value(name, no_content="")
 
             values[tag] = value
@@ -82,8 +84,8 @@ class XmlDataFrameConverter(BaseXMLParser):
         **kwarg,
     ):
         rows = []
-        columns = [self.id_field, "found_folder", "file_name"] + (
-            self.roots if self.roots else []
+        columns = [self.id_field.lower(), "found_folder", "file_name"] + (
+            list(map(lambda x: x.lower(),self.roots)) if self.roots else []
         )
 
         if root is None:
