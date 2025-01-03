@@ -84,8 +84,8 @@ class XmlDataFrameConverter(BaseXMLParser):
         **kwarg,
     ):
         rows = []
-        columns = [self.id_field, "found_folder", "file_name"] + (
-            self.roots if self.roots else []
+        columns = [self.id_field.lower(), "found_folder", "file_name"] + (
+            list(map(lambda x: x.lower(),self.roots)) if self.roots else []
         )
 
         if root is None:

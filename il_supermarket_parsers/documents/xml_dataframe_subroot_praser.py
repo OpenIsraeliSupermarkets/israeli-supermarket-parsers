@@ -38,7 +38,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         # if the user asked to include the headers
         if self.sub_roots:
             for root in self.sub_roots:
-                if root not in data.columns:
+                if root.lower() not in data.columns:
                     raise ValueError(
                         f"parse error for file {source_file}, "
                         f"columns {root} missing from {data.columns}"
@@ -58,9 +58,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         if root is None or len(root) == 0:
             return pd.DataFrame(
-                columns=self.sub_roots
+                columns= map(lambda x: x.lower(),self.sub_roots)
                 + [self.id_field, "found_folder", "file_name"]
-                + (self.roots if self.roots else [])
+                + (map(lambda x: x.lower(),self.roots) if self.roots else [])
             )
 
         for sub_elem in list(root):
@@ -68,7 +68,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
             for k in list(sub_elem):
                 if any(k.tag.lower() == s.lower() for s in self.sub_roots):
-                    sub_root_store[k.lower()] = k.text
+                    sub_root_store[k.tag.lower()] = k.text
 
             if self.last_mile:
                 for last in self.last_mile:
