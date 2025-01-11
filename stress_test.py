@@ -5,8 +5,9 @@ import tempfile
 import pstats
 import cProfile
 import io
-from il_supermarket_scarper import ScarpingTask,ScraperFactory
+from il_supermarket_scarper import ScarpingTask, ScraperFactory
 from il_supermarket_parsers import ConvertingTask
+
 
 def format_stats_as_json(profile, project_name):
     """get the stats from the profiler and format them as json"""
@@ -40,14 +41,13 @@ def format_stats_as_json(profile, project_name):
 
 if __name__ == "__main__":
 
-   
     # ScarpingTask(
     #     enabled_scrapers=ScraperFactory.sample(1),
     #     dump_folder_name="dumps",
     #     multiprocessing=None,
     #     when_date=datetime.datetime(2025,1,10,0,0,0),
     # ).start()
-    
+
     # execution_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # start_time = time.time()
     # pr = cProfile.Profile()

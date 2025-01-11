@@ -131,31 +131,3 @@ def test_file_2():
             "XmlDocVersion",
         ],
     )
-
-
-def test_large_file():
-    """test reading files that are the encoding in the file is not correct"""
-
-    start_time = time.time()
-
-    converter = XmlDataFrameConverter(
-        list_key="Promotions",
-        id_field="PromotionId",
-        roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-        date_columns=["PromotionUpdateDate"],
-        ignore_column=["XmlDocVersion", "DllVerNo"],
-    )
-    converter.convert(
-        "il_supermarket_parsers/documents/tests",
-        "PromoFull7290639000004-001-202501110103.xml",
-    )
-
-    end_time = time.time()
-    duration = end_time - start_time
-    print(f"Duration: {duration} seconds")
-    return duration
-
-
-if __name__ == "__main__":
-    durations = [test_large_file() for _ in range(5)]
-    print(sum(durations) / len(durations))
