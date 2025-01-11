@@ -44,7 +44,7 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         source_file = os.path.join(found_store, file_name)
         root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
 
-        data = self._phrse(
+        data = self._parse(
             root,
             found_store,
             file_name,
@@ -58,7 +58,7 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         return data
 
     @abstractmethod
-    def _phrse(
+    def _parse(
         self,
         root,
         found_folder,

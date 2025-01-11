@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+from lxml import etree as ET
 
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
@@ -31,7 +31,6 @@ def collect_unique_keys_from_xml(xml_file_path):
     """find all the unique keys in the xml"""
 
     # Parse the XML file
-    # Parse the XML file
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
 
@@ -62,17 +61,10 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     if not content:
         content = constant_mapping.get(name.tag, no_content)
     if "\n" in content:
-        normaled_keys = []  # shufersal as 'ClubId' and 'Clubid", normoalize this
-        keys = []
-        content = []
-        for item in name.findall("*"):
-            content.append(build_value(item, constant_mapping))
-            keys.append(item.tag)
-            normaled_keys.append(item.tag.lower())
-
-        content = dict(zip(keys, content))
-        content = dict(sorted(content.items()))
-
+        return {
+            item.tag.lower(): build_value(item, constant_mapping)
+            for item in name.findall("*")
+        }
     return content
 
 
@@ -95,7 +87,7 @@ def get_root(file):
     """get ET root"""
     try:
         tree = ET.parse(file)
-    except ET.ParseError:
+    except ET.XMLSyntaxError:
         change_xml_encoding(file)
         tree = ET.parse(file)
 

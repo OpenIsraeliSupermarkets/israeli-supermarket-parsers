@@ -44,7 +44,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                         f"columns {root} missing from {data.columns}"
                     )
 
-    def _phrse(
+    def _parse(
         self,
         root,
         found_folder,
@@ -58,9 +58,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         if root is None or len(root) == 0:
             return pd.DataFrame(
-                columns= map(lambda x: x.lower(),self.sub_roots)
+                columns=map(lambda x: x.lower(), self.sub_roots)
                 + [self.id_field, "found_folder", "file_name"]
-                + (map(lambda x: x.lower(),self.roots) if self.roots else [])
+                + (map(lambda x: x.lower(), self.roots) if self.roots else [])
             )
 
         for sub_elem in list(root):
