@@ -1,7 +1,6 @@
 import os
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
 from il_supermarket_parsers.utils import EMPTY_FILE_TOEHOLD
-import time
 
 
 def test_read_bad_encoding_1():

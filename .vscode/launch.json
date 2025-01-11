@@ -10,7 +10,20 @@
             "request": "launch",
             "program": "example.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+    
+        },
+        {
+            "name": "Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "il_supermarket_parsers/documents/tests/test_xml_dataframe.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        
         }
     ]
 }

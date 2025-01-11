@@ -2,6 +2,7 @@ import unittest
 import os
 import tempfile
 import pandas as pd
+from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import (
     get_sample_data,
     DataLoader,
@@ -9,7 +10,6 @@ from il_supermarket_parsers.utils import (
     EMPTY_FILE_TOEHOLD,
 )
 from il_supermarket_parsers.parser_factory import ParserFactory
-from il_supermarket_scarper import ScraperFactory
 
 
 def make_test_case(scraper_enum, parser_enum):
@@ -63,7 +63,7 @@ def make_test_case(scraper_enum, parser_enum):
         def __parser_validate(self, file_type, dump_path="temp"):
             """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
-            
+
             if ScraperFactory.is_scraper_enabled(self.scraper_enum):
                 self._refresh_download_folder(sub_folder, file_type)
 
