@@ -34,7 +34,7 @@ What is il_supermarket_parsers?
 -------------
 
 A simple access layer to the data the supermarkets publish.
-You can download the data using https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers.
+You can download the data using https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-scarpers.
 
 You only need to run the following code to parse all the data currently shared by the supermarkets and was downloaded using the package above.
 
