@@ -1,4 +1,4 @@
-from lxml import etree as ET
+import xml.etree.ElementTree as ET
 
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
@@ -87,7 +87,7 @@ def get_root(file):
     """get ET root"""
     try:
         tree = ET.parse(file)
-    except ET.XMLSyntaxError:
+    except ET.ParseError:
         change_xml_encoding(file)
         tree = ET.parse(file)
 

@@ -41,5 +41,5 @@ jobs:
     - name: Test with pytest
       run: |
            mkdir -p temp &&
-           docker run --cpus=1 --memory=1024m --memory-swap=256m  --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test &&
+           docker run --memory="800m" -c 0 --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test &&
            docker builder prune -f
