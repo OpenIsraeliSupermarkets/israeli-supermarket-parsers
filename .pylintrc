@@ -1,3 +1,4 @@
 [MASTER]
 disable=
     C0114, # missing-module-docstring
+extension-pkg-allow-list=lxml.etree

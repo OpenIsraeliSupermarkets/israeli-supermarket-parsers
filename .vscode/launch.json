@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "example.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+    
         }
     ]
 }

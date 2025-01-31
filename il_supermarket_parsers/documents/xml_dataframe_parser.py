@@ -63,19 +63,16 @@ class XmlDataFrameConverter(BaseXMLParser):
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""
-        values = {
+        return {
             "found_folder": found_folder,
             "file_name": file_name,
             **sub_root_store,
+            **{
+                name.tag.lower(): self.build_value(name, no_content="") for name in elem
+            },
         }
-        for name in list(elem):
-            tag = name.tag.lower()
-            value = self.build_value(name, no_content="")
 
-            values[tag] = value
-        return values.copy()
-
-    def _phrse(
+    def _parse(
         self,
         root,
         found_folder,
@@ -83,24 +80,21 @@ class XmlDataFrameConverter(BaseXMLParser):
         root_store,
         **kwarg,
     ):
-        rows = []
-        columns = [self.id_field.lower(), "found_folder", "file_name"] + (
-            list(map(lambda x: x.lower(),self.roots)) if self.roots else []
-        )
+
+        columns = [self.id_field.lower(), "found_folder", "file_name"]
+        if self.roots:
+            columns.extend(root.lower() for root in self.roots)
 
         if root is None:
             return pd.DataFrame(columns=columns)
 
-        elements = list(root)
-        if len(root) == 0:
-
-            return pd.DataFrame(columns=columns)
-
-        for elem in elements:
-            rows.append(
-                self.list_single_entry(
-                    elem, found_folder=found_folder, file_name=file_name, **root_store
-                )
+        rows = [
+            self.list_single_entry(
+                elem, found_folder=found_folder, file_name=file_name, **root_store
             )
+            for elem in root
+        ]
+        if len(rows) == 0:
+            return pd.DataFrame(columns=columns)
 
         return pd.DataFrame(rows)

@@ -6,11 +6,18 @@ This is a parser for ALL the supermarket chains listed in the GOV.IL site.
 הגדרת הקבצים שהיו צריכים להיות זמינים באתרים - https://www.nevo.co.il/law_html/law01/501_131.htm
 
 
-[![Unit & Integration Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg?branch=main&event=push)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
+[![Unit & Integration Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
 [![CodeQL](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/codeql.yml)
 [![Pylint](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/pylint.yml)
 [![Publish Docker image](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/docker-publish.yml)
 [![Upload Python Package](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/python-publish.yml/badge.svg)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/python-publish.yml)
+
+Daily Automatic Testing
+----
+The test suite is scheduled to run daily, so you can see if the supermarket chains have changed something in their interface and the package will not work properly.
+
+Status: 
+[![Scheduled Tests](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml/badge.svg?event=schedule)](https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers/actions/workflows/test-suite.yml)
 
 
 ## 🤗 Want to support my work?
