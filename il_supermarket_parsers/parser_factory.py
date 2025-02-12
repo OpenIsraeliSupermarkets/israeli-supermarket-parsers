@@ -42,6 +42,7 @@ class ParserFactory(Enum):
     YELLOW = all_parsers.YellowFileConverter
     YOHANANOF = all_parsers.YohananofFileConverter
     ZOL_VEBEGADOL = all_parsers.ZolVebegadolFileConverter
+    WOLT = all_parsers.WoltFileConverter
 
     @classmethod
     def all_listed_parsers(cls):
