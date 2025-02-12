@@ -147,3 +147,9 @@ class ZolVebegadolFileConverter(BaseFileConverter):
     File converter for Zol Vebegadol supermarket chain.
     Extends: BaseFileConverter
     """
+
+
+class WoltFileConverter(BaseFileConverter):
+    """
+    wolt
+    """

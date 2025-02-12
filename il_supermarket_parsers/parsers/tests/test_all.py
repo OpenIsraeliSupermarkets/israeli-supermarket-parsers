@@ -276,3 +276,9 @@ class ZolVeBegadolTestCase(
     """
     Test case for Zol VeBegadol supermarket.
     """
+
+
+class WoltTestCase(make_test_case(ScraperFactory.WOLT, ParserFactory.WOLT)):
+    """
+    Test case for wolt supermarket.
+    """
