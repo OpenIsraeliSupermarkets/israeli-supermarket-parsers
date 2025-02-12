@@ -74,29 +74,29 @@ class BaseFileConverter(ABC):
                 ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
+            
+        
+    def _load_parser(self,dump_file:DumpFile):
+        parser_mapping = {
+            FileTypesFilters.PRICE_FILE: self.price_parser,
+            FileTypesFilters.PRICE_FULL_FILE: self.pricefull_parser,
+            FileTypesFilters.PROMO_FILE: self.promo_parsers,
+            FileTypesFilters.PROMO_FULL_FILE: self.promofull_parser,
+            FileTypesFilters.STORE_FILE: self.stores_parser,
+        }
+
+        parser = parser_mapping.get(dump_file.detected_filetype)
+        if parser is None:
+            raise ValueError("Something went wrong")
 
     def read(self, dump_file: DumpFile, run_validation=False):
         """covert the dump file to the target format according to the filetype"""
-        if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
-            parser = self.price_parser
-        elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
-            parser = self.pricefull_parser
-
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
-            parser = self.promo_parsers
-
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
-            parser = self.promofull_parser
-
-        elif dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
-            parser = self.stores_parser
-        else:
-            raise ValueError("Something want wrong")
+        parser = self._load_parser(dump_file)
 
         data = parser.convert(
             dump_file.store_folder,
             dump_file.file_name,
-            # **self.load_column_config(settings)
+            column_config_mapping=self.load_column_config(settings)
         )
 
         if run_validation:
