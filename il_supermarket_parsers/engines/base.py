@@ -87,6 +87,8 @@ class BaseFileConverter(ABC):
 
         parser = parser_mapping.get(dump_file.detected_filetype)
         if parser is None:
+            # TODO: add a logger
+            # TODO: make error more specific
             raise ValueError("Something went wrong")
 
     def read(self, dump_file: DumpFile, run_validation=False):
