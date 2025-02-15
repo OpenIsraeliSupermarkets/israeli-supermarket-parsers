@@ -10,28 +10,28 @@ class SchemaField(BaseModel):
     include: bool = True
 
 
-class StoreFileSchema(BaseModel):
+class UnifiedStoreSchema(BaseModel):
     fields: List[SchemaField]
     version: str
     last_updated: str
 
 
-class PriceFullFileSchema(BaseModel):
+class UnifiedPriceFullSchema(BaseModel):
     fields: List[SchemaField]
     currency: str
     effective_date: str
 
 
-class PromoFullFileSchema(BaseModel):
+class UnifiedPromoFullSchema(BaseModel):
     fields: List[SchemaField]
     discount_type: str
     valid_until: str
 
 
 class UniformSchema(BaseModel):
-    store_file: StoreFileSchema
-    price_full_file: PriceFullFileSchema
-    promo_full_file: PromoFullFileSchema
+    store_file: UnifiedStoreSchema
+    price_full_file: UnifiedPriceFullSchema
+    promo_full_file: UnifiedPromoFullSchema
 
     @classmethod
     def from_json_file(cls, json_path: str) -> "UniformSchema":

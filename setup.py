@@ -12,7 +12,7 @@ with open("requirements-dev.txt", encoding="utf-8") as f:
 
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
-    name="il-supermarket-parser",
+    name="il_supermarket_parsers",
     url="https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers",
     author="Sefi Erlich",
     author_email="erlichsefi@gmail.com",

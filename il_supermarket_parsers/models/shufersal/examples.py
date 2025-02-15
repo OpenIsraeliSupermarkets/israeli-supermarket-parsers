@@ -90,37 +90,37 @@ STORES_EXAMPLE = {
     ]
 }
 
-# Price updates are similar to full price but typically contain only changed items
-PRICE_UPDATE_EXAMPLE = {
-    "ChainId": "7290027600007",
-    "SubChainId": "001",
-    "StoreId": "000",
-    "BikoretNo": "002",
-    "Items": [
-        {
-            "ItemCode": "7290000066318",
-            "ItemName": "חלב טרי 3% שטראוס",
-            "ItemPrice": 7.90,  # Updated price
-            "ItemUnit": "ליטר",
-            "ManufacturerName": "שטראוס",
-            "ManufacturerItemDescription": "חלב טרי 3% שומן"
-        }
-    ]
-}
+# # Price updates are similar to full price but typically contain only changed items
+# PRICE_UPDATE_EXAMPLE = {
+#     "ChainId": "7290027600007",
+#     "SubChainId": "001",
+#     "StoreId": "000",
+#     "BikoretNo": "002",
+#     "Items": [
+#         {
+#             "ItemCode": "7290000066318",
+#             "ItemName": "חלב טרי 3% שטראוס",
+#             "ItemPrice": 7.90,  # Updated price
+#             "ItemUnit": "ליטר",
+#             "ManufacturerName": "שטראוס",
+#             "ManufacturerItemDescription": "חלב טרי 3% שומן"
+#         }
+#     ]
+# }
 
-# Promo updates are similar to full promos but typically contain only new/changed promotions
-PROMO_UPDATE_EXAMPLE = {
-    "ChainId": "7290027600007",
-    "SubChainId": "001",
-    "StoreId": "000",
-    "BikoretNo": "002",
-    "Promotions": [
-        {
-            "PromotionId": "7290000066318",
-            "PromotionDescription": "2+1 על כל מוצרי החלב",  # Updated promotion
-            "PromotionStartDate": "2024-01-08T00:00:00",
-            "PromotionEndDate": "2024-01-14T23:59:59",
-            "RewardType": "1"
-        }
-    ]
-} 
+# # Promo updates are similar to full promos but typically contain only new/changed promotions
+# PROMO_UPDATE_EXAMPLE = {
+#     "ChainId": "7290027600007",
+#     "SubChainId": "001",
+#     "StoreId": "000",
+#     "BikoretNo": "002",
+#     "Promotions": [
+#         {
+#             "PromotionId": "7290000066318",
+#             "PromotionDescription": "2+1 על כל מוצרי החלב",  # Updated promotion
+#             "PromotionStartDate": "2024-01-08T00:00:00",
+#             "PromotionEndDate": "2024-01-14T23:59:59",
+#             "RewardType": "1"
+#         }
+#     ]
+# } 

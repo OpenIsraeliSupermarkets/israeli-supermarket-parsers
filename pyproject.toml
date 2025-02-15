@@ -4,6 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Sefi Erlich <erlichsefi@gmail.com>"]
 readme = "README.md"
+packages = [
+    { include = "il_supermarket_parsers" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"

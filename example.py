@@ -1,21 +1,13 @@
-from il_supermarket_scarper import ScarpingTask
 from il_supermarket_parsers import ConvertingTask
 
 if __name__ == "__main__":
 
-    ScarpingTask(
-        enabled_scrapers=None,
-        dump_folder_name="dumps",
-        limit=1,  # download one from each
-        multiprocessing=None,
-        lookup_in_db=True,
-    ).start()
     ConvertingTask(
-        enabled_parsers=None,
-        files_types=None,
+        enabled_parsers=["shufersal"],
+        files_types=[""],
         data_folder="dumps",
         multiprocessing=None,
-        output_folder="outputs",
+        output_folder=None,
     ).start()
 
     # checkout 'outputs' folder and 'dumps' folder
