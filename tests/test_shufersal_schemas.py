@@ -20,3 +20,4 @@ def test_promo_full_schema_matches_example():
 
 def test_stores_schema_matches_example():
     ShufersalStoreData.model_validate(STORES_EXAMPLE)
+    
