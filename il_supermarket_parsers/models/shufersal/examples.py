@@ -12,7 +12,7 @@ PRICE_FULL_EXAMPLE = {
             "ItemPrice": 6.90,
             "ItemUnit": "ליטר",
             "ManufacturerName": "שטראוס",
-            "ManufacturerItemDescription": "חלב טרי 3% שומן"
+            "ManufacturerItemDescription": "חלב טרי 3% שומן",
         },
         {
             "ItemCode": "7290002288589",
@@ -20,9 +20,9 @@ PRICE_FULL_EXAMPLE = {
             "ItemPrice": 7.50,
             "ItemUnit": "יחידה",
             "ManufacturerName": "אנג׳ל",
-            "ManufacturerItemDescription": "לחם אחיד פרוס 750 גרם"
-        }
-    ]
+            "ManufacturerItemDescription": "לחם אחיד פרוס 750 גרם",
+        },
+    ],
 }
 
 PROMO_FULL_EXAMPLE = {
@@ -36,16 +36,16 @@ PROMO_FULL_EXAMPLE = {
             "PromotionDescription": "1+1 על כל מוצרי החלב",
             "PromotionStartDate": "2024-01-01T00:00:00",
             "PromotionEndDate": "2024-01-07T23:59:59",
-            "RewardType": "1"
+            "RewardType": "1",
         },
         {
             "PromotionId": "7290002288589",
             "PromotionDescription": "הנחת 20% על לחם",
             "PromotionStartDate": "2024-01-01T00:00:00",
             "PromotionEndDate": "2024-01-07T23:59:59",
-            "RewardType": "2"
-        }
-    ]
+            "RewardType": "2",
+        },
+    ],
 }
 
 STORES_EXAMPLE = {
@@ -63,16 +63,16 @@ STORES_EXAMPLE = {
                     "StoreName": "שופרסל דיל רמת אביב",
                     "StoreAddress": "ברודצקי 43",
                     "StoreCity": "תל אביב",
-                    "StoreType": "1"
+                    "StoreType": "1",
                 },
                 {
                     "StoreId": "002",
                     "StoreName": "שופרסל דיל דיזינגוף",
                     "StoreAddress": "דיזינגוף 50",
                     "StoreCity": "תל אביב",
-                    "StoreType": "1"
-                }
-            ]
+                    "StoreType": "1",
+                },
+            ],
         },
         {
             "SubChainId": "002",
@@ -83,11 +83,11 @@ STORES_EXAMPLE = {
                     "StoreName": "שופרסל אקספרס אלנבי",
                     "StoreAddress": "אלנבי 99",
                     "StoreCity": "תל אביב",
-                    "StoreType": "2"
+                    "StoreType": "2",
                 }
-            ]
-        }
-    ]
+            ],
+        },
+    ],
 }
 
 # # Price updates are similar to full price but typically contain only changed items
@@ -123,4 +123,4 @@ STORES_EXAMPLE = {
 #             "RewardType": "1"
 #         }
 #     ]
-# } 
+# }

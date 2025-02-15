@@ -1,0 +1,5 @@
+pandas==2.2.2
+lxml==5.2.1
+pymongo==4.6.3
+il-supermarket-scraper>=0.5.6
+tqdm==4.66
