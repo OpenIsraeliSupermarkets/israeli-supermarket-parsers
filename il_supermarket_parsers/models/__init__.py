@@ -4,6 +4,7 @@ from .unified_schema import (
     UnifiedPromoFullSchema,
 )
 
+
 __all__ = [
     "UnifiedStoreSchema",
     "UnifiedPriceFullSchema",

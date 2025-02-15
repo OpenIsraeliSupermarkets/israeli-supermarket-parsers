@@ -11,30 +11,79 @@ class SchemaField(BaseModel):
 
 
 class UnifiedStoreSchema(BaseModel):
-    fields: List[SchemaField]
-    version: str
+    store_number: str
+    store_type: str
+    chain_name: str
+    store_name: str
+    city: str
+    postal_code: str
+    last_update_date: str
+    last_update_time: str
     last_updated: str
 
 
 class UnifiedPriceFullSchema(BaseModel):
-    fields: List[SchemaField]
+    chain_code: str
+    sub_chain_code: str
+    store_number: str
+    check_digit: Optional[str] = None
+    price_update_time: str
+    product_barcode: Optional[str] = None
+    internal_barcode: str
+    product_name: str
+    manufacturer_or_importer_name: str
+    country_of_origin: str
+    product_description: str
+    product_quantity_measure: str
+    product_quantity: str
+    unit_of_measure: str
+    items_per_package: str
+    total_price: Optional[str] = None
+    unit_price: Optional[str] = None
+    is_on_sale: str
+    record_status: str
     currency: str
     effective_date: str
 
 
 class UnifiedPromoFullSchema(BaseModel):
-    fields: List[SchemaField]
+    chain_code: str
+    sub_chain_code: str
+    store_number: str
+    check_digit: str
+    promo_update_time: str
+    product_barcode: Optional[str] = None
+    internal_barcode: str
+    promo_code: str
+    multiple_promos: str
+    promo_id: str
+    promo_description: str
+    promo_start_date: str
+    promo_start_time: str
+    promo_end_date: str
+    promo_end_time: str
+    target_population: str
+    minimum_quantity_for_promo: str
+    purchase_limit_in_promo: str
+    discount_rate: str
+    minimum_purchase_amount: str
+    total_promo_price: Optional[str] = None
+    unit_price_after_promo: str
+    minimum_promo_items_in_store: str
+    additional_promo_restrictions: str
+    additional_promo_text: str
     discount_type: str
     valid_until: str
 
 
-class UniformSchema(BaseModel):
-    store_file: UnifiedStoreSchema
-    price_full_file: UnifiedPriceFullSchema
-    promo_full_file: UnifiedPromoFullSchema
+
+class UnifiedSchema(BaseModel):
+    stores: List[UnifiedStoreSchema]
+    prices: List[UnifiedPriceFullSchema]
+    promotions: List[UnifiedPromoFullSchema]
 
     @classmethod
-    def from_json_file(cls, json_path: str) -> "UniformSchema":
+    def from_json_file(cls, json_path: str) -> "UnifiedSchema":
         """Load schema from JSON file"""
         import json
 

@@ -47,47 +47,17 @@ PROMO_FULL_EXAMPLE = {
         },
     ],
 }
-
-STORES_EXAMPLE = {
+STORES_EXAMPLE_JSON = {
     "ChainId": "7290027600007",
     "ChainName": "שופרסל",
-    "LastUpdateDate": "20240101",
-    "LastUpdateTime": "080000",
-    "SubChains": [
-        {
-            "SubChainId": "001",
-            "SubChainName": "שופרסל דיל",
-            "Stores": [
-                {
-                    "StoreId": "001",
-                    "StoreName": "שופרסל דיל רמת אביב",
-                    "StoreAddress": "ברודצקי 43",
-                    "StoreCity": "תל אביב",
-                    "StoreType": "1",
-                },
-                {
-                    "StoreId": "002",
-                    "StoreName": "שופרסל דיל דיזינגוף",
-                    "StoreAddress": "דיזינגוף 50",
-                    "StoreCity": "תל אביב",
-                    "StoreType": "1",
-                },
-            ],
-        },
-        {
-            "SubChainId": "002",
-            "SubChainName": "שופרסל אקספרס",
-            "Stores": [
-                {
-                    "StoreId": "003",
-                    "StoreName": "שופרסל אקספרס אלנבי",
-                    "StoreAddress": "אלנבי 99",
-                    "StoreCity": "תל אביב",
-                    "StoreType": "2",
-                }
-            ],
-        },
-    ],
+    "SubChainId": "001",
+    "SubChainName": "שופרסל דיל",
+    "StoreId": "001",
+    "StoreName": "שופרסל דיל רמת אביב",
+    "StoreAddress": "ברודצקי 43",
+    "StoreCity": "תל אביב",
+    "StoreType": "1",
+    "LastUpdateDate": "20240101"
 }
 
 # # Price updates are similar to full price but typically contain only changed items
