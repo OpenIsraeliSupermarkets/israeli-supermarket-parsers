@@ -1,51 +1,41 @@
 # Example data for each schema type
 
-PRICE_FULL_EXAMPLE = {
+SINGLE_ITEM_PRICE_EXAMPLE = {
     "ChainId": "7290027600007",
     "SubChainId": "001",
     "StoreId": "000",
     "BikoretNo": "001",
-    "Items": [
-        {
-            "ItemCode": "7290000066318",
-            "ItemName": "חלב טרי 3% שטראוס",
-            "ItemPrice": 6.90,
-            "ItemUnit": "ליטר",
-            "ManufacturerName": "שטראוס",
-            "ManufacturerItemDescription": "חלב טרי 3% שומן",
-        },
-        {
-            "ItemCode": "7290002288589",
-            "ItemName": "לחם אחיד פרוס",
-            "ItemPrice": 7.50,
-            "ItemUnit": "יחידה",
-            "ManufacturerName": "אנג׳ל",
-            "ManufacturerItemDescription": "לחם אחיד פרוס 750 גרם",
-        },
-    ],
+    "ItemCode": "7290000066318",
+    "ItemName": "חלב טרי 3% שטראוס",
+    "ItemPrice": 6.90,
+    "ItemUnit": "ליטר",
+    "ManufacturerName": "שטראוס",
+    "ManufacturerItemDescription": "חלב טרי 3% שומן",
 }
 
-PROMO_FULL_EXAMPLE = {
+SINGLE_PROMO_FULL_EXAMPLE = {
     "ChainId": "7290027600007",
     "SubChainId": "001",
     "StoreId": "000",
     "BikoretNo": "001",
-    "Promotions": [
-        {
-            "PromotionId": "7290000066318",
-            "PromotionDescription": "1+1 על כל מוצרי החלב",
-            "PromotionStartDate": "2024-01-01T00:00:00",
-            "PromotionEndDate": "2024-01-07T23:59:59",
-            "RewardType": "1",
-        },
-        {
-            "PromotionId": "7290002288589",
-            "PromotionDescription": "הנחת 20% על לחם",
-            "PromotionStartDate": "2024-01-01T00:00:00",
-            "PromotionEndDate": "2024-01-07T23:59:59",
-            "RewardType": "2",
-        },
-    ],
+    "PromotionId": "PROMO123",
+    "PromotionDescription": "Buy 1 Get 1 Free",
+    "PromotionStartDate": "2024-01-01T00:00:00",
+    "PromotionEndDate": "2024-01-31T23:59:59",
+    "PromotionStartHour": "00:00",
+    "PromotionEndHour": "23:59",
+    "RewardType": "Discount",
+    "DiscountType": "Percentage",
+    "DiscountRate": 50.0,
+    "DiscountedPricePerMida": None,
+    "MinQty": 1,
+    "MaxQty": None,
+    "MinPurchaseAmnt": None,
+    "MinNoOfItemOfered": None,
+    "AdditionalRestrictions": None,
+    "Remark": "Limited time offer",
+    "IsWeightedPromo": False,
+    "AllowMultipleDiscounts": True,
 }
 STORES_EXAMPLE_JSON = {
     "ChainId": "7290027600007",

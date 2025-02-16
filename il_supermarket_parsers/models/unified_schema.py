@@ -22,12 +22,12 @@ class UnifiedStoreSchema(BaseModel):
     last_updated: str
 
 
-class UnifiedPriceFullSchema(BaseModel):
+class UnifiedItemPriceSchema(BaseModel):
     chain_code: str
     sub_chain_code: str
     store_number: str
     check_digit: Optional[str] = None
-    price_update_time: str
+    price_update_time: Optional[str] = None
     product_barcode: Optional[str] = None
     internal_barcode: str
     product_name: str
@@ -40,13 +40,10 @@ class UnifiedPriceFullSchema(BaseModel):
     items_per_package: str
     total_price: Optional[str] = None
     unit_price: Optional[str] = None
-    is_on_sale: str
-    record_status: str
     currency: str
-    effective_date: str
 
 
-class UnifiedPromoFullSchema(BaseModel):
+class UnifiedPromoSchema(BaseModel):
     chain_code: str
     sub_chain_code: str
     store_number: str
@@ -76,11 +73,10 @@ class UnifiedPromoFullSchema(BaseModel):
     valid_until: str
 
 
-
 class UnifiedSchema(BaseModel):
     stores: List[UnifiedStoreSchema]
-    prices: List[UnifiedPriceFullSchema]
-    promotions: List[UnifiedPromoFullSchema]
+    prices: List[UnifiedItemPriceSchema]
+    promotions: List[UnifiedPromoSchema]
 
     @classmethod
     def from_json_file(cls, json_path: str) -> "UnifiedSchema":
