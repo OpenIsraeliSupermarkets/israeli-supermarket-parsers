@@ -7,24 +7,23 @@ with open("README.md", encoding="utf-8") as f:
 with open("requirements.txt", encoding="utf-8") as f:
     required = f.read().splitlines()
 
-with open("requirements-dev.txt", encoding="utf-8") as f:
     dev_required = f.read().splitlines()
 
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
-    name="il_supermarket_parsers",
+    name="il-supermarket-parsers",
     url="https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-parsers",
     author="Sefi Erlich",
     author_email="erlichsefi@gmail.com",
     # Needed to actually package something
     packages=[
-        "il_supermarket_parsers",
-        "il_supermarket_parsers.conf",
-        "il_supermarket_parsers.documents",
-        "il_supermarket_parsers.engines",
-        "il_supermarket_parsers.normlizers",
-        "il_supermarket_parsers.parsers",
-        "il_supermarket_parsers.utils",
+        "il-supermarket-parsers",
+        "il-supermarket-parsers.conf",
+        "il-supermarket-parsers.documents",
+        "il-supermarket-parsers.engines",
+        "il-supermarket-parsers.normlizers",
+        "il-supermarket-parsers.parsers",
+        "il-supermarket-parsers.utils",
     ],
     # Needed for dependencies
     install_requires=required,

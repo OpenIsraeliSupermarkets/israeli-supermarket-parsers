@@ -13,12 +13,10 @@ pydantic = "^2.0.0"
 pandas = "^2.2.3"
 tqdm = "^4.67.1"
 il-supermarket-scraper = "^0.5.6"
+mypy = "^1.15.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
-black = "^23.0.0"
-isort = "^5.0.0"
-mypy = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
