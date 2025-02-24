@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from lxml import etree
 
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
@@ -83,13 +84,31 @@ def change_xml_encoding(file_path):
         )
 
 
+def try_to_recover_xml(file_path):
+    """try to recover the xml"""
+
+    parser = etree.XMLParser(recover=True, encoding="utf-8")
+    with open(file_path, "rb") as f:
+        tree = etree.parse(f, parser)
+    fixed_xml = etree.tostring(tree, pretty_print=True, encoding="utf-8").decode(
+        "utf-8"
+    )
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(fixed_xml)
+
+
 def get_root(file):
     """get ET root"""
     try:
         tree = ET.parse(file)
     except ET.ParseError:
-        change_xml_encoding(file)
-        tree = ET.parse(file)
+        try:
+            try_to_recover_xml(file)
+            tree = ET.parse(file)
+        except ET.ParseError:
+            change_xml_encoding(file)
+            tree = ET.parse(file)
 
     return tree.getroot()
 
