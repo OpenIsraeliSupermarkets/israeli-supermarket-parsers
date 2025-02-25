@@ -73,8 +73,10 @@ class DataLoader:
             if len(_file_name_split) == 5:
                 prefix_file_name, _, store_number, date, time, *_ = _file_name_split
                 extracted_datetime = date + time
-
-            prefix_file_name, store_number, extracted_datetime, *_ = _file_name_split
+            else:
+                prefix_file_name, store_number, extracted_datetime, *_ = (
+                    _file_name_split
+                )
         except ValueError:
             # global files
             prefix_file_name, extracted_datetime, *_ = _file_name_split

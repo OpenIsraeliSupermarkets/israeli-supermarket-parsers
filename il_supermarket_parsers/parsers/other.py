@@ -1,4 +1,6 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
+from il_supermarket_parsers.documents import SubRootedXmlDataFrameConverter
+
 from .confix import CofixFileConverter
 
 
@@ -153,3 +155,40 @@ class WoltFileConverter(BaseFileConverter):
     """
     wolt
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=SubRootedXmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                list_sub_key="PromotionItems",
+                sub_roots=[
+                    "Remarks",
+                    "AdditionalRestrictions",
+                    "ClubId",
+                    "PromotionEndHour",
+                    "PromotionUpdateTime",
+                    "PromotionId",
+                    "PromotionDescription",
+                    "PromotionStartDate",
+                    "PromotionStartHour",
+                    "PromotionEndDate",
+                ],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
+            )
+        )
+
+
+# 'rewardtype', 'itemtype', 'blsweighted', 'itemcode', 'discountrate', 'allowmultiplediscounts', 'discountedpricepermida', 'minnoofitemsoffered', 'discountedprice'}
+
+#  <PromotionUpdateTime>2025-02-23T21:13:53.000</PromotionUpdateTime>
+#             <PromotionId>156221</PromotionId>
+#             <PromotionDescription>8.33 חציל אורגני</PromotionDescription>
+#             <PromotionStartDate>2025-02-24</PromotionStartDate>
+#             <PromotionStartHour>23:59:00.000</PromotionStartHour>
+#             <PromotionEndDate>2025-02-25</PromotionEndDate>
+#             <PromotionEndHour>23:50:00.000</PromotionEndHour>
+#             <ClubId>0</ClubId>
+#             <AdditionalRestrictions></AdditionalRestrictions>
+#             <Remarks></Remarks>

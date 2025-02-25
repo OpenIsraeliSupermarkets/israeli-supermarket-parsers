@@ -1,4 +1,5 @@
 from il_supermarket_scarper.scrappers_factory import ScraperFactory
+from il_supermarket_scarper.scraper_stability import ScraperStability
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.parsers.tests.test_case import make_test_case
 
