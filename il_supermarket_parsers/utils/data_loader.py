@@ -72,12 +72,12 @@ class DataLoader:
             # Promo7290700100008-000-207-20250224-103225
             if len(_file_name_split) == 5:
                 prefix_file_name, _, store_number, date, time, *_ = _file_name_split
-                datetime = date + time
+                extracted_datetime = date + time
 
-            prefix_file_name, store_number, datetime, *_ = _file_name_split
+            prefix_file_name, store_number, extracted_datetime, *_ = _file_name_split
         except ValueError:
             # global files
-            prefix_file_name, datetime, *_ = _file_name_split
+            prefix_file_name, extracted_datetime, *_ = _file_name_split
             store_number = empty_store_id
 
         file_type, chain_id = self._find_file_type_and_chain_id(prefix_file_name)
@@ -88,7 +88,7 @@ class DataLoader:
             prefix_file_name=prefix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
-            extracted_date=self._format_datetime(datetime),
+            extracted_date=self._format_datetime(extracted_datetime),
             detected_filetype=file_type,
         )
 
