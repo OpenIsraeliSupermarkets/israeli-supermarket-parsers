@@ -101,6 +101,7 @@ def make_test_case(scraper_enum, parser_enum):
                 pd.concat(dfs)
 
         def list_xml_files_recursive(self, directory):
+            """list all xml files"""
             file_list = []
             for root, _, files in os.walk(directory):
                 for file in files:

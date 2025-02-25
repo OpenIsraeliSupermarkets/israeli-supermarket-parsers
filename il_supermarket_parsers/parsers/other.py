@@ -178,17 +178,3 @@ class WoltFileConverter(BaseFileConverter):
                 ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
-
-
-# 'rewardtype', 'itemtype', 'blsweighted', 'itemcode', 'discountrate', 'allowmultiplediscounts', 'discountedpricepermida', 'minnoofitemsoffered', 'discountedprice'}
-
-#  <PromotionUpdateTime>2025-02-23T21:13:53.000</PromotionUpdateTime>
-#             <PromotionId>156221</PromotionId>
-#             <PromotionDescription>8.33 חציל אורגני</PromotionDescription>
-#             <PromotionStartDate>2025-02-24</PromotionStartDate>
-#             <PromotionStartHour>23:59:00.000</PromotionStartHour>
-#             <PromotionEndDate>2025-02-25</PromotionEndDate>
-#             <PromotionEndHour>23:50:00.000</PromotionEndHour>
-#             <ClubId>0</ClubId>
-#             <AdditionalRestrictions></AdditionalRestrictions>
-#             <Remarks></Remarks>
