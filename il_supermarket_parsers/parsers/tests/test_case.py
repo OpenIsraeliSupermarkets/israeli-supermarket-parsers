@@ -75,6 +75,7 @@ def make_test_case(scraper_enum, parser_enum):
                 files_types=[file_type],
             ).load()
 
+            assert len(files) > 0
             dfs = []
             for file in files:
 
