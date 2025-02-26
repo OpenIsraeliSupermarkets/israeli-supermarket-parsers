@@ -75,9 +75,11 @@ def make_test_case(scraper_enum, parser_enum):
                 files_types=[file_type],
             ).load()
 
-            assert len(files) == len(
-                self.list_xml_files_recursive(sub_folder)
-            ), "dataloader failed"
+            complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
+            files_from_folder = self.list_xml_files_recursive(sub_folder)
+            assert sorted(complete_file_loaded) == sorted(
+                files_from_folder
+            ), f"dataloader failed, failed to load: {set(files_from_folder) - set(complete_file_loaded)}"
             dfs = []
             for file in files:
 
