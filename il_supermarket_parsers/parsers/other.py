@@ -1,4 +1,6 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
+from il_supermarket_parsers.documents import SubRootedXmlDataFrameConverter
+
 from .confix import CofixFileConverter
 
 
@@ -153,3 +155,26 @@ class WoltFileConverter(BaseFileConverter):
     """
     wolt
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=SubRootedXmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                list_sub_key="PromotionItems",
+                sub_roots=[
+                    "Remarks",
+                    "AdditionalRestrictions",
+                    "ClubId",
+                    "PromotionEndHour",
+                    "PromotionUpdateTime",
+                    "PromotionId",
+                    "PromotionDescription",
+                    "PromotionStartDate",
+                    "PromotionStartHour",
+                    "PromotionEndDate",
+                ],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
+            )
+        )

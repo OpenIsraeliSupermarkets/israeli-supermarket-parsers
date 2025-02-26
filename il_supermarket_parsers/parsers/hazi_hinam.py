@@ -1,5 +1,8 @@
 from il_supermarket_parsers.engines import BaseFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    XmlDataFrameConverter,
+    SubRootedXmlDataFrameConverter,
+)
 
 
 class HaziHinamFileConverter(BaseFileConverter):
@@ -33,10 +36,12 @@ class HaziHinamFileConverter(BaseFileConverter):
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 ignore_column=["XmlDocVersion", "DllVerNo"],
             ),
-            stores_parser=XmlDataFrameConverter(
+            stores_parser=SubRootedXmlDataFrameConverter(
                 id_field="StoreID",
-                list_key="Stores",
-                roots=["ChainId"],
+                list_key="SubChains",
+                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                list_sub_key="Stores",
+                sub_roots=["SubChainID", "SubChainName"],
                 ignore_column=[],
             ),
         )

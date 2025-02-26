@@ -75,6 +75,12 @@ def make_test_case(scraper_enum, parser_enum):
                 files_types=[file_type],
             ).load()
 
+            complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
+            files_from_folder = self.list_xml_files_recursive(sub_folder)
+            assert sorted(complete_file_loaded) == sorted(files_from_folder), (
+                f"dataloader failed, failed to load"
+                f": {list(set(files_from_folder) - set(complete_file_loaded))}"
+            )
             dfs = []
             for file in files:
 
@@ -96,6 +102,15 @@ def make_test_case(scraper_enum, parser_enum):
 
             if dfs:
                 pd.concat(dfs)
+
+        def list_xml_files_recursive(self, directory):
+            """list all xml files"""
+            file_list = []
+            for root, _, files in os.walk(directory):
+                for file in files:
+                    if "xml" in file:
+                        file_list.append(os.path.join(root, file))
+            return file_list
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""

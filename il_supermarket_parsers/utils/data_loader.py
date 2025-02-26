@@ -66,13 +66,20 @@ class DataLoader:
 
     def _file_name_to_components(self, store_folder, file_name, empty_store_id="0000"):
         """extract file name components"""
+
+        _file_name_split = file_name.split(".")[0].split("-")
         try:
-            prefix_file_name, store_number, date, *_ = file_name.split(".")[0].split(
-                "-"
-            )
+            # Promo7290700100008-000-207-20250224-103225
+            if len(_file_name_split) == 5:
+                prefix_file_name, _, store_number, date, time, *_ = _file_name_split
+                extracted_datetime = date + time
+            else:
+                prefix_file_name, store_number, extracted_datetime, *_ = (
+                    _file_name_split
+                )
         except ValueError:
             # global files
-            prefix_file_name, date, *_ = file_name.split(".")[0].split("-")
+            prefix_file_name, extracted_datetime, *_ = _file_name_split
             store_number = empty_store_id
 
         file_type, chain_id = self._find_file_type_and_chain_id(prefix_file_name)
@@ -83,7 +90,7 @@ class DataLoader:
             prefix_file_name=prefix_file_name,
             extracted_store_number=store_number,
             extracted_chain_id=chain_id,
-            extracted_date=self._format_datetime(date),
+            extracted_date=self._format_datetime(extracted_datetime),
             detected_filetype=file_type,
         )
 
