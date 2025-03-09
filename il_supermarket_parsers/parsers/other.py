@@ -160,7 +160,7 @@ class WoltFileConverter(BaseFileConverter):
         super().__init__(
             promofull_parser=SubRootedXmlDataFrameConverter(
                 list_key="Promotions",
-                id_field="PromotionId",
+                id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 list_sub_key="PromotionItems",
                 sub_roots=[
