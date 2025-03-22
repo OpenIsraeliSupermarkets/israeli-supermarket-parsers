@@ -87,14 +87,16 @@ class RawParsingPipeline:
                         create_csv, index=False, mode="a", header=False
                     )
 
-                del df
-
                 execution_log.append(
                     {
                         "status": True,
+                        "file_size": os.path.getsize(file.get_full_path()),
+                        "detected_num_rows": df.shape[0],
                         **file.to_log_dict(),
                     }
                 )
+                
+                del df
 
             except Exception as error:  # pylint: disable=broad-exception-caught
                 execution_errors += 1
