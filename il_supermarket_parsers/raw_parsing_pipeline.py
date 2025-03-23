@@ -60,6 +60,17 @@ class RawParsingPipeline:
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
 
+            # ignore but log empty files
+            if file.is_expected_to_be_readable():
+                execution_log.append(
+                    {
+                        "loaded": False,
+                        **file.to_log_dict(),
+                    }
+                )
+                continue
+
+            # if the file is not empty, process it
             try:
                 parser = parser_class()
                 df = parser.read(file)
@@ -87,20 +98,23 @@ class RawParsingPipeline:
                         create_csv, index=False, mode="a", header=False
                     )
 
-                del df
-
                 execution_log.append(
                     {
-                        "status": True,
+                        "loaded": True,
+                        "succusfull": True,
+                        "detected_num_rows": df.shape[0],
                         **file.to_log_dict(),
                     }
                 )
+
+                del df
 
             except Exception as error:  # pylint: disable=broad-exception-caught
                 execution_errors += 1
                 execution_log.append(
                     {
-                        "status": False,
+                        "loaded": True,
+                        "succusfull": False,
                         "error": str(error),
                         "trace": traceback.format_exc(),
                         **file.to_log_dict(),

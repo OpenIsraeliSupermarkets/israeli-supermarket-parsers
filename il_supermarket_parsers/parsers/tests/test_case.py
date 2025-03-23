@@ -3,12 +3,7 @@ import os
 import tempfile
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
-from il_supermarket_parsers.utils import (
-    get_sample_data,
-    DataLoader,
-    FileTypesFilters,
-    EMPTY_FILE_TOEHOLD,
-)
+from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters
 from il_supermarket_parsers.parser_factory import ParserFactory
 
 
@@ -85,10 +80,12 @@ def make_test_case(scraper_enum, parser_enum):
             for file in files:
 
                 try:
-                    df = parser.read(file, run_validation=True)
+                    if file.is_expected_to_be_readable():
+                        continue
 
+                    df = parser.read(file, run_validation=True)
                     # none empty file
-                    if os.path.getsize(file.get_full_path()) > EMPTY_FILE_TOEHOLD:
+                    if file.is_expected_to_have_records():
 
                         # should contain data
                         assert df.shape[0] > 0, f"File {file} is empty"
