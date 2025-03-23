@@ -95,7 +95,7 @@ class RawParsingPipeline:
                         **file.to_log_dict(),
                     }
                 )
-                
+
                 del df
 
             except Exception as error:  # pylint: disable=broad-exception-caught
