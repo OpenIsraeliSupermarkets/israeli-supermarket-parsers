@@ -5,12 +5,14 @@ from dataclasses import dataclass
 from typing import List
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
-from .logger import Logger
 
+
+EMPTY_FILE_TOEHOLD = 300
 
 @dataclass
 class DumpFile:  # pylint: disable=too-many-instance-attributes
     """information about file found from the scraper"""
+    
 
     store_folder: str
     file_name: str
@@ -20,10 +22,21 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
     extracted_date: datetime.datetime
     detected_filetype: FileTypesFilters
     data: str = None
+    #
+    should_be_processed: bool = True
+    ingore_reason: str = None
 
     def get_full_path(self):
         """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
+
+    def is_empty_file(self):
+        """get the file category"""
+        return os.path.getsize(self.get_full_path()) == 0
+
+    def is_expected_to_have_data(self):
+        """check if the file is expected to have data"""
+        return os.path.getsize(self.get_full_path()) > EMPTY_FILE_TOEHOLD
 
     def to_log_dict(self):
         """return the object as dict"""
@@ -35,6 +48,8 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
             "extracted_chain_id": self.extracted_chain_id,
             "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
             "detected_filetype": self.detected_filetype.name,
+            "size": os.path.join(self.store_folder, self.file_name),
+            "is_expected_to_have_data": self.is_expected_to_have_data(),
         }
 
 
@@ -107,9 +122,7 @@ class DataLoader:
             lower_file_name[index:],
         )
 
-    def load(
-        self, limit=None, ignore_null_files=False, ignore_zero_store_id=False
-    ):  # pylint: disable=too-many-branches
+    def load(self, limit=None):  # pylint: disable=too-many-branches
         """load details about the files in the folder"""
         files_in_dir = os.listdir(self.folder)
         stores_folders = [DumpFolderNames[enum].value for enum in self.store_names]
@@ -134,26 +147,10 @@ class DataLoader:
             for xml in os.listdir(store_folder):
 
                 # skip files that are not xml
-                ignore_file_reason = ""
                 extension = xml.split(".")[-1]
                 if extension != "xml":
                     ignore_file_reason = (
                         ignore_file_reason + f"file type not in {extension}"
-                    )
-                if ignore_null_files and "null" in xml.lower():
-                    ignore_file_reason = ignore_file_reason + " null file "
-
-                if ignore_zero_store_id and "0000000000000" in xml:
-                    ignore_file_reason = (
-                        ignore_file_reason + " containing zeros as store id"
-                    )
-
-                if os.path.getsize(os.path.join(store_folder, xml)) == 0:
-                    ignore_file_reason = "file is empty."
-
-                if len(ignore_file_reason) > 0:
-                    Logger.warning(
-                        f"Ignoring file {store_folder}, {ignore_file_reason}."
                     )
                     continue
 

@@ -60,6 +60,18 @@ class RawParsingPipeline:
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
 
+            # ignore but log empty files
+            if file.is_empty_file():
+                execution_log.append(
+                    {
+                        "status": "IGNORED",
+                        "detected_num_rows": df.shape[0],
+                        **file.to_log_dict(),
+                    }
+                )
+                continue
+
+            # if the file is not empty, process it
             try:
                 parser = parser_class()
                 df = parser.read(file)
@@ -90,7 +102,6 @@ class RawParsingPipeline:
                 execution_log.append(
                     {
                         "status": True,
-                        "file_size": os.path.getsize(file.get_full_path()),
                         "detected_num_rows": df.shape[0],
                         **file.to_log_dict(),
                     }

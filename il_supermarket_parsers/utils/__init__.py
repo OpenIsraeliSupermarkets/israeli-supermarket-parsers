@@ -21,4 +21,3 @@ from .dataframe_utils import collect_unique_columns_from_nested_json
 from .test_utils import get_sample_data
 from .data_loader import DataLoader, DumpFile
 
-EMPTY_FILE_TOEHOLD = 300
