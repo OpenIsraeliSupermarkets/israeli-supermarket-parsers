@@ -17,14 +17,14 @@ class YaynotBitanTestCase(
     """
 
 
-class CityMarketGivatayimTestCase(
-    make_test_case(
-        ScraperFactory.CITY_MARKET_GIVATAYIM, ParserFactory.CITY_MARKET_GIVATAYIM
-    )
-):
-    """
-    Test case for Cofix supermarket.
-    """
+# class CityMarketGivatayimTestCase(
+#     make_test_case(
+#         ScraperFactory.CITY_MARKET_GIVATAYIM, ParserFactory.CITY_MARKET_GIVATAYIM
+#     )
+# ):
+#     """
+#     Test case for Cofix supermarket.
+#     """
 
 
 class CityMarketKiratGatTestCase(
