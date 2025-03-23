@@ -9,10 +9,10 @@ from il_supermarket_scarper.utils import DumpFolderNames
 
 EMPTY_FILE_TOEHOLD = 300
 
+
 @dataclass
 class DumpFile:  # pylint: disable=too-many-instance-attributes
     """information about file found from the scraper"""
-    
 
     store_folder: str
     file_name: str
@@ -30,11 +30,11 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
         """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
 
-    def is_empty_file(self):
+    def is_expected_to_be_readable(self):
         """get the file category"""
         return os.path.getsize(self.get_full_path()) == 0
 
-    def is_expected_to_have_data(self):
+    def is_expected_to_have_records(self):
         """check if the file is expected to have data"""
         return os.path.getsize(self.get_full_path()) > EMPTY_FILE_TOEHOLD
 
@@ -49,7 +49,7 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
             "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
             "detected_filetype": self.detected_filetype.name,
             "size": os.path.join(self.store_folder, self.file_name),
-            "is_expected_to_have_data": self.is_expected_to_have_data(),
+            "is_expected_to_have_records": self.is_expected_to_have_records(),
         }
 
 

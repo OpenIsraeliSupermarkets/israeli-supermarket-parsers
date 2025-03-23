@@ -61,11 +61,10 @@ class RawParsingPipeline:
         ):
 
             # ignore but log empty files
-            if file.is_empty_file():
+            if file.is_expected_to_be_readable():
                 execution_log.append(
                     {
-                        "status": "IGNORED",
-                        "detected_num_rows": df.shape[0],
+                        "loaded": False,
                         **file.to_log_dict(),
                     }
                 )
@@ -101,7 +100,8 @@ class RawParsingPipeline:
 
                 execution_log.append(
                     {
-                        "status": True,
+                        "loaded": True,
+                        "succusfull": True,
                         "detected_num_rows": df.shape[0],
                         **file.to_log_dict(),
                     }
@@ -113,7 +113,8 @@ class RawParsingPipeline:
                 execution_errors += 1
                 execution_log.append(
                     {
-                        "status": False,
+                        "loaded": True,
+                        "succusfull": False,
                         "error": str(error),
                         "trace": traceback.format_exc(),
                         **file.to_log_dict(),

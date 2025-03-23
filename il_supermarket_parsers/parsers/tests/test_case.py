@@ -80,12 +80,12 @@ def make_test_case(scraper_enum, parser_enum):
             for file in files:
 
                 try:
-                    if file.is_empty_file():
+                    if file.is_expected_to_be_readable():
                         continue
 
                     df = parser.read(file, run_validation=True)
                     # none empty file
-                    if file.is_expected_to_have_data():
+                    if file.is_expected_to_have_records():
 
                         # should contain data
                         assert df.shape[0] > 0, f"File {file} is empty"
