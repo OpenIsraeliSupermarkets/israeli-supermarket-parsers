@@ -12,6 +12,8 @@ class XmlDataFrameConverter(BaseXMLParser):
 
     def reduce_size(self, data):
         """reduce the size"""
+        data = data.fillna("")
+        # remove duplicate columns
         for col in data.columns:
             data[col] = data[col].mask(data[col] == data[col].shift())
         return data

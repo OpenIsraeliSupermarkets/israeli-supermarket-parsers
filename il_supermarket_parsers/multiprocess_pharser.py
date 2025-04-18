@@ -1,5 +1,6 @@
 import itertools
 import json
+import datetime
 import os
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
@@ -20,6 +21,7 @@ class RawProcessing(ProcessJob):
         parser_name = kwargs.pop("store_enum")
         output_folder = kwargs.pop("output_folder")
         limit = kwargs.pop("limit")
+        when_date = kwargs.pop("when_date")
 
         return RawParsingPipeline(
             drop_folder, parser_name, file_type, output_folder
@@ -36,12 +38,14 @@ class ParallelParser(MultiProcessor):
         enabled_file_types=None,
         multiprocessing=6,
         output_folder="output",
+        when_date=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3))),
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
         self.enabled_parsers = enabled_parsers
         self.enabled_file_types = enabled_file_types
         self.output_folder = output_folder
+        self.when_date = when_date
 
     def task_to_execute(self):
         """the task to execute"""
@@ -67,6 +71,7 @@ class ParallelParser(MultiProcessor):
             "file_type",
             "data_folder",
             "output_folder",
+            "when_date",
         ]
         combinations = list(
             itertools.product(
@@ -75,6 +80,7 @@ class ParallelParser(MultiProcessor):
                 all_file_types,
                 [self.data_folder],
                 [self.output_folder],
+                [self.when_date]
             )
         )
         task_can_executed_independently = [
@@ -84,10 +90,15 @@ class ParallelParser(MultiProcessor):
 
     def post(self, results):
         """post process the results"""
-        with open(
-            os.path.join(self.output_folder, "parser-status.json"),
-            "w",
-            encoding="utf-8",
-        ) as file:
-            json.dump(results, file)
+        status_file = os.path.join(self.output_folder, "parser-status.json")
+        if os.path.exists(status_file):
+            with open(status_file, "r", encoding="utf-8") as file:
+                existing_results = json.load(file)
+        else:
+            existing_results = []
+
+        existing_results.extend(results)
+
+        with open(status_file, "w", encoding="utf-8") as file:
+            json.dump(existing_results, file)
         return super().post(results)
