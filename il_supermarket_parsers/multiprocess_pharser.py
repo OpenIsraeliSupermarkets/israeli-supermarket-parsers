@@ -24,7 +24,7 @@ class RawProcessing(ProcessJob):
         when_date = kwargs.pop("when_date")
 
         return RawParsingPipeline(
-            drop_folder, parser_name, file_type, output_folder
+            drop_folder, parser_name, file_type, output_folder, when_date
         ).process(limit=limit)
 
 
