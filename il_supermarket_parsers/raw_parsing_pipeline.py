@@ -126,7 +126,7 @@ class RawParsingPipeline:
             "status": True,
             "store_name": self.store_name,
             "files_types": self.file_type,
-            "when_date": self.when_date,
+            "when_date": self.when_date.strftime("%Y-%m-%d %H:%M:%S %z"),
             "processed_files": len(files_to_process) > 0,
             "execution_errors": execution_errors > 0,
             "file_was_created": os.path.exists(create_csv),
