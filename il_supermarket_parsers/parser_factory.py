@@ -9,7 +9,7 @@ class ParserFactory(Enum):
     BAREKET = all_parsers.BareketFileConverter
     YAYNO_BITAN = all_parsers.YaynoBitanFileConverter
     COFIX = all_parsers.CofixFileConverter
-    CITY_MARKET_GIVATAYIM = all_parsers.CityMarketGivatayim
+    # CITY_MARKET_GIVATAYIM = all_parsers.CityMarketGivatayim
     CITY_MARKET_KIRYATGAT = all_parsers.CityMarketKiryatGat
     CITY_MARKET_SHOPS = all_parsers.CityMarketShops
     DOR_ALON = all_parsers.DorAlonFileConverter
