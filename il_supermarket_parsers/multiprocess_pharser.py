@@ -2,6 +2,7 @@ import itertools
 import json
 import datetime
 import os
+import pytz
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .parser_factory import ParserFactory
@@ -38,7 +39,7 @@ class ParallelParser(MultiProcessor):
         enabled_file_types=None,
         multiprocessing=6,
         output_folder="output",
-        when_date=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3))),
+        when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
