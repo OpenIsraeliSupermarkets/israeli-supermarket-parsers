@@ -14,11 +14,12 @@ class RawParsingPipeline:
     processing files to dataframe
     """
 
-    def __init__(self, folder, store_name, file_type, output_folder) -> None:
+    def __init__(self, folder, store_name, file_type, output_folder, when_date) -> None:
         self.store_name = store_name
         self.file_type = file_type
         self.folder = folder
         self.output_folder = output_folder
+        self.when_date = when_date
 
     def append_columns_to_csv(self, existing_file, new_columns):
         """Append new columns to an existing CSV file"""
@@ -125,6 +126,7 @@ class RawParsingPipeline:
             "status": True,
             "store_name": self.store_name,
             "files_types": self.file_type,
+            "when_date": self.when_date,
             "processed_files": len(files_to_process) > 0,
             "execution_errors": execution_errors > 0,
             "file_was_created": os.path.exists(create_csv),

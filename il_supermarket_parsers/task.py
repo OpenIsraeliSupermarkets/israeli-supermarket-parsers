@@ -1,5 +1,8 @@
+import datetime
+import pytz
 from .multiprocess_pharser import ParallelParser
 from .utils.logger import Logger
+
 
 
 class ConvertingTask:
@@ -12,6 +15,7 @@ class ConvertingTask:
         files_types=None,
         multiprocessing=6,
         limit=None,
+        when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
         output_folder="outputs",
     ):
         Logger.info(
@@ -21,6 +25,7 @@ class ConvertingTask:
             f"files_types = {files_types}"
             f"output_folder={output_folder}"
             f"limit={limit}"
+            f"when_date={when_date}"
         )
         self.runner = ParallelParser(
             data_folder,
@@ -28,6 +33,7 @@ class ConvertingTask:
             enabled_file_types=files_types,
             multiprocessing=multiprocessing,
             output_folder=output_folder,
+            when_date=when_date,
         )
         self.limit = limit
 
