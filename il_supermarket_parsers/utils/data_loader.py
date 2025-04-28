@@ -57,7 +57,7 @@ class DataLoader:
     """class for loading dump files from the folder"""
 
     def __init__(
-        self, folder, store_names=None, files_types=None, empty_store_id=0000
+        self, folder, store_names=None, files_types=None, empty_store_id="0000"
     ) -> None:
         self.folder = folder
         self.store_names = (
