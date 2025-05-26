@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 from .parser_factory import ParserFactory
-from .utils import DataLoader, DumpFile
+from .utils import DataLoader, DumpFile, Logger
 
 
 class RawParsingPipeline:
@@ -53,6 +53,10 @@ class RawParsingPipeline:
             store_names=[self.store_name],
             files_types=[self.file_type],
         ).load(limit=limit)
+
+        Logger.info(
+            f"Processing {len(files_to_process)} files of type {self.file_type} for store {self.store_name}"
+        )
         execution_log = []
         execution_errors = 0
         for file in tqdm(
