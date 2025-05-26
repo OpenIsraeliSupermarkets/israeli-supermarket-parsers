@@ -33,6 +33,10 @@ class Logger:
         """log info"""
         cls.logger.info(msg, *args, **kwargs)
 
+    def debug(cls, msg, *args, **kwargs):
+        """log debug"""
+        cls.logger.debug(msg, *args, **kwargs)
+
     @classmethod
     def error(cls, msg, *args, **kwargs):
         """log error"""

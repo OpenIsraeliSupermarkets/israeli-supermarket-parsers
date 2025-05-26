@@ -81,7 +81,7 @@ class ParallelParser(MultiProcessor):
                 all_file_types,
                 [self.data_folder],
                 [self.output_folder],
-                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")]
+                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
             )
         )
         task_can_executed_independently = [

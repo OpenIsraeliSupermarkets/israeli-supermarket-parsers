@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
+from .logger import Logger
 
 
 EMPTY_FILE_TOEHOLD = 300
@@ -133,25 +134,29 @@ class DataLoader:
             store_folder = os.path.join(self.folder, store_name)
 
             # ignore list
-            ignore_reason = None
             if store_name.startswith("."):
-                ignore_reason = " contains '.'"
-            if os.path.isfile(store_folder):
-                ignore_reason = "is file and not folder"
-            if self.store_names and store_name not in stores_folders:
-                ignore_reason = "not in requested chains to scan"
-
-            if ignore_reason:
+                Logger.debug(f"Skipping folder {store_folder} because it contains '.'")
                 continue
+
+            if os.path.isfile(store_folder):
+                Logger.debug(
+                    f"Skipping folder {store_folder} because it contains  is file and not folder"
+                )
+                continue
+
+            if self.store_names and store_name not in stores_folders:
+                Logger.debug(
+                    f"Skipping folder {store_folder} because it not in requested chains to scan {self.store_names}"
+                )
+                continue
+
             #
             for xml in os.listdir(store_folder):
 
                 # skip files that are not xml
                 extension = xml.split(".")[-1]
                 if extension != "xml":
-                    ignore_file_reason = (
-                        ignore_file_reason + f"file type not in {extension}"
-                    )
+                    Logger.warning(f"Skipping file {xml} because it is not xml file")
                     continue
 
                 dump_file: DumpFile = self._file_name_to_components(

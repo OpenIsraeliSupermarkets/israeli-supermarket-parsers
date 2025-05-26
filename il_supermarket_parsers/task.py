@@ -4,7 +4,6 @@ from .multiprocess_pharser import ParallelParser
 from .utils.logger import Logger
 
 
-
 class ConvertingTask:
     """main convert task"""
 
