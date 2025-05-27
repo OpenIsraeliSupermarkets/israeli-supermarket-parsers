@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 from .parser_factory import ParserFactory
-from .utils import DataLoader, DumpFile
+from .utils import DataLoader, DumpFile, Logger
 
 
 class RawParsingPipeline:
@@ -53,6 +53,11 @@ class RawParsingPipeline:
             store_names=[self.store_name],
             files_types=[self.file_type],
         ).load(limit=limit)
+
+        Logger.info(
+            f"Processing {len(files_to_process)} files"
+            f"of type {self.file_type} for store {self.store_name}"
+        )
         execution_log = []
         execution_errors = 0
         for file in tqdm(
@@ -61,6 +66,7 @@ class RawParsingPipeline:
             desc=f"Processing {self.file_type}@{self.store_name}",
         ):
 
+            Logger.debug(f"Processing file {file.file_name}")
             # ignore but log empty files
             if file.is_expected_to_be_readable():
                 execution_log.append(
@@ -69,6 +75,7 @@ class RawParsingPipeline:
                         **file.to_log_dict(),
                     }
                 )
+                Logger.debug(f"File {file.file_name} is empty, skipping")
                 continue
 
             # if the file is not empty, process it
@@ -77,14 +84,19 @@ class RawParsingPipeline:
                 df = parser.read(file)
 
                 if not os.path.exists(create_csv):
+                    Logger.debug(f"Creating new file {create_csv}")
                     df.to_csv(create_csv, index=False, mode="w", header=True)
                 else:
+                    Logger.debug(f"File {file.file_name} is not empty, processing")
                     # align columns
                     existing_df = pd.read_csv(create_csv, nrows=0)
 
                     # if there is missing columns in the existing file, append them
                     missing_columns = set(df.columns) - set(existing_df.columns)
                     if missing_columns:
+                        Logger.debug(
+                            f"Appending missing columns {missing_columns} to {create_csv}"
+                        )
                         self.append_columns_to_csv(create_csv, missing_columns)
 
                     existing_df = pd.read_csv(create_csv, nrows=0)
@@ -98,6 +110,7 @@ class RawParsingPipeline:
                     df[existing_df.columns].to_csv(
                         create_csv, index=False, mode="a", header=False
                     )
+                    Logger.debug(f"Appending data to {create_csv}")
 
                 execution_log.append(
                     {
@@ -111,6 +124,7 @@ class RawParsingPipeline:
                 del df
 
             except Exception as error:  # pylint: disable=broad-exception-caught
+                Logger.error(f"Error processing file {file.file_name}: {error}")
                 execution_errors += 1
                 execution_log.append(
                     {
@@ -134,105 +148,3 @@ class RawParsingPipeline:
             "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
             "execution_log": execution_log,
         }
-
-    # def convert(self, full_path, file_type, update_date):
-    #     """convert xml to database"""
-    #     #
-    #     try:
-    #         id_field_name = xml.get_key_column()
-
-    #         if not self.database.is_file_already_processed(full_path):
-
-    #             # check there is not file that process after it.
-    #             self.database.validate_all_data_source_processed_was_before(update_date)
-
-    #             # insert line by line
-    #             try:
-    #                 if os.path.getsize(full_path) == 0:
-    #                     raise Empty(f"File {full_path} is empty.")
-
-    #                 raw = xml.convert(full_path)
-
-    #                 if xml.should_convert_to_incremental():
-
-    #                     # get the last not deleted entriees
-    #                     not_deleted_entries = self.database.get_store_last_state(
-    #                         id_field_name
-    #                     )
-    #                     #
-    #                     if id_field_name not in raw.columns:
-    #                         raise ValueError("pharse error, no id field")
-
-    #                     for _, line in raw.iterrows():
-
-    #                         # remove the Id from the list of doc in the collection
-    #                         doc_id = line[id_field_name]
-
-    #                         if doc_id in not_deleted_entries:
-    #                             not_deleted_entries.remove(doc_id)
-
-    #                         existing_doc = self.database.find_one_doc(
-    #                             id_field_name, line[id_field_name]
-    #                         )
-    #                         insert_doc = line[line != "NOT_APPLY"].to_dict()
-
-    #                         if not existing_doc or self.database.document_had_changed(
-    #                             insert_doc, existing_doc
-    #                         ):
-
-    #                             # if there exits a document -> found a change
-    #                             if existing_doc:
-    #                                 print(
-    #                                     f"Found an update for
-    #                                       {existing_doc[id_field_name]}: \n"
-    #                                     f"{self.database.diff_document
-    #                                       (insert_doc,existing_doc)}\n"
-    #                                 )
-
-    #                             # insert with new update
-    #                             self.database.insert_one_doc(insert_doc, update_date)
-
-    #                     # mark deleted for the document left.
-    #                     for entry_left in not_deleted_entries:
-    #                         self.database.update_one_doc(
-    #                             {id_field_name: entry_left},
-    #                             id_field_name,
-    #                             mark_deleted=True,
-    #                         )
-    #                 else:
-    #                     # simpley add all
-    #                     for _, line in raw.iterrows():
-    #                         self.database.insert_one_doc(line.to_dict(), update_date)
-    #             except Empty as error:
-    #                 self.database.insert_file_processed(
-    #                     {
-    #                         "execption": str(error),
-    #                         **self._to_doc(
-    #                             full_path, file_type, update_date, id_field_name
-    #                         ),
-    #                     }
-    #                 )
-    #             else:
-    #                 # update when all is done
-    #                 self.database.insert_file_processed(
-    #                     self._to_doc(full_path, file_type, update_date, id_field_name)
-    #                 )
-    #         return True
-    #     except Exception as error:
-    #         self.database.insert_failure(
-    #             {
-    #                 "execption": str(error),
-    #                 **self._to_doc(full_path, file_type, update_date, id_field_name),
-    #             }
-    #         )
-    #         return False
-
-    # def _to_doc(self, full_path, file_type, update_date, id_field_name):
-    #     return {
-    #         "full_path": full_path,
-    #         "update_date": update_date,
-    #         "branch_store_id": self.branch_store_id,
-    #         "store_name": self.store_name,
-    #         "file_type": file_type,
-    #         "id_field_name": id_field_name,
-    #     }

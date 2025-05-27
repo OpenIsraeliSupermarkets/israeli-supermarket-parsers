@@ -1,5 +1,7 @@
 pandas==2.2.2
 lxml==5.2.1
 pymongo==4.6.3
-il-supermarket-scraper>=0.5.8
+il-supermarket-scraper>=0.5.9
 tqdm==4.66
+
+dnspython>=2.6.1 # not directly required, pinned by Snyk to avoid a vulnerability

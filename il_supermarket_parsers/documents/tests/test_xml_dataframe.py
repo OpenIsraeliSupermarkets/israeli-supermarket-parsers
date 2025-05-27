@@ -1,6 +1,6 @@
 import os
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
-from il_supermarket_parsers.utils.data_loader import EMPTY_FILE_TOEHOLD
+from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
 
 
 def test_read_bad_encoding_1():

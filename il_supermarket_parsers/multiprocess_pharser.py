@@ -6,7 +6,7 @@ import pytz
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .parser_factory import ParserFactory
-from .utils import FileTypesFilters
+from .utils import FileTypesFilters, Logger
 
 
 class RawProcessing(ProcessJob):
@@ -74,6 +74,15 @@ class ParallelParser(MultiProcessor):
             "output_folder",
             "when_date",
         ]
+
+        Logger.info(
+            f"Creating combinations for limit={limit},"
+            f"parsers={all_parsers},"
+            f"file_types={all_file_types},"
+            f"data_folder={self.data_folder},"
+            f"output_folder={self.output_folder},"
+            f"when_date={self.when_date.strftime('%Y-%m-%d %H:%M:%S %z')}"
+        )
         combinations = list(
             itertools.product(
                 [limit],
@@ -81,7 +90,7 @@ class ParallelParser(MultiProcessor):
                 all_file_types,
                 [self.data_folder],
                 [self.output_folder],
-                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")]
+                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
             )
         )
         task_can_executed_independently = [
