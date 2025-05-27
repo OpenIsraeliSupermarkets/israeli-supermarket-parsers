@@ -93,7 +93,9 @@ class RawParsingPipeline:
                     # if there is missing columns in the existing file, append them
                     missing_columns = set(df.columns) - set(existing_df.columns)
                     if missing_columns:
-                        Logger.debug(f"Appending missing columns {missing_columns} to {create_csv}")
+                        Logger.debug(
+                            f"Appending missing columns {missing_columns} to {create_csv}"
+                        )
                         self.append_columns_to_csv(create_csv, missing_columns)
 
                     existing_df = pd.read_csv(create_csv, nrows=0)

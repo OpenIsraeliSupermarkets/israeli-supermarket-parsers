@@ -74,8 +74,10 @@ class ParallelParser(MultiProcessor):
             "output_folder",
             "when_date",
         ]
-        
-        Logger.info(f"Creating combinations for limit={limit} parsers={all_parsers} file_types={all_file_types} data_folder={self.data_folder} output_folder={self.output_folder} when_date={self.when_date.strftime('%Y-%m-%d %H:%M:%S %z')}")
+
+        Logger.info(
+            f"Creating combinations for limit={limit} parsers={all_parsers} file_types={all_file_types} data_folder={self.data_folder} output_folder={self.output_folder} when_date={self.when_date.strftime('%Y-%m-%d %H:%M:%S %z')}"
+        )
         combinations = list(
             itertools.product(
                 [limit],

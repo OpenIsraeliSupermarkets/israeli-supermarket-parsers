@@ -78,7 +78,7 @@ def file_name_to_components(store_folder, file_name, empty_store_id="0000"):
             prefix_file_name, store_number, extracted_datetime, *_ = _file_name_split
     except ValueError:
         Logger.warning(f"Error parsing file name {file_name}")
-        
+
         # global files
         prefix_file_name, extracted_datetime, *_ = _file_name_split
         store_number = empty_store_id
