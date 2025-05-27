@@ -55,7 +55,8 @@ class RawParsingPipeline:
         ).load(limit=limit)
 
         Logger.info(
-            f"Processing {len(files_to_process)} files of type {self.file_type} for store {self.store_name}"
+            f"Processing {len(files_to_process)} files"
+            f"of type {self.file_type} for store {self.store_name}"
         )
         execution_log = []
         execution_errors = 0

@@ -43,7 +43,8 @@ class DataLoader:
 
             if self.store_names and store_name not in stores_folders:
                 Logger.debug(
-                    f"Skipping folder {store_folder} because it not in requested chains to scan {self.store_names}"
+                    f"Skipping folder {store_folder} because it not in "
+                    f"requested chains to scan {self.store_names}"
                 )
                 continue
 
