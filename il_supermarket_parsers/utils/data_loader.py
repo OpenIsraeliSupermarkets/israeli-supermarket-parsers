@@ -63,6 +63,7 @@ class DataLoader:
                     files.append(dump_file)
 
                 if limit and len(files) >= limit:
+                    Logger.warning(f"Reached limit of {limit} files, stopping")
                     break
 
         return sorted(files, key=lambda x: x.extracted_date)
