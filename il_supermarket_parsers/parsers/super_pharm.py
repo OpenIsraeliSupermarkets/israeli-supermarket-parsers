@@ -1,5 +1,8 @@
 from il_supermarket_parsers.engines import BigIDFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter,SubRootedXmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    XmlDataFrameConverter,
+    SubRootedXmlDataFrameConverter,
+)
 
 
 class SuperPharmFileConverter(BigIDFileConverter):
@@ -32,6 +35,6 @@ class SuperPharmFileConverter(BigIDFileConverter):
                 id_field="StoreID",
                 list_sub_key="Stores",
                 sub_roots=["SubChainID", "SubChainName"],
-                roots=["ChainId", "ChainName",'LastUpdateDate','LastUpdateTime'],
+                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
             ),
         )

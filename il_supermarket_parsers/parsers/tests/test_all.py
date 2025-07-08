@@ -10,7 +10,10 @@ class BareketTestCase(make_test_case(ScraperFactory.BAREKET, ParserFactory.BAREK
 
 
 class YaynotBitanTestCase(
-    make_test_case(ScraperFactory.YAYNO_BITAN_AND_CARREFOUR, ParserFactory.YAYNO_BITAN_AND_CARREFOUR)
+    make_test_case(
+        ScraperFactory.YAYNO_BITAN_AND_CARREFOUR,
+        ParserFactory.YAYNO_BITAN_AND_CARREFOUR,
+    )
 ):
     """
     Test case for Yaynot Bitan supermarket.
