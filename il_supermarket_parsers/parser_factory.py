@@ -7,7 +7,7 @@ class ParserFactory(Enum):
     """all parsers available"""
 
     BAREKET = all_parsers.BareketFileConverter
-    YAYNO_BITAN = all_parsers.YaynoBitanFileConverter
+    YAYNO_BITAN_AND_CARREFOUR = all_parsers.YaynoBitanFileConverter
     COFIX = all_parsers.CofixFileConverter
     # CITY_MARKET_GIVATAYIM = all_parsers.CityMarketGivatayim
     CITY_MARKET_KIRYATGAT = all_parsers.CityMarketKiryatGat
@@ -20,7 +20,7 @@ class ParserFactory(Enum):
     KING_STORE = all_parsers.KingStoreFileConverter
     MAAYAN_2000 = all_parsers.Maayan2000FileConverter
     MAHSANI_ASHUK = all_parsers.MahsaniAShukPromoFileConverter
-    MEGA = all_parsers.MegaFileConverter
+    #MEGA = all_parsers.MegaFileConverter
     NETIV_HASED = all_parsers.NetivHasedFileConverter
     MESHMAT_YOSEF_1 = all_parsers.MeshmatYosef1FileConverter
     MESHMAT_YOSEF_2 = all_parsers.MeshmatYosef2FileConverter

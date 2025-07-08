@@ -10,7 +10,7 @@ class BareketTestCase(make_test_case(ScraperFactory.BAREKET, ParserFactory.BAREK
 
 
 class YaynotBitanTestCase(
-    make_test_case(ScraperFactory.YAYNO_BITAN, ParserFactory.YAYNO_BITAN)
+    make_test_case(ScraperFactory.YAYNO_BITAN_AND_CARREFOUR, ParserFactory.YAYNO_BITAN_AND_CARREFOUR)
 ):
     """
     Test case for Yaynot Bitan supermarket.
@@ -111,10 +111,10 @@ class MahsaniAShukTestCase(
     """
 
 
-class MegaTestCase(make_test_case(ScraperFactory.MEGA, ParserFactory.MEGA)):
-    """
-    Test case for Mega supermarket.
-    """
+# class MegaTestCase(make_test_case(ScraperFactory.MEGA, ParserFactory.MEGA)):
+#     """
+#     Test case for Mega supermarket.
+#     """
 
 
 class NetivHasefTestCase(
