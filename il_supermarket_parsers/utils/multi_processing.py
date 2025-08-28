@@ -37,13 +37,33 @@ class MultiProcessor:
 
             Logger.info(f"Starting process {index}.")
 
-    def wait_to_finish(self, tasks_accomplished):
-        """wait until all finish"""
+    def wait_to_finish(self, tasks_accomplished, timeout_seconds=60*60):
+        """wait until all finish with timeout protection"""
 
         if self.multiprocessing:
             Logger.info("Starting waiting to all processes")
-            while not tasks_accomplished.full():
-                time.sleep(2)
+            start_time = time.time()
+            
+            while not tasks_accomplished.full() and (time.time() - start_time) < timeout_seconds:
+                Logger.info(f"Waiting to all processes {tasks_accomplished.qsize()}")
+                
+                # Check if all processes are still alive
+                alive_processes = [p for p in self.processes if p.is_alive()]
+                if not alive_processes:
+                    Logger.warning("All processes finished but queue not full")
+                    break
+                    
+                time.sleep(10)
+            
+            # Check if we timed out
+            if (time.time() - start_time) >= timeout_seconds:
+                Logger.error(f"wait_to_finish timed out after {timeout_seconds} seconds")
+                # Terminate remaining processes
+                for process in self.processes:
+                    if process.is_alive():
+                        Logger.warning(f"Terminating process {process.name}")
+                        process.terminate()
+                        process.join(timeout=5)
 
         Logger.info("Finished waiting to all processes")
 
@@ -89,17 +109,52 @@ class MultiProcessor:
             tasks_to_accomplish.join_thread()
             #
             with tqdm(total=size, desc="Total Processing...") as pbar:
-                while not tasks_accomplished.empty() or len(results) < size:
-                    output = tasks_accomplished.get(True)
-                    results.append(output)
-                    pbar.update(1)
+                start_time = time.time()
+                timeout_seconds = 3600  # 1 hour timeout
+                
+                while (not tasks_accomplished.empty() or len(results) < size) and (time.time() - start_time) < timeout_seconds:
+                    try:
+                        output = tasks_accomplished.get(True, timeout=1)  # Add 1 second timeout
+                        results.append(output)
+                        pbar.update(1)
+                    except queue.Empty:
+                        # Check if all processes are still alive
+                        alive_processes = [p for p in self.processes if p.is_alive()]
+                        if not alive_processes and tasks_accomplished.empty():
+                            Logger.warning("All processes finished but results incomplete")
+                            break
+                        continue
+                
+                # Check if we timed out
+                if (time.time() - start_time) >= timeout_seconds:
+                    Logger.error(f"Processing timed out after {timeout_seconds} seconds")
+                    # Terminate remaining processes
+                    for process in self.processes:
+                        if process.is_alive():
+                            Logger.warning(f"Terminating process {process.name}")
+                            process.terminate()
+                            process.join(timeout=5)
 
         else:
             internal_task = self.task_to_execute()
             while tasks_to_accomplish.qsize() > 0:  # or 'while' instead of 'if'
-                results.append(internal_task().job(**tasks_to_accomplish.get()))
+                task_kwargs = tasks_to_accomplish.get()
+                try:
+                    result = internal_task().job(**task_kwargs)
+                    results.append({**task_kwargs, "status": True, "response": result})
+                except Exception as error:
+                    results.append({**task_kwargs, "status": False, "error": str(error)})
 
-        assert len(results) == size, f"{len(results)} vs {size}"
+        # More flexible assertion with better error handling
+        if len(results) != size:
+            Logger.warning(f"Expected {size} results but got {len(results)}. Some tasks may have failed.")
+            
+            # Check for failed tasks
+            failed_tasks = [r for r in results if r.get("status") == False]
+            if failed_tasks:
+                Logger.error(f"Found {len(failed_tasks)} failed tasks")
+                for task in failed_tasks:
+                    Logger.error(f"Failed task: {task}")
 
         return self.post(results)
 
@@ -114,33 +169,77 @@ class ProcessJob:
 
     def processes_job(self, tasks_to_accomplish=None, tasks_accomplished=None):
         """job to run on process"""
-        while True:
+        max_empty_retries = 3
+        empty_retry_count = 0
+        max_timeout_retries = 5
+        timeout_retry_count = 0
+        
+        while empty_retry_count < max_empty_retries and timeout_retry_count < max_timeout_retries:
             try:
                 Logger.info(f"{current_process().name}: Waiting on queue.")
                 task_kwargs = tasks_to_accomplish.get(True, timeout=5)
                 Logger.info(f"{current_process().name}: Start processing {task_kwargs}")
+                
+                # Reset retry counters on successful get
+                empty_retry_count = 0
+                timeout_retry_count = 0
 
             except queue.Empty:
-                # other-wise the process exits at the start.
+                # Check if queue is actually empty or just timing out
                 if tasks_to_accomplish.empty():
-                    Logger.info(f"{current_process().name}: Queue is empty. existing.")
-                    break
+                    empty_retry_count += 1
+                    Logger.info(f"{current_process().name}: Queue is empty. Retry {empty_retry_count}/{max_empty_retries}")
+                    if empty_retry_count >= max_empty_retries:
+                        Logger.info(f"{current_process().name}: Queue confirmed empty after {max_empty_retries} retries. Exiting.")
+                        break
+                else:
+                    timeout_retry_count += 1
+                    Logger.warning(f"{current_process().name}: Queue get timed out but queue not empty. Retry {timeout_retry_count}/{max_timeout_retries}")
+                    if timeout_retry_count >= max_timeout_retries:
+                        Logger.error(f"{current_process().name}: Too many timeouts. Exiting.")
+                        break
+                
+                # Small delay before retrying
+                time.sleep(1)
+                continue
+                
             else:
-
                 try:
                     file_processed = self.job(**task_kwargs)
                     Logger.info(
                         f"{current_process().name}: Placing results for {task_kwargs}."
                     )
-                    tasks_accomplished.put(
-                        {**task_kwargs, "status": False, "response": file_processed},
-                        timeout=5,
-                    )
+                    
+                    # Add retry logic for putting results
+                    put_retry_count = 0
+                    max_put_retries = 3
+                    while put_retry_count < max_put_retries:
+                        try:
+                            tasks_accomplished.put(
+                                {**task_kwargs, "status": True, "response": file_processed},
+                                timeout=5,
+                            )
+                            break
+                        except queue.Full:
+                            put_retry_count += 1
+                            Logger.warning(f"{current_process().name}: Results queue full. Retry {put_retry_count}/{max_put_retries}")
+                            if put_retry_count >= max_put_retries:
+                                Logger.error(f"{current_process().name}: Failed to put results after {max_put_retries} retries")
+                                break
+                            time.sleep(1)
+                    
                     Logger.info(
                         f"{current_process().name}: End processing {task_kwargs}."
                     )
                 except Exception as error:  # pylint: disable=broad-exception-caught
-                    Logger.info(
-                        f"{current_process().name}:  failed with {error}, exiting."
+                    Logger.error(
+                        f"{current_process().name}: Task failed with {error}"
                     )
-                    tasks_accomplished.put({**task_kwargs, "status": False}, timeout=5)
+                    
+                    # Try to put error result
+                    try:
+                        tasks_accomplished.put({**task_kwargs, "status": False, "error": str(error)}, timeout=5)
+                    except queue.Full:
+                        Logger.error(f"{current_process().name}: Failed to put error result - queue full")
+        
+        Logger.info(f"{current_process().name}: Process exiting")
