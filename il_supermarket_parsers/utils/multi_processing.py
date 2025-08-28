@@ -184,7 +184,9 @@ class ProcessJob:
         """the job the process need to run"""
         raise NotImplementedError()
 
-    def processes_job(self, tasks_to_accomplish=None, tasks_accomplished=None):  # pylint: disable=too-many-locals,too-many-branches
+    def processes_job(
+        self, tasks_to_accomplish=None, tasks_accomplished=None
+    ):  # pylint: disable=too-many-locals,too-many-branches
         """job to run on process"""
         max_empty_retries = 3
         empty_retry_count = 0

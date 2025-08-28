@@ -3,6 +3,7 @@ import time
 import queue
 from unittest.mock import patch, MagicMock
 from multiprocessing import Queue
+
 # pylint: disable=wrong-import-position
 from il_supermarket_parsers.utils.multi_processing import MultiProcessor, ProcessJob
 
@@ -249,6 +250,7 @@ class TestMultiProcessing(unittest.TestCase):
         # Mix of successful and failed tasks
         class MixedTask(ProcessJob):
             """Test task that fails on even numbered tasks."""
+
             def __init__(self, task_id):
                 self.task_id = task_id
 
@@ -260,6 +262,7 @@ class TestMultiProcessing(unittest.TestCase):
 
         class MixedTaskFactory:
             """Factory for MixedTask instances."""
+
             def __init__(self):
                 pass
 
@@ -268,6 +271,7 @@ class TestMultiProcessing(unittest.TestCase):
 
         class MixedMultiProcessor(MultiProcessor):
             """Test multiprocessor for error recovery testing."""
+
             def __init__(self):
                 super().__init__(multiprocessing=0)  # Single process mode
 
