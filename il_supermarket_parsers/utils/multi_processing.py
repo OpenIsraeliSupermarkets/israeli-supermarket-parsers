@@ -113,7 +113,8 @@ class MultiProcessor:
             tasks_to_accomplish.close()
             tasks_to_accomplish.join_thread()
             #
-            with tqdm(total=size, desc="Total Processing...") as pbar:
+            Logger.info(f"Total Processing... {size} tasks")
+            with tqdm(total=size, desc="Total Processing...", file=Logger.get_stream()) as pbar:
                 start_time = time.time()
                 timeout_seconds = 3600  # 1 hour timeout
 

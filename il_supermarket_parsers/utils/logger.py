@@ -47,3 +47,13 @@ class Logger:
     def warning(cls, msg, *args, **kwargs):
         """log warning"""
         cls.logger.warning(msg, *args, **kwargs)
+
+    @classmethod
+    def get_stream(cls):
+        """get the logger stream for tqdm progress bars"""
+        # Return the first StreamHandler found in the logger handlers
+        for handler in cls.logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                return handler.stream
+        # Fallback to stdout if no StreamHandler found
+        return stdout
