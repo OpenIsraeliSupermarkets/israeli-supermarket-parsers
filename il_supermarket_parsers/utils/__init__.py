@@ -16,8 +16,12 @@ from .xml_utils import (
     get_root_and_search,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
+    count_all_tags_in_xml,
 )
-from .dataframe_utils import collect_unique_columns_from_nested_json
+from .dataframe_utils import (
+    collect_unique_columns_from_nested_json,
+    count_elements_in_nested_json,
+)
 from .test_utils import get_sample_data
 from .data_loader import DataLoader
 from .loading_utils import DumpFile
