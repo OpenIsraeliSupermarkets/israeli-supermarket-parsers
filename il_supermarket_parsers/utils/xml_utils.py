@@ -1,3 +1,4 @@
+from collections import Counter
 import xml.etree.ElementTree as ET
 from lxml import etree
 
@@ -56,8 +57,6 @@ def collect_unique_keys_from_xml(xml_file_path):
 
 def count_all_tags_in_xml(xml_file_path):
     """count all tag occurrences in the xml, returns dict {tag_name: count}"""
-    from collections import Counter
-
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
 

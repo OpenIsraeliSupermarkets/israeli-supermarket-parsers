@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 from il_supermarket_parsers.utils import (
     count_tag_in_xml,
@@ -6,7 +5,6 @@ from il_supermarket_parsers.utils import (
     collect_unique_columns_from_nested_json,
     count_all_tags_in_xml,
     count_elements_in_nested_json,
-    get_root_and_search,
 )
 from .base import BaseXMLParser
 
@@ -67,8 +65,8 @@ class XmlDataFrameConverter(BaseXMLParser):
         assert "found_folder" in data.columns
         assert "file_name" in data.columns
 
-        """Validate all nested elements were retrieved (catches missing repeated elements).
-        Must be called on unreduced data for accurate counts."""
+        # Validate all nested elements were retrieved (catches missing repeated elements).
+        # Must be called on unreduced data for accurate counts.
         xml_counts = count_all_tags_in_xml(source_file)
         df_counts = count_elements_in_nested_json(data)
 
