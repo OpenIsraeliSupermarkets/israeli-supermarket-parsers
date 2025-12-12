@@ -3,6 +3,8 @@ from il_supermarket_parsers.utils import (
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     collect_unique_columns_from_nested_json,
+    count_all_tags_in_xml,
+    count_elements_in_nested_json,
 )
 from .base import BaseXMLParser
 
@@ -62,6 +64,20 @@ class XmlDataFrameConverter(BaseXMLParser):
             )
         assert "found_folder" in data.columns
         assert "file_name" in data.columns
+
+        # Validate all nested elements were retrieved (catches missing repeated elements).
+        # Must be called on unreduced data for accurate counts.
+        xml_counts = count_all_tags_in_xml(source_file)
+        df_counts = count_elements_in_nested_json(data)
+
+        # Only validate tags that appear in nested JSON (df_counts)
+        for tag, df_count in df_counts.items():
+            xml_count = xml_counts.get(tag, 0)
+            if xml_count != df_count:
+                raise ValueError(
+                    f"for file {source_file}, element count mismatch for '{tag}': "
+                    f"XML has {xml_count}, DataFrame has {df_count}"
+                )
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

@@ -1,0 +1,58 @@
+﻿<Root>
+  <XmlDocVersion>19</XmlDocVersion>
+  <ChainId>7290058140886</ChainId>
+  <SubChainId>1</SubChainId>
+  <StoreId>013</StoreId>
+  <BikoretNo>7</BikoretNo>
+  <DllVerNo>9.4.0.50</DllVerNo>
+  <Promotions Count="1">
+    <Promotion>
+      <PromotionId>1353484</PromotionId>
+      <PromotionDescription>פטרוזליה/כוסברה/נענע/שמיר 3ב8.90</PromotionDescription>
+      <PromotionUpdateDate>2025-03-13 00:00</PromotionUpdateDate>
+      <PromotionStartDate>2025-01-01</PromotionStartDate>
+      <PromotionStartHour>00:00:00</PromotionStartHour>
+      <PromotionEndDate>2026-01-03</PromotionEndDate>
+      <PromotionEndHour>23:59:00</PromotionEndHour>
+      <RewardType>1</RewardType>
+      <AllowMultipleDiscounts>1</AllowMultipleDiscounts>
+      <IsWeightedPromo>0</IsWeightedPromo>
+      <AdditionalRestrictions>
+        <AdditionalIsCoupon>0</AdditionalIsCoupon>
+        <AdditionalGiftCount>0</AdditionalGiftCount>
+        <AdditionalIsTotal>0</AdditionalIsTotal>
+        <AdditionalIsActive>1</AdditionalIsActive>
+      </AdditionalRestrictions>
+      <MinQty>3.00</MinQty>
+      <DiscountedPrice>8.90</DiscountedPrice>
+      <DiscountedPricePerMida>2.97</DiscountedPricePerMida>
+      <MinNoOfItemOfered>10</MinNoOfItemOfered>
+      <WeightUnit>1</WeightUnit>
+      <PromotionItems>
+        <Item>
+          <ItemCode>7290000000125</ItemCode>
+          <ItemType>1</ItemType>
+          <IsGiftItem>0</IsGiftItem>
+        </Item>
+        <Item>
+          <ItemCode>7290000000126</ItemCode>
+          <ItemType>1</ItemType>
+          <IsGiftItem>0</IsGiftItem>
+        </Item>
+        <Item>
+          <ItemCode>7290000000128</ItemCode>
+          <ItemType>1</ItemType>
+          <IsGiftItem>0</IsGiftItem>
+        </Item>
+        <Item>
+          <ItemCode>7290000000129</ItemCode>
+          <ItemType>1</ItemType>
+          <IsGiftItem>0</IsGiftItem>
+        </Item>
+      </PromotionItems>
+      <Clubs>
+        <ClubId>0</ClubId>
+      </Clubs>
+    </Promotion>
+  </Promotions>
+</Root>

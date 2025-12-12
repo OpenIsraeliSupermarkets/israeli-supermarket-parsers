@@ -1,3 +1,4 @@
+from collections import Counter
 import xml.etree.ElementTree as ET
 from lxml import etree
 
@@ -54,6 +55,25 @@ def collect_unique_keys_from_xml(xml_file_path):
     return keys_with_values
 
 
+def count_all_tags_in_xml(xml_file_path):
+    """count all tag occurrences in the xml, returns dict {tag_name: count}"""
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+
+    def strip_namespace(tag):
+        return tag.split("}", 1)[-1] if "}" in tag else tag
+
+    tag_counts = Counter()
+
+    def count_recursive(element):
+        tag_counts[strip_namespace(element.tag).lower()] += 1
+        for child in element:
+            count_recursive(child)
+
+    count_recursive(root)
+    return dict(tag_counts)
+
+
 def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
 
@@ -62,10 +82,19 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     if not content:
         content = constant_mapping.get(name.tag, no_content)
     if "\n" in content:
-        return {
-            item.tag.lower(): build_value(item, constant_mapping)
-            for item in name.findall("*")
-        }
+        result = {}
+        for item in name.findall("*"):
+            key = item.tag.lower()
+            value = build_value(item, constant_mapping)
+            if key in result:
+                # Multiple elements with same tag - collect into a list
+                if isinstance(result[key], list):
+                    result[key].append(value)
+                else:
+                    result[key] = [result[key], value]
+            else:
+                result[key] = value
+        return result
     return content
 
 
