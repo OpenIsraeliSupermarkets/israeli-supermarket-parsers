@@ -1,6 +1,6 @@
 #syntax=docker/dockerfile:1
 
-FROM node:20-bookworm as base
+FROM node:20.19.6-trixie-slim as base
 
 ARG PY_VERSION="3.11.0"
 ENV TZ="Asia/Jerusalem"
