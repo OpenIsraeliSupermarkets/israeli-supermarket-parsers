@@ -28,8 +28,13 @@ def count_tag_in_xml(xml_file_path, tag_to_count):
     return count_tag_recursive(root)
 
 
-def collect_unique_keys_from_xml(xml_file_path):
-    """find all the unique keys in the xml"""
+def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
+    """find all the unique keys in the xml
+    
+    Args:
+        xml_file_path: Path to the XML file
+        ignore_tags: Optional list of tag names to ignore (will be normalized for comparison)
+    """
 
     # Parse the XML file
     tree = ET.parse(xml_file_path)
@@ -37,13 +42,20 @@ def collect_unique_keys_from_xml(xml_file_path):
 
     # Set to store unique keys that have values
     keys_with_values = set()
+    
+    # Normalize ignore tags if provided
+    ignore_set = None
+    if ignore_tags:
+        ignore_set = {normalize_tag(tag) for tag in ignore_tags}
 
     # Recursive function to collect keys with values
     def collect_keys_recursive(element):
         # Check if the element has a non-empty text value
         if element.text and element.text.strip():
-            # Add the current element's tag to the set
-            keys_with_values.add(element.tag)
+            # Skip if this tag should be ignored
+            if ignore_set is None or normalize_tag(element.tag) not in ignore_set:
+                # Add the current element's tag to the set
+                keys_with_values.add(element.tag)
         # Recurse through all child elements
         for child in element:
             collect_keys_recursive(child)
@@ -53,6 +65,14 @@ def collect_unique_keys_from_xml(xml_file_path):
 
     return keys_with_values
 
+def normalize_tag(tag):
+    """Strip namespace URI format ({URI}tag) and prefix format (prefix:tag)"""
+    # First strip namespace URI format: {http://...}tag -> tag
+    tag = strip_namespace(tag)
+    # Then strip prefix format: xs:schema -> schema
+    if ":" in tag:
+        tag = tag.split(":", 1)[-1]
+    return tag.lower()
 
 def count_all_tags_in_xml(xml_file_path):
     """count all tag occurrences in the xml, returns dict {tag_name: count}"""

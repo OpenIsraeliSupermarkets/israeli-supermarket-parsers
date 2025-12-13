@@ -2,8 +2,7 @@ from il_supermarket_parsers.engines import BigIdBranchesFileConverter
 from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
-    ConditionalXmlDataFrameConverter,
-    FilteredXmlDataFrameConverter,
+    ConditionalXmlDataFrameConverter
 )
 
 
@@ -50,7 +49,7 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
                     id_field="ItemCode",
                     filter_element="item",
                     roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                    ignore_column=["DllVerNo", "xs:schema"],
+                    ignore_column=["DllVerNo", "schema"],
                 ),
                 check_key="Items",
             ),

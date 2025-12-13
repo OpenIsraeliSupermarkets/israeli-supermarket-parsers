@@ -1,6 +1,6 @@
 import pandas as pd
 from .xml_dataframe_parser import XmlDataFrameConverter
-
+from ..utils import normalize_tag
 
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     """parser the xml docuement with extra indentations"""
@@ -80,13 +80,14 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 list_sub_elem = sub_elem.find(self.list_sub_key)
                 if list_sub_elem is not None:
                     for elem in list_sub_elem:
-                        rows.append(
-                            self.list_single_entry(
-                                elem,
-                                found_folder=found_folder,
-                                file_name=file_name,
-                                **sub_root_store,
+                        if normalize_tag(elem.tag) not in self.ignore_column:
+                            rows.append(
+                                self.list_single_entry(
+                                    elem,
+                                    found_folder=found_folder,
+                                    file_name=file_name,
+                                    **sub_root_store,
+                                )
                             )
-                        )
 
         return pd.DataFrame(rows)

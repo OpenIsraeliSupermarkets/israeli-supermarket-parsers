@@ -18,6 +18,7 @@ from .xml_utils import (
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     count_all_tags_in_xml,
+    normalize_tag
 )
 from .dataframe_utils import (
     collect_unique_columns_from_nested_json,
