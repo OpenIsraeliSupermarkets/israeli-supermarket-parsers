@@ -104,6 +104,9 @@ class XmlDataFrameConverter(BaseXMLParser):
             columns.extend(root.lower() for root in self.roots)
 
         if root is None:
+            # If root is None, it means the list_key element was not found in the XML
+            # This could happen if the XML structure is different than expected
+            # Return empty DataFrame with proper columns
             return pd.DataFrame(columns=columns)
 
         rows = [
@@ -113,6 +116,8 @@ class XmlDataFrameConverter(BaseXMLParser):
             for elem in root
         ]
         if len(rows) == 0:
+            # Root was found but has no children
+            # This could happen if the XML structure is different than expected
             return pd.DataFrame(columns=columns)
 
         return pd.DataFrame(rows)

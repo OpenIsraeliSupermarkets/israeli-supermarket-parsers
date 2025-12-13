@@ -58,9 +58,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
         if root is None or len(root) == 0:
             return pd.DataFrame(
-                columns=map(lambda x: x.lower(), self.sub_roots)
-                + [self.id_field, "found_folder", "file_name"]
-                + (map(lambda x: x.lower(), self.roots) if self.roots else [])
+                columns=list(map(lambda x: x.lower(), self.sub_roots))
+                + [self.id_field.lower(), "found_folder", "file_name"]
+                + (list(map(lambda x: x.lower(), self.roots)) if self.roots else [])
             )
 
         for sub_elem in list(root):
@@ -72,16 +72,21 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
 
             if self.last_mile:
                 for last in self.last_mile:
-                    sub_elem = sub_elem.find(last)
+                    sub_elem = sub_elem.find(last) if sub_elem is not None else None
+                    if sub_elem is None:
+                        break
 
-            for elem in sub_elem.find(self.list_sub_key):
-                rows.append(
-                    self.list_single_entry(
-                        elem,
-                        found_folder=found_folder,
-                        file_name=file_name,
-                        **sub_root_store,
-                    )
-                )
+            if sub_elem is not None:
+                list_sub_elem = sub_elem.find(self.list_sub_key)
+                if list_sub_elem is not None:
+                    for elem in list_sub_elem:
+                        rows.append(
+                            self.list_single_entry(
+                                elem,
+                                found_folder=found_folder,
+                                file_name=file_name,
+                                **sub_root_store,
+                            )
+                        )
 
         return pd.DataFrame(rows)

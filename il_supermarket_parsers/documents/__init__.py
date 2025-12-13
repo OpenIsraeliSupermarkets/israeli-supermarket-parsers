@@ -2,3 +2,4 @@ from .base import XmlBaseConverter
 from .xml_dataframe_parser import XmlDataFrameConverter
 from .xml_dataframe_subroot_praser import SubRootedXmlDataFrameConverter
 from .conditional_xml_dataframe_parser import ConditionalXmlDataFrameConverter
+from .filtered_xml_dataframe_parser import FilteredXmlDataFrameConverter

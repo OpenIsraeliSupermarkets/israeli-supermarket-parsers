@@ -3,16 +3,15 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 
 
+def strip_namespace(tag):
+    # Split the tag by the closing '}' of the namespace and return the tag part
+    return tag.split("}", 1)[-1] if "}" in tag else tag
+
 def count_tag_in_xml(xml_file_path, tag_to_count):
     """recursive count the number of tags from 'tag_to_count' in 'xml_file_path'"""
     # Parse the XML file
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
-
-    # Function to remove the namespace from an element tag
-    def strip_namespace(tag):
-        # Split the tag by the closing '}' of the namespace and return the tag part
-        return tag.split("}", 1)[-1] if "}" in tag else tag
 
     # Recursive function to count "x" tags
     def count_tag_recursive(element):
@@ -152,7 +151,12 @@ def get_root_and_search(file, key_to_find, attributes_to_collect):
 
 
 def _get_root(root, key_to_find, attributes_to_collect, collected):
-    if root.tag.lower() == key_to_find.lower():
+    # Function to remove the namespace from an element tag
+    def strip_namespace(tag):
+        # Split the tag by the closing '}' of the namespace and return the tag part
+        return tag.split("}", 1)[-1] if "}" in tag else tag
+
+    if strip_namespace(root.tag).lower() == key_to_find.lower():
         return root
 
     found_root = None
@@ -161,9 +165,12 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
         if (
             len(list(sub)) == 0
             and attributes_to_collect is not None
-            and any(sub.tag.lower() == s.lower() for s in attributes_to_collect)
+            and any(
+                strip_namespace(sub.tag).lower() == s.lower()
+                for s in attributes_to_collect
+            )
         ):
-            collected[sub.tag.lower()] = sub.text
+            collected[strip_namespace(sub.tag).lower()] = sub.text
         else:
             possible_root = _get_root(
                 sub, key_to_find, attributes_to_collect, collected
