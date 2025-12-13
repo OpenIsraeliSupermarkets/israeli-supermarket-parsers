@@ -4,8 +4,9 @@ from lxml import etree
 
 
 def strip_namespace(tag):
-    # Split the tag by the closing '}' of the namespace and return the tag part
+    """Split the tag by the closing '}' of the namespace and return the tag part."""
     return tag.split("}", 1)[-1] if "}" in tag else tag
+
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
     """recursive count the number of tags from 'tag_to_count' in 'xml_file_path'"""
@@ -30,7 +31,7 @@ def count_tag_in_xml(xml_file_path, tag_to_count):
 
 def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
     """find all the unique keys in the xml
-    
+
     Args:
         xml_file_path: Path to the XML file
         ignore_tags: Optional list of tag names to ignore (will be normalized for comparison)
@@ -42,7 +43,7 @@ def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
 
     # Set to store unique keys that have values
     keys_with_values = set()
-    
+
     # Normalize ignore tags if provided
     ignore_set = None
     if ignore_tags:
@@ -65,6 +66,7 @@ def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
 
     return keys_with_values
 
+
 def normalize_tag(tag):
     """Strip namespace URI format ({URI}tag) and prefix format (prefix:tag)"""
     # First strip namespace URI format: {http://...}tag -> tag
@@ -74,13 +76,11 @@ def normalize_tag(tag):
         tag = tag.split(":", 1)[-1]
     return tag.lower()
 
+
 def count_all_tags_in_xml(xml_file_path):
     """count all tag occurrences in the xml, returns dict {tag_name: count}"""
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
-
-    def strip_namespace(tag):
-        return tag.split("}", 1)[-1] if "}" in tag else tag
 
     tag_counts = Counter()
 
@@ -171,11 +171,6 @@ def get_root_and_search(file, key_to_find, attributes_to_collect):
 
 
 def _get_root(root, key_to_find, attributes_to_collect, collected):
-    # Function to remove the namespace from an element tag
-    def strip_namespace(tag):
-        # Split the tag by the closing '}' of the namespace and return the tag part
-        return tag.split("}", 1)[-1] if "}" in tag else tag
-
     if strip_namespace(root.tag).lower() == key_to_find.lower():
         return root
 

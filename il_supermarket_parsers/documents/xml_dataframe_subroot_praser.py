@@ -2,6 +2,7 @@ import pandas as pd
 from .xml_dataframe_parser import XmlDataFrameConverter
 from ..utils import normalize_tag
 
+
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     """parser the xml docuement with extra indentations"""
 

@@ -20,15 +20,9 @@ class XmlDataFrameConverter(BaseXMLParser):
         for col in data.columns:
             data[col] = data[col].mask(data[col] == data[col].shift())
         return data
-    
-    def validate_succussful_extraction(
-        self, data, source_file, ignore_missing_columns=None
-    ):
-        """validate column requested"""
-        # if there is an empty file
-        # we expected it to return none
-        tag_count = count_tag_in_xml(source_file, self.id_field)
 
+    def _validate_columns_and_counts(self, data, source_file, tag_count):
+        """Validate required columns and row count match."""
         if self.roots and tag_count > 0:
             for root in self.roots:
                 if root.lower() not in data.columns:
@@ -49,28 +43,28 @@ class XmlDataFrameConverter(BaseXMLParser):
                 f"data shape {data.shape} tag count is {tag_count}"
             )
 
-        ignore_list = self.ignore_column
-        if ignore_missing_columns:
-            ignore_list = ignore_list + ignore_missing_columns
-        # Strip namespaces from keys and ignore_list for proper comparison
-        # Pass ignore_list to collect_unique_keys_from_xml so ignored elements aren't collected
-        xml_keys = {normalize_tag(key) for key in collect_unique_keys_from_xml(source_file, ignore_tags=ignore_list)}
-        data_keys = {normalize_tag(key) for key in collect_unique_columns_from_nested_json(data)}
+    def _validate_unused_keys(self, data, source_file, ignore_list):
+        """Validate that all XML keys are captured in the DataFrame."""
+        xml_keys = {
+            normalize_tag(key)
+            for key in collect_unique_keys_from_xml(
+                source_file, ignore_tags=ignore_list
+            )
+        }
+        data_keys = {
+            normalize_tag(key) for key in collect_unique_columns_from_nested_json(data)
+        }
         ignore_keys = {normalize_tag(key) for key in ignore_list}
-        keys_not_used = xml_keys - data_keys - ignore_keys
-        if len(keys_not_used) > 0:
+        if keys_not_used := xml_keys - data_keys - ignore_keys:
             raise ValueError(
                 f"for file {source_file}, there is data we didn't get {keys_not_used}"
             )
-        assert "found_folder" in data.columns
-        assert "file_name" in data.columns
 
-        # Validate all nested elements were retrieved (catches missing repeated elements).
-        # Must be called on unreduced data for accurate counts.
+    def _validate_element_counts(self, data, source_file):
+        """Validate that element counts match between XML and DataFrame."""
         xml_counts = count_all_tags_in_xml(source_file)
         df_counts = count_elements_in_nested_json(data)
 
-        # Only validate tags that appear in nested JSON (df_counts)
         for tag, df_count in df_counts.items():
             xml_count = xml_counts.get(tag, 0)
             if xml_count != df_count:
@@ -79,8 +73,31 @@ class XmlDataFrameConverter(BaseXMLParser):
                     f"XML has {xml_count}, DataFrame has {df_count}"
                 )
 
+    def validate_succussful_extraction(
+        self, data, source_file, ignore_missing_columns=None
+    ):
+        """validate column requested"""
+        # if there is an empty file
+        # we expected it to return none
+        tag_count = count_tag_in_xml(source_file, self.id_field)
+
+        self._validate_columns_and_counts(data, source_file, tag_count)
+
+        ignore_list = (
+            self.ignore_column + ignore_missing_columns
+            if ignore_missing_columns
+            else self.ignore_column
+        )
+
+        self._validate_unused_keys(data, source_file, ignore_list)
+
+        assert "found_folder" in data.columns
+        assert "file_name" in data.columns
+
+        self._validate_element_counts(data, source_file)
+
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
-        """build a single row"""        
+        """build a single row"""
         return {
             "found_folder": found_folder,
             "file_name": file_name,
@@ -112,7 +129,9 @@ class XmlDataFrameConverter(BaseXMLParser):
         rows = [
             self.list_single_entry(
                 elem, found_folder=found_folder, file_name=file_name, **root_store
-            ) for elem in root if normalize_tag(elem.tag) not in self.ignore_column
+            )
+            for elem in root
+            if normalize_tag(elem.tag) not in self.ignore_column
         ]
         if len(rows) == 0:
             # Root was found but has no children

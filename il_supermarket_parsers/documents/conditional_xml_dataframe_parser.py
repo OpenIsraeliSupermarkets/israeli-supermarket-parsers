@@ -35,8 +35,7 @@ class ConditionalXmlDataFrameConverter(XmlBaseConverter):
             if root_elem is not None:
                 return self.option_a.convert(found_store, file_name, **kwarg)
             return self.option_b.convert(found_store, file_name, **kwarg)
-        
-        
+
         root = get_root(source_file)
         if root.tag == self.root_value:
             return self.option_a.convert(found_store, file_name, **kwarg)

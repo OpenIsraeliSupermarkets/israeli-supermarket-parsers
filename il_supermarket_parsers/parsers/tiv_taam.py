@@ -2,7 +2,7 @@ from il_supermarket_parsers.engines import BigIdBranchesFileConverter
 from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
-    ConditionalXmlDataFrameConverter
+    ConditionalXmlDataFrameConverter,
 )
 
 
