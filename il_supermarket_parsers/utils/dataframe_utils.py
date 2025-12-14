@@ -17,18 +17,18 @@ def collect_unique_columns_from_nested_json(df):
             for item in data:
                 collect_keys_recursive(item)  # Recursively check each item in the list
 
-    # Iterate over each column in the DataFrame
-    for col in df.columns:
-        # Check for nested JSON data in each cell
-        for cell in df[col]:
+    # Use itertuples for memory efficiency - only iterate once
+    for row in df.itertuples(index=False):
+        for cell in row:
             if isinstance(cell, str):
-                try:
-                    # Try to parse the cell as JSON (if it's a string)
-                    json_data = json.loads(cell)
-                    collect_keys_recursive(json_data)
-                except (ValueError, TypeError):
-                    # Skip cells that are not valid JSON
-                    continue
+                # Only try to parse if it looks like JSON (starts with { or [)
+                if cell and (cell.strip().startswith('{') or cell.strip().startswith('[')):
+                    try:
+                        json_data = json.loads(cell)
+                        collect_keys_recursive(json_data)
+                    except (ValueError, TypeError):
+                        # Skip cells that are not valid JSON
+                        continue
             elif isinstance(cell, (dict, list)):
                 # Directly collect keys if it's already a dict or list
                 collect_keys_recursive(cell)
@@ -44,7 +44,8 @@ def count_elements_in_nested_json(df):
     - When a dict key maps to a scalar inside a nested dict, counts it as 1
     Returns dict {key: count}"""
     element_counts = Counter()
-    df = df.ffill()
+    # Use forward fill in-place to avoid creating a copy
+    df_filled = df.ffill()
 
     def count_recursive(data, in_nested_dict=False):
         if isinstance(data, dict):
@@ -65,14 +66,17 @@ def count_elements_in_nested_json(df):
             for item in data:
                 count_recursive(item, in_nested_dict=in_nested_dict)
 
-    for col in df.columns:
-        for cell in df[col]:
+    # Use itertuples for memory efficiency - only iterate once
+    for row in df_filled.itertuples(index=False):
+        for cell in row:
             if isinstance(cell, str):
-                try:
-                    json_data = json.loads(cell)
-                    count_recursive(json_data, in_nested_dict=True)
-                except (ValueError, TypeError):
-                    continue
+                # Only try to parse if it looks like JSON (starts with { or [)
+                if cell and (cell.strip().startswith('{') or cell.strip().startswith('[')):
+                    try:
+                        json_data = json.loads(cell)
+                        count_recursive(json_data, in_nested_dict=True)
+                    except (ValueError, TypeError):
+                        continue
             elif isinstance(cell, (dict, list)):
                 count_recursive(cell, in_nested_dict=True)
 

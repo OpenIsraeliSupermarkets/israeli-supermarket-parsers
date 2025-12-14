@@ -29,11 +29,11 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self.list_sub_key = list_sub_key
 
     def validate_succussful_extraction(
-        self, data, source_file, ignore_missing_columns=None
+        self, data, source_file, ignore_missing_columns=None, cached_xml_data=None
     ):
         """validation"""
         super().validate_succussful_extraction(
-            data, source_file, ignore_missing_columns=ignore_missing_columns
+            data, source_file, ignore_missing_columns=ignore_missing_columns, cached_xml_data=cached_xml_data
         )
 
         # if the user asked to include the headers
@@ -55,8 +55,6 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     ):
         """parse file to data frame"""
 
-        rows = []
-
         if root is None or len(root) == 0:
             return pd.DataFrame(
                 columns=list(map(lambda x: x.lower(), self.sub_roots))
@@ -64,31 +62,33 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 + (list(map(lambda x: x.lower(), self.roots)) if self.roots else [])
             )
 
-        for sub_elem in list(root):
-            sub_root_store = root_store.copy()
+        # Use generator instead of list to reduce memory
+        def row_generator():
+            for sub_elem in root:
+                sub_root_store = root_store.copy()
 
-            for k in list(sub_elem):
-                if any(k.tag.lower() == s.lower() for s in self.sub_roots):
-                    sub_root_store[k.tag.lower()] = k.text
+                for k in sub_elem:
+                    if any(k.tag.lower() == s.lower() for s in self.sub_roots):
+                        sub_root_store[k.tag.lower()] = k.text
 
-            if self.last_mile:
-                for last in self.last_mile:
-                    sub_elem = sub_elem.find(last) if sub_elem is not None else None
-                    if sub_elem is None:
-                        break
+                current_elem = sub_elem
+                if self.last_mile:
+                    for last in self.last_mile:
+                        current_elem = current_elem.find(last) if current_elem is not None else None
+                        if current_elem is None:
+                            break
 
-            if sub_elem is not None:
-                list_sub_elem = sub_elem.find(self.list_sub_key)
-                if list_sub_elem is not None:
-                    for elem in list_sub_elem:
-                        if normalize_tag(elem.tag) not in self.ignore_column:
-                            rows.append(
-                                self.list_single_entry(
+                if current_elem is not None:
+                    list_sub_elem = current_elem.find(self.list_sub_key)
+                    if list_sub_elem is not None:
+                        for elem in list_sub_elem:
+                            if normalize_tag(elem.tag) not in self.ignore_column:
+                                yield self.list_single_entry(
                                     elem,
                                     found_folder=found_folder,
                                     file_name=file_name,
                                     **sub_root_store,
                                 )
-                            )
 
-        return pd.DataFrame(rows)
+        # Convert generator to DataFrame directly
+        return pd.DataFrame(row_generator())

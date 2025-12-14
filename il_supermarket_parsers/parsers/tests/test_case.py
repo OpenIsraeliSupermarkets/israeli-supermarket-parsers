@@ -1,6 +1,7 @@
 import unittest
 import os
 import tempfile
+import gc
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters
@@ -90,15 +91,25 @@ def make_test_case(scraper_enum, parser_enum):
                         # should contain data
                         assert df.shape[0] > 0, f"File {file} is empty"
 
-                        dfs.append(df)
+                        # Sample to reduce memory, then delete original dataframe
+                        sampled_df = df.sample(n=min(10, df.shape[0]))
+                        del df  # Delete original large dataframe immediately
+                        dfs.append(sampled_df)
 
                     else:
                         assert df.shape[0] == 0, f"File {file} should be full"
+                        # Clean up empty dataframe immediately
+                        del df
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     raise ValueError(f"File {file}, Failed with {e}")
 
             if dfs:
-                pd.concat(dfs)
+                # Validate concatenation works, but don't keep the result
+                del pd.concat(dfs)
+            
+            # Explicitly clean up dataframes and other variables to free memory
+            del dfs
+            gc.collect()
 
         def list_xml_files_recursive(self, directory):
             """list all xml files"""
