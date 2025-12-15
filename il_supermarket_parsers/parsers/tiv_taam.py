@@ -31,11 +31,21 @@ class TivTaamFileConverter(BigIdBranchesFileConverter):
                 roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
                 ignore_column=["XmlDocVersion"],
             ),
-            price_parser=XmlDataFrameConverter(
-                list_key="Items",
-                id_field="ItemCode",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                ignore_column=["DllVerNo"],
+            price_parser=ConditionalXmlDataFrameConverter(
+                option_a=XmlDataFrameConverter(
+                    list_key="Items",
+                    id_field="ItemCode",
+                    roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                    ignore_column=["DllVerNo"],
+                ),
+                option_b=XmlDataFrameConverter(
+                    list_key="NewDataSet",
+                    id_field="ItemCode",
+                    filter_element="item",
+                    roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                    ignore_column=["DllVerNo", "schema"],
+                ),
+                check_key="Items",
             ),
             pricefull_parser=ConditionalXmlDataFrameConverter(
                 option_a=XmlDataFrameConverter(
