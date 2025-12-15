@@ -13,10 +13,13 @@ from .test_utils import (
 from .xml_utils import (
     get_root,
     build_value,
+    strip_namespace,
     get_root_and_search,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     count_all_tags_in_xml,
+    normalize_tag,
+    collect_validation_data_from_xml,
 )
 from .dataframe_utils import (
     collect_unique_columns_from_nested_json,

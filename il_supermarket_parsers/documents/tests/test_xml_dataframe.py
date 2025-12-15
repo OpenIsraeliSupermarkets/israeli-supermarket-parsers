@@ -136,11 +136,11 @@ def test_nested_xml_dataframe():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(
-                list_key="Promotions",
-                id_field="PromotionId",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                date_columns=["PromotionUpdateDate"],
-                ignore_column=["XmlDocVersion", "DllVerNo"],
+        list_key="Promotions",
+        id_field="PromotionId",
+        roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+        date_columns=["PromotionUpdateDate"],
+        ignore_column=["XmlDocVersion", "DllVerNo"],
     )
     df = converter.convert(
         "il_supermarket_parsers/documents/tests",
