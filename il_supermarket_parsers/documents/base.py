@@ -39,13 +39,12 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         """get the value"""
         return build_value(name, self.additional_constant, no_content=no_content)
 
-    def convert(self, found_store, file_name, cache_xml_for_validation=False, **kwarg):
+    def convert(self, found_store, file_name, **kwarg):
         """parse file to data frame
 
         Args:
             found_store: Directory containing the file
             file_name: Name of the file to parse
-            cache_xml_for_validation: If True, cache XML parsing results for validation
             **kwarg: Additional keyword arguments
         """
         source_file = os.path.join(found_store, file_name)
@@ -58,13 +57,6 @@ class BaseXMLParser(XmlBaseConverter, ABC):
             root_store,
             **kwarg,
         )
-
-        # Store cached XML data if requested
-        if cache_xml_for_validation and hasattr(self, "_cached_xml_data"):
-            self._cached_xml_data[source_file] = {
-                "root": root,
-                "root_store": root_store,
-            }
 
         return self.reduce_size(data)
 

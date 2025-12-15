@@ -117,10 +117,9 @@ class XmlDataFrameConverter(BaseXMLParser):
         )
         self._validate_columns_and_counts(data, source_file, tag_count)
 
-        # Use cached data if available
-        if "xml_keys" in cached_xml_data:
-            xml_keys = cached_xml_data["xml_keys"]
-        else:
+        # Use cached data if available, otherwise collect it
+        xml_keys = cached_xml_data.get("xml_keys")
+        if xml_keys is None:
             xml_keys = {
                 normalize_tag(key)
                 for key in collect_unique_keys_from_xml(
@@ -128,32 +127,14 @@ class XmlDataFrameConverter(BaseXMLParser):
                 )
             }
 
-        data_keys = {
-            normalize_tag(key) for key in collect_unique_columns_from_nested_json(data)
-        }
-        ignore_keys = {normalize_tag(key) for key in ignore_list}
-        if keys_not_used := xml_keys - data_keys - ignore_keys:
-            raise ValueError(
-                f"for file {source_file}, there is data we didn't get {keys_not_used}"
-            )
+        self._validate_unused_keys(data, source_file, ignore_list, xml_keys)
 
         assert "found_folder" in data.columns
         assert "file_name" in data.columns
 
         # Use cached data if available
         xml_counts = cached_xml_data.get("xml_counts")
-        if xml_counts is None:
-            xml_counts = count_all_tags_in_xml(source_file)
-
-        df_counts = count_elements_in_nested_json(data)
-
-        for tag, df_count in df_counts.items():
-            xml_count = xml_counts.get(tag, 0)
-            if xml_count != df_count:
-                raise ValueError(
-                    f"for file {source_file}, element count mismatch for '{tag}': "
-                    f"XML has {xml_count}, DataFrame has {df_count}"
-                )
+        self._validate_element_counts(data, source_file, xml_counts)
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

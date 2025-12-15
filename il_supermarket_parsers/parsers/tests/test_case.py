@@ -8,6 +8,47 @@ from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesF
 from il_supermarket_parsers.parser_factory import ParserFactory
 
 
+def _validate_file_loading(files, sub_folder):
+    """Validate that all files were loaded correctly."""
+    complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
+    files_from_folder = _list_xml_files_recursive(sub_folder)
+    assert sorted(complete_file_loaded) == sorted(files_from_folder), (
+        f"dataloader failed, failed to load"
+        f": {list(set(files_from_folder) - set(complete_file_loaded))}"
+    )
+
+
+def _list_xml_files_recursive(directory):
+    """list all xml files"""
+    file_list = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if "xml" in file:
+                file_list.append(os.path.join(root, file))
+    return file_list
+
+
+def _process_files(files, parser):
+    """Process all files and return sampled dataframes."""
+    dfs = []
+    for file in files:
+        try:
+            if file.is_expected_to_be_readable():
+                continue
+            df = parser.read(file, run_validation=True)
+            if file.is_expected_to_have_records():
+                assert df.shape[0] > 0, f"File {file} is empty"
+                sampled_df = df.sample(n=min(10, df.shape[0]))
+                del df
+                dfs.append(sampled_df)
+            else:
+                assert df.shape[0] == 0, f"File {file} should be full"
+                del df
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            raise ValueError(f"File {file}, Failed with {e}")
+    return dfs
+
+
 def make_test_case(scraper_enum, parser_enum):
     """create test suite for parser"""
 
@@ -64,62 +105,20 @@ def make_test_case(scraper_enum, parser_enum):
                 self._refresh_download_folder(sub_folder, file_type)
 
             parser = self.parser_class()
-
             files = DataLoader(
                 folder=sub_folder,
                 store_names=[self.parser_name],
                 files_types=[file_type],
             ).load()
 
-            complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
-            files_from_folder = self.list_xml_files_recursive(sub_folder)
-            assert sorted(complete_file_loaded) == sorted(files_from_folder), (
-                f"dataloader failed, failed to load"
-                f": {list(set(files_from_folder) - set(complete_file_loaded))}"
-            )
-            dfs = []
-            for file in files:
-
-                try:
-                    if file.is_expected_to_be_readable():
-                        continue
-
-                    df = parser.read(file, run_validation=True)
-                    # none empty file
-                    if file.is_expected_to_have_records():
-
-                        # should contain data
-                        assert df.shape[0] > 0, f"File {file} is empty"
-
-                        # Sample to reduce memory, then delete original dataframe
-                        sampled_df = df.sample(n=min(10, df.shape[0]))
-                        del df  # Delete original large dataframe immediately
-                        dfs.append(sampled_df)
-
-                    else:
-                        assert df.shape[0] == 0, f"File {file} should be full"
-                        # Clean up empty dataframe immediately
-                        del df
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    raise ValueError(f"File {file}, Failed with {e}")
+            _validate_file_loading(files, sub_folder)
+            dfs = _process_files(files, parser)
 
             if dfs:
-                # Validate concatenation works, but don't keep the result
                 concatenated = pd.concat(dfs)
                 del concatenated
-
-            # Explicitly clean up dataframes and other variables to free memory
             del dfs
             gc.collect()
-
-        def list_xml_files_recursive(self, directory):
-            """list all xml files"""
-            file_list = []
-            for root, _, files in os.walk(directory):
-                for file in files:
-                    if "xml" in file:
-                        file_list.append(os.path.join(root, file))
-            return file_list
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""
