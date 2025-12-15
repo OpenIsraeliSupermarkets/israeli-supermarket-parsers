@@ -40,7 +40,13 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         return build_value(name, self.additional_constant, no_content=no_content)
 
     def convert(self, found_store, file_name, **kwarg):
-        """parse file to data frame"""
+        """parse file to data frame
+
+        Args:
+            found_store: Directory containing the file
+            file_name: Name of the file to parse
+            **kwarg: Additional keyword arguments
+        """
         source_file = os.path.join(found_store, file_name)
         root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
 
@@ -51,6 +57,7 @@ class BaseXMLParser(XmlBaseConverter, ABC):
             root_store,
             **kwarg,
         )
+
         return self.reduce_size(data)
 
     def reduce_size(self, data):
