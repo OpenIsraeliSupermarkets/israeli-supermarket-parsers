@@ -33,7 +33,10 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
     ):
         """validation"""
         super().validate_succussful_extraction(
-            data, source_file, ignore_missing_columns=ignore_missing_columns, cached_xml_data=cached_xml_data
+            data,
+            source_file,
+            ignore_missing_columns=ignore_missing_columns,
+            cached_xml_data=cached_xml_data,
         )
 
         # if the user asked to include the headers
@@ -74,7 +77,11 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 current_elem = sub_elem
                 if self.last_mile:
                     for last in self.last_mile:
-                        current_elem = current_elem.find(last) if current_elem is not None else None
+                        current_elem = (
+                            current_elem.find(last)
+                            if current_elem is not None
+                            else None
+                        )
                         if current_elem is None:
                             break
 

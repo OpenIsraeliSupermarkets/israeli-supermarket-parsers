@@ -95,52 +95,52 @@ def count_all_tags_in_xml(xml_file_path):
 
 def collect_validation_data_from_xml(xml_file_path, id_field, ignore_tags=None):
     """Collect all validation data from XML in a single pass.
-    
+
     Returns a dict with:
     - tag_count: count of id_field tags
     - xml_keys: set of unique keys with values
     - xml_counts: dict of all tag counts
-    
+
     This is more memory efficient than calling the functions separately.
     """
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
-    
+
     tag_count = 0
     keys_with_values = set()
     tag_counts = Counter()
-    
+
     ignore_set = None
     if ignore_tags:
         ignore_set = {normalize_tag(tag) for tag in ignore_tags}
-    
+
     def collect_recursive(element):
         nonlocal tag_count
-        
+
         tag = strip_namespace(element.tag)
         tag_lower = tag.lower()
         tag_counts[tag_lower] += 1
-        
+
         # Count id_field tags
         if tag_lower == id_field.lower():
             tag_count += 1
-        
+
         # Collect keys with values
         if element.text and element.text.strip():
             tag_normalized = normalize_tag(element.tag)
             if ignore_set is None or tag_normalized not in ignore_set:
                 keys_with_values.add(element.tag)
-        
+
         # Recurse through children
         for child in element:
             collect_recursive(child)
-    
+
     collect_recursive(root)
-    
+
     return {
-        'tag_count': tag_count,
-        'xml_keys': keys_with_values,
-        'xml_counts': dict(tag_counts)
+        "tag_count": tag_count,
+        "xml_keys": keys_with_values,
+        "xml_counts": dict(tag_counts),
     }
 
 

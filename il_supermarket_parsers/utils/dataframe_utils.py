@@ -22,7 +22,9 @@ def collect_unique_columns_from_nested_json(df):
         for cell in row:
             if isinstance(cell, str):
                 # Only try to parse if it looks like JSON (starts with { or [)
-                if cell and (cell.strip().startswith('{') or cell.strip().startswith('[')):
+                if cell and (
+                    cell.strip().startswith("{") or cell.strip().startswith("[")
+                ):
                     try:
                         json_data = json.loads(cell)
                         collect_keys_recursive(json_data)
@@ -71,7 +73,9 @@ def count_elements_in_nested_json(df):
         for cell in row:
             if isinstance(cell, str):
                 # Only try to parse if it looks like JSON (starts with { or [)
-                if cell and (cell.strip().startswith('{') or cell.strip().startswith('[')):
+                if cell and (
+                    cell.strip().startswith("{") or cell.strip().startswith("[")
+                ):
                     try:
                         json_data = json.loads(cell)
                         count_recursive(json_data, in_nested_dict=True)

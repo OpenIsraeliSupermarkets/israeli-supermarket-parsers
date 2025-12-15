@@ -41,7 +41,7 @@ class BaseXMLParser(XmlBaseConverter, ABC):
 
     def convert(self, found_store, file_name, cache_xml_for_validation=False, **kwarg):
         """parse file to data frame
-        
+
         Args:
             found_store: Directory containing the file
             file_name: Name of the file to parse
@@ -58,14 +58,14 @@ class BaseXMLParser(XmlBaseConverter, ABC):
             root_store,
             **kwarg,
         )
-        
+
         # Store cached XML data if requested
-        if cache_xml_for_validation and hasattr(self, '_cached_xml_data'):
+        if cache_xml_for_validation and hasattr(self, "_cached_xml_data"):
             self._cached_xml_data[source_file] = {
-                'root': root,
-                'root_store': root_store
+                "root": root,
+                "root_store": root_store,
             }
-        
+
         return self.reduce_size(data)
 
     def reduce_size(self, data):

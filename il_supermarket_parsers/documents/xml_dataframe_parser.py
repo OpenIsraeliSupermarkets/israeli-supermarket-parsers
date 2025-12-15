@@ -85,7 +85,7 @@ class XmlDataFrameConverter(BaseXMLParser):
         self, data, source_file, ignore_missing_columns=None, cached_xml_data=None
     ):
         """validate column requested
-        
+
         Args:
             data: DataFrame to validate
             source_file: Path to source XML file
@@ -95,29 +95,31 @@ class XmlDataFrameConverter(BaseXMLParser):
         """
         # if there is an empty file
         # we expected it to return none
-        
+
         ignore_list = (
             self.ignore_column + ignore_missing_columns
             if ignore_missing_columns
             else self.ignore_column
         )
-        
+
         # If no cached data provided, collect all validation data in a single XML pass
         if cached_xml_data is None:
             cached_xml_data = collect_validation_data_from_xml(
                 source_file, self.id_field, ignore_tags=ignore_list
             )
             # Normalize the keys
-            cached_xml_data['xml_keys'] = {
-                normalize_tag(key) for key in cached_xml_data['xml_keys']
+            cached_xml_data["xml_keys"] = {
+                normalize_tag(key) for key in cached_xml_data["xml_keys"]
             }
-        
-        tag_count = cached_xml_data.get('tag_count', count_tag_in_xml(source_file, self.id_field))
+
+        tag_count = cached_xml_data.get(
+            "tag_count", count_tag_in_xml(source_file, self.id_field)
+        )
         self._validate_columns_and_counts(data, source_file, tag_count)
 
         # Use cached data if available
-        if 'xml_keys' in cached_xml_data:
-            xml_keys = cached_xml_data['xml_keys']
+        if "xml_keys" in cached_xml_data:
+            xml_keys = cached_xml_data["xml_keys"]
         else:
             xml_keys = {
                 normalize_tag(key)
@@ -125,7 +127,7 @@ class XmlDataFrameConverter(BaseXMLParser):
                     source_file, ignore_tags=ignore_list
                 )
             }
-        
+
         data_keys = {
             normalize_tag(key) for key in collect_unique_columns_from_nested_json(data)
         }
@@ -139,10 +141,10 @@ class XmlDataFrameConverter(BaseXMLParser):
         assert "file_name" in data.columns
 
         # Use cached data if available
-        xml_counts = cached_xml_data.get('xml_counts')
+        xml_counts = cached_xml_data.get("xml_counts")
         if xml_counts is None:
             xml_counts = count_all_tags_in_xml(source_file)
-        
+
         df_counts = count_elements_in_nested_json(data)
 
         for tag, df_count in df_counts.items():
@@ -191,7 +193,7 @@ class XmlDataFrameConverter(BaseXMLParser):
             for elem in root
             if normalize_tag(elem.tag) not in self.ignore_column
         )
-        
+
         # Convert generator to DataFrame directly
         df = pd.DataFrame(rows)
         if len(df) == 0:

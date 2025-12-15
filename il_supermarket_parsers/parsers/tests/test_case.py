@@ -107,7 +107,7 @@ def make_test_case(scraper_enum, parser_enum):
                 # Validate concatenation works, but don't keep the result
                 concatenated = pd.concat(dfs)
                 del concatenated
-            
+
             # Explicitly clean up dataframes and other variables to free memory
             del dfs
             gc.collect()
