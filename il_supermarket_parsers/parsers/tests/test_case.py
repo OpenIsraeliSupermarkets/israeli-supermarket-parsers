@@ -62,7 +62,7 @@ def make_test_case(scraper_enum, parser_enum):
             self.parser_class = ParserFactory.get(parser_enum)
             self.parser_name = parser_enum.name
             self.folder_name = "temp"
-            self.refresh = False
+            self.refresh = True
 
         def _get_temp_folder(self, dump_folder):
             """get a temp folder to download the files into"""
