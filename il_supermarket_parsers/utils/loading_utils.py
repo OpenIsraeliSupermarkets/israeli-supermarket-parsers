@@ -4,12 +4,12 @@ import datetime
 from dataclasses import dataclass
 from il_supermarket_scarper import FileTypesFilters
 from .logger import Logger
-
+from pydantic import BaseModel
 EMPTY_FILE_TOEHOLD = 300
 
 
-@dataclass
-class DumpFile:  # pylint: disable=too-many-instance-attributes
+
+class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
     """information about file found from the scraper"""
 
     store_folder: str
@@ -24,34 +24,23 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
     should_be_processed: bool = True
     ingore_reason: str = None
 
-    def get_full_path(self):
+    @property
+    def get_full_path(self) -> str:
         """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
 
-    def is_expected_to_be_readable(self):
+    @property
+    def is_expected_to_be_readable(self) -> bool:
         """get the file category"""
         return os.path.getsize(self.get_full_path()) == 0
 
-    def is_expected_to_have_records(self):
+    @property
+    def is_expected_to_have_records(self) -> bool:
         """check if the file is expected to have data"""
         return os.path.getsize(self.get_full_path()) > EMPTY_FILE_TOEHOLD
 
-    def to_log_dict(self):
-        """return the object as dict"""
-        return {
-            "store_folder": self.store_folder,
-            "file_name": self.file_name,
-            "prefix_file_name": self.prefix_file_name,
-            "extracted_store_number": self.extracted_store_number,
-            "extracted_chain_id": self.extracted_chain_id,
-            "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "detected_filetype": self.detected_filetype.name,
-            "size": os.path.join(self.store_folder, self.file_name),
-            "is_expected_to_have_records": self.is_expected_to_have_records(),
-        }
 
-
-def filename_string_to_datetime(date):
+def filename_string_to_datetime(date) -> datetime.datetime:
     """format the datetime"""
     if len(date) == 8:
         # if doesn't include seconds

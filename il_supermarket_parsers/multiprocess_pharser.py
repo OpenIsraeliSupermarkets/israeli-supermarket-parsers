@@ -3,10 +3,10 @@ import json
 import datetime
 import os
 import pytz
-from .raw_parsing_pipeline import RawParsingPipeline
+from .raw_parsing_pipeline import ExecutionLog, RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .parser_factory import ParserFactory
-from .utils import FileTypesFilters, Logger
+from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 
 
 class RawProcessing(ProcessJob):
@@ -24,8 +24,26 @@ class RawProcessing(ProcessJob):
         limit = kwargs.pop("limit")
         when_date = kwargs.pop("when_date")
 
+        # Create data loader
+        data_loader = DataLoader(
+            drop_folder,
+            store_names=[parser_name],
+            files_types=[file_type],
+        )
+
+        # Create output writer (CSV)
+        output_path = os.path.join(
+            output_folder,
+            file_type.lower() + "_" + parser_name.lower() + ".csv",
+        )
+        output_writer = CSVOutputWriter(output_path)
+
         return RawParsingPipeline(
-            drop_folder, parser_name, file_type, output_folder, when_date
+            store_name=parser_name,
+            file_type=file_type,
+            when_date=when_date,
+            data_loader=data_loader,
+            output_writer=output_writer,
         ).process(limit=limit)
 
 
@@ -107,7 +125,24 @@ class ParallelParser(MultiProcessor):
         else:
             existing_results = []
 
-        existing_results.extend(results)
+        # Convert ExecutionLog objects to dicts for JSON serialization
+        serializable_results = []
+        for result in results:
+            if isinstance(result, dict) and "response" in result:
+                # Check if response is an ExecutionLog object
+                if isinstance(result["response"], ExecutionLog):
+                    serializable_results.append(
+                        {
+                            **{k: v for k, v in result.items() if k != "response"},
+                            "response": result["response"].to_dict(),
+                        }
+                    )
+                else:
+                    serializable_results.append(result)
+            else:
+                serializable_results.append(result)
+
+        existing_results.extend(serializable_results)
 
         with open(status_file, "w", encoding="utf-8") as file:
             json.dump(existing_results, file)

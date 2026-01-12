@@ -5,23 +5,26 @@ from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
 from .logger import Logger
 from .loading_utils import DumpFile, file_name_to_components
+from .base_data_loader import BaseDataLoader
 
 
-class DataLoader:
+class DataLoader(BaseDataLoader):
     """class for loading dump files from the folder"""
 
     def __init__(
-        self, folder, store_names=None, files_types=None, empty_store_id="0000"
+        self, folder,empty_store_id="0000"
     ) -> None:
         self.folder = folder
-        self.store_names = (
-            store_names if store_names else DumpFolderNames.all_folders_names()
-        )
-        self.files_types = files_types if files_types else FileTypesFilters.all_types()
         self.empty_store_id = empty_store_id
 
-    def load(self, limit=None):  # pylint: disable=too-many-branches
+    def load(self, limit=None, store_names=None, files_types=None):  # pylint: disable=too-many-branches
         """load details about the files in the folder"""
+        
+        store_names = (
+            store_names if store_names else DumpFolderNames.all_folders_names()
+        )
+        files_types = files_types if files_types else FileTypesFilters.all_types()
+        
         files_in_dir = os.listdir(self.folder)
         stores_folders = [DumpFolderNames[enum].value for enum in self.store_names]
 
