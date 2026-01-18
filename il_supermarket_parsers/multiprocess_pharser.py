@@ -22,7 +22,6 @@ class RawProcessing(ProcessJob):
         parser_name = kwargs.pop("store_enum")
         output_folder = kwargs.pop("output_folder")
         limit = kwargs.pop("limit")
-        when_date = kwargs.pop("when_date")
 
         # Create data loader
         data_loader = DataLoader(
@@ -39,12 +38,9 @@ class RawProcessing(ProcessJob):
         output_writer = CSVOutputWriter(output_path)
 
         return RawParsingPipeline(
-            store_name=parser_name,
-            file_type=file_type,
-            when_date=when_date,
             data_loader=data_loader,
             output_writer=output_writer,
-        ).process(limit=limit)
+        ).process(limit=limit, store_names=[parser_name], files_types=[file_type], when_date=when_date)
 
 
 class ParallelParser(MultiProcessor):

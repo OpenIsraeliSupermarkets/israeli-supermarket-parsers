@@ -3,11 +3,12 @@ from typing import List
 from .loading_utils import DumpFile
 
 
+
 class BaseDataLoader(ABC):
     """Abstract base class for data loaders"""
 
     @abstractmethod
-    def load(self, limit=None) -> List[DumpFile]:
+    def load(self, limit=None, store_names=None, files_types=None) -> List[DumpFile]:
         """
         Load dump files
 

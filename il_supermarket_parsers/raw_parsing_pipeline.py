@@ -18,9 +18,6 @@ class RawParsingPipeline:
 
     def __init__(
         self,
-        store_name: str,
-        file_type: str,
-        when_date,
         data_loader: BaseDataLoader,
         output_writer: BaseOutputWriter,
     ) -> None:
@@ -28,23 +25,18 @@ class RawParsingPipeline:
         Initialize RawParsingPipeline
 
         Args:
-            store_name: Name of the store
-            file_type: Type of file to process
             when_date: Date when processing
             data_loader: DataLoader instance to load files
             output_writer: OutputWriter instance to write results
         """
-        self.store_name = store_name
-        self.file_type = file_type
-        self.when_date = when_date
         self.data_loader = data_loader
         self.output_writer = output_writer
 
-    def process(self, limit=None) -> ExecutionLog:
+    def process(self, limit=None, store_names=None, files_types=None) -> List[ExecutionLog]:
         """start processing the files selected in the pipeline input"""
-        parser_class: BaseFileConverter = ParserFactory.get(self.store_name)
+        parser_class: BaseFileConverter = ParserFactory.get(store_names)
 
-        files_to_process: List[DumpFile] = self.data_loader.load(limit=limit, store_names=[self.store_name], files_types=[self.file_type])
+        files_to_process: List[DumpFile] = self.data_loader.load(limit=limit, store_names=store_names, files_types=files_types)
 
         Logger.info(
             f"Processing {len(files_to_process)} files"
@@ -60,7 +52,7 @@ class RawParsingPipeline:
 
             Logger.debug(f"Processing file {file.file_name}")
             # ignore but log empty files
-            if file.is_expected_to_be_readable():
+            if not file.is_expected_to_be_readable:
                 execution_log.append(
                     FileExecutionLog(
                         loaded=False,
