@@ -1,6 +1,7 @@
 import os
 import csv
-from typing import List
+import asyncio
+from typing import List, Optional
 import pandas as pd
 from .base_output_writer import BaseOutputWriter
 from .logger import Logger
@@ -17,6 +18,21 @@ class CSVOutputWriter(BaseOutputWriter):
             output_path: Path to the CSV file
         """
         self.output_path = output_path
+        self._existing_columns: List[str] = []
+        self._header_written = False
+        self._initialized = False
+
+    async def initialize(self) -> None:
+        """Initialize the output writer"""
+        if not self._initialized:
+            # Load existing columns if file exists
+            if self.exists():
+                self._existing_columns = await asyncio.to_thread(self.get_existing_columns)
+                self._header_written = True
+                Logger.debug(f"Initialized CSV writer, found existing columns: {self._existing_columns}")
+            else:
+                Logger.debug(f"Initializing new CSV file {self.output_path}")
+            self._initialized = True
 
     def exists(self) -> bool:
         """Check if CSV file exists"""
@@ -36,56 +52,69 @@ class CSVOutputWriter(BaseOutputWriter):
         except Exception:
             return []
 
-    def append_columns_to_csv(self, new_columns: List[str]) -> None:
+    async def _append_columns_to_csv(self, new_columns: List[str]) -> None:
         """Append new columns to an existing CSV file"""
-        output_file = self.output_path.replace(".csv", "_temp.csv")
-        with open(self.output_path, "r", encoding="utf-8") as infile, open(
-            output_file, "w+", newline="", encoding="utf-8"
-        ) as outfile:
-            reader = csv.reader(infile)
-            writer = csv.writer(outfile)
+        def _do_append():
+            output_file = self.output_path.replace(".csv", "_temp.csv")
+            with open(self.output_path, "r", encoding="utf-8") as infile, open(
+                output_file, "w+", newline="", encoding="utf-8"
+            ) as outfile:
+                reader = csv.reader(infile)
+                writer = csv.writer(outfile)
 
-            # Add header
-            header = next(reader)
-            writer.writerow(header + new_columns)
+                # Add header
+                header = next(reader)
+                writer.writerow(header + new_columns)
 
-            # Add data row-by-row
-            for row in reader:
-                writer.writerow(row + [""] * len(new_columns))
-        os.remove(self.output_path)
-        os.rename(output_file, self.output_path)
+                # Add data row-by-row
+                for row in reader:
+                    writer.writerow(row + [""] * len(new_columns))
+            os.remove(self.output_path)
+            os.rename(output_file, self.output_path)
 
-    def write_batch(self, df: pd.DataFrame) -> None:
+        await asyncio.to_thread(_do_append)
+
+    async def write_row(self, row: dict) -> None:
         """
-        Write a DataFrame batch to CSV with column alignment
+        Write a single row to CSV with column alignment
 
         Args:
-            df: DataFrame to write
+            row: Dictionary representing a single row
         """
-        if not self.exists():
-            Logger.debug(f"Creating new file {self.output_path}")
-            df.to_csv(self.output_path, index=False, mode="w", header=True)
-        else:
-            Logger.debug(f"File exists, processing batch")
-            existing_columns = self.get_existing_columns()
+        if not self._initialized:
+            await self.initialize()
 
-            # If there are missing columns in the existing file, append them
-            missing_columns = set(df.columns) - set(existing_columns)
+        row_columns = list(row.keys())
+
+        # Update existing columns with any new ones from this row
+        if not self._header_written:
+            # First row - initialize columns
+            self._existing_columns = row_columns
+            Logger.debug(f"Creating new file {self.output_path} with columns {self._existing_columns}")
+        else:
+            # Check if we need to add new columns
+            missing_columns = set(row_columns) - set(self._existing_columns)
             if missing_columns:
                 Logger.debug(
                     f"Appending missing columns {missing_columns} to {self.output_path}"
                 )
-                self.append_columns_to_csv(list(missing_columns))
-                existing_columns = self.get_existing_columns()
+                await self._append_columns_to_csv(list(missing_columns))
+                self._existing_columns = await asyncio.to_thread(self.get_existing_columns)
 
-            # If there are missing columns in the new DataFrame, add them
-            all_columns = list(set(existing_columns) - set(df.columns))
-            for column in all_columns:
-                if column not in df.columns:
-                    df[column] = None  # Add missing columns with None values
+        # Align row to match existing schema (add None for missing columns)
+        aligned_row = {}
+        for col in self._existing_columns:
+            aligned_row[col] = row.get(col, None)
 
-            # Write aligned DataFrame
-            df[existing_columns].to_csv(
-                self.output_path, index=False, mode="a", header=False
-            )
-            Logger.debug(f"Appending data to {self.output_path}")
+        # Write row to CSV
+        def _write_row():
+            file_exists = os.path.exists(self.output_path)
+            mode = "a" if file_exists else "w"
+            with open(self.output_path, mode, newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self._existing_columns)
+                if not self._header_written:
+                    writer.writeheader()
+                    self._header_written = True
+                writer.writerow(aligned_row)
+
+        await asyncio.to_thread(_write_row)

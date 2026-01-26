@@ -1,6 +1,6 @@
 import json
-from typing import List
-import pandas as pd
+import asyncio
+from typing import List, Optional
 from kafka import KafkaProducer
 from .base_output_writer import BaseOutputWriter
 from .logger import Logger
@@ -34,6 +34,12 @@ class KafkaOutputWriter(BaseOutputWriter):
             ),
         )
         self._existing_columns: List[str] = []
+        self._initialized = False
+
+    async def initialize(self) -> None:
+        """Initialize the output writer"""
+        self._initialized = True
+        Logger.debug(f"Initialized Kafka output writer for topic {self.topic}")
 
     def exists(self) -> bool:
         """Check if output exists (for Kafka, checks if columns are known)"""
@@ -52,40 +58,39 @@ class KafkaOutputWriter(BaseOutputWriter):
         all_columns = set(self._existing_columns) | set(new_columns)
         self._existing_columns = sorted(list(all_columns))
 
-    def write_batch(self, df: pd.DataFrame) -> None:
+    async def write_row(self, row: dict) -> None:
         """
-        Write a DataFrame batch to Kafka (one row per message) with column alignment
+        Write a single row to Kafka with column alignment
 
         Args:
-            df: DataFrame to write
+            row: Dictionary representing a single row
         """
+        if not self._initialized:
+            await self.initialize()
+
+        # Update existing columns with any new ones from this row
+        row_columns = list(row.keys())
         if not self.exists():
             Logger.debug(f"Creating new Kafka output for topic {self.topic}")
-            self._existing_columns = list(df.columns)
+            self._existing_columns = row_columns
         else:
-            Logger.debug(f"Kafka output exists, processing batch")
-            # Update existing columns with any new ones from this batch
-            self._update_existing_columns(list(df.columns))
+            self._update_existing_columns(row_columns)
 
-            # If there are missing columns in the DataFrame, add them
-            missing_columns = set(self._existing_columns) - set(df.columns)
-            for column in missing_columns:
-                df[column] = None
+        # Align row to match existing schema (add None for missing columns)
+        aligned_row = {}
+        for col in self._existing_columns:
+            aligned_row[col] = row.get(col, None)
 
-        # Align columns to match existing schema
-        df_aligned = df[self._existing_columns]
+        # Create message value
+        value = aligned_row
 
-        # Send each row as a separate Kafka message
-        for _, row in df_aligned.iterrows():
-            # Create message value (row as dict)
-            value = row.to_dict()
+        # Create message key if key_columns specified
+        key = None
+        if self.key_columns:
+            key = {col: aligned_row[col] for col in self.key_columns if col in aligned_row}
 
-            # Create message key if key_columns specified
-            key = None
-            if self.key_columns:
-                key = {col: row[col] for col in self.key_columns if col in row}
-
-            # Send message
+        # Send message (run in thread pool to avoid blocking)
+        def _send_message():
             future = self.producer.send(self.topic, value=value, key=key)
             try:
                 future.get(timeout=10)  # Wait for message to be sent
@@ -93,7 +98,7 @@ class KafkaOutputWriter(BaseOutputWriter):
                 Logger.error(f"Error sending message to Kafka: {e}")
                 raise
 
-        Logger.debug(f"Sent {len(df_aligned)} messages to Kafka topic {self.topic}")
+        await asyncio.to_thread(_send_message)
 
     def close(self) -> None:
         """Close the Kafka producer"""

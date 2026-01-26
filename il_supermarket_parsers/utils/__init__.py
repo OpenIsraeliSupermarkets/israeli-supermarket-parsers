@@ -15,6 +15,8 @@ from .xml_utils import (
     build_value,
     strip_namespace,
     get_root_and_search,
+    get_root_and_search_from_content,
+    iterparse_streaming,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     count_all_tags_in_xml,
@@ -27,7 +29,8 @@ from .dataframe_utils import (
 )
 from .test_utils import get_sample_data
 from .data_loader import DataLoader
-from .loading_utils import DumpFile
+from .queue_data_loader import QueueDataLoader
+from .loading_utils import DumpFile, create_dumpfile_from_queue_message
 from .base_data_loader import BaseDataLoader
 from .base_output_writer import BaseOutputWriter
 from .csv_output_writer import CSVOutputWriter

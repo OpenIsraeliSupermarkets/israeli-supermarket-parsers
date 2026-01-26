@@ -1,18 +1,25 @@
 from abc import ABC, abstractmethod
-from typing import List
-import pandas as pd
+from typing import List, Optional
 
 
 class BaseOutputWriter(ABC):
     """Abstract base class for output writers"""
 
     @abstractmethod
-    def write_batch(self, df: pd.DataFrame) -> None:
+    async def write_row(self, row: dict) -> None:
         """
-        Write a batch (DataFrame) to output
+        Write a single row to output
 
         Args:
-            df: DataFrame to write
+            row: Dictionary representing a single row
+        """
+        pass
+
+    @abstractmethod
+    async def initialize(self) -> None:
+        """
+        Initialize the output writer (e.g., create file, detect columns)
+        Called before first row is written
         """
         pass
 

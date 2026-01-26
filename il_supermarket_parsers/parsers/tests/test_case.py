@@ -2,15 +2,17 @@ import unittest
 import os
 import tempfile
 import gc
+import asyncio
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
-from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters
+from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters, DumpFile
 from il_supermarket_parsers.parser_factory import ParserFactory
+from il_supermarket_parsers.engines.base import BaseFileConverter
 
 
-def _validate_file_loading(files, sub_folder):
+def _validate_file_loading(files: list[DumpFile], sub_folder: str):
     """Validate that all files were loaded correctly."""
-    complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
+    complete_file_loaded = list(map(lambda x: x.get_full_path, files))
     files_from_folder = _list_xml_files_recursive(sub_folder)
     assert sorted(complete_file_loaded) == sorted(files_from_folder), (
         f"dataloader failed, failed to load"
@@ -28,24 +30,37 @@ def _list_xml_files_recursive(directory):
     return file_list
 
 
-def _process_files(files, parser):
+async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
     """Process all files and return sampled dataframes."""
     dfs = []
     for file in files:
         try:
-            if file.is_expected_to_be_readable():
+            if file.is_expected_to_be_readable:
                 continue
-            df = parser.read(file, run_validation=True)
-            if file.is_expected_to_have_records():
-                assert df.shape[0] > 0, f"File {file} is empty"
+            # Collect rows from async generator
+            rows = []
+            async for row in parser.read(file):
+                rows.append(row)
+            
+            # Convert to DataFrame for testing
+            if rows:
+                df = pd.DataFrame(rows)
+            else:
+                df = pd.DataFrame()
+            
+            # Run validation against the created DataFrame
+            parser.run_validation(file, df)
+            
+            if file.is_expected_to_have_records:
+                assert df.shape[0] > 0, f"File {file.file_name} is empty"
                 sampled_df = df.sample(n=min(10, df.shape[0]))
                 del df
                 dfs.append(sampled_df)
             else:
-                assert df.shape[0] == 0, f"File {file} should be full"
+                assert df.shape[0] == 0, f"File {file.file_name} should be empty"
                 del df
         except Exception as e:  # pylint: disable=broad-exception-caught
-            raise ValueError(f"File {file}, Failed with {e}")
+            raise ValueError(f"File {file.file_name}, Failed with {e}")
     return dfs
 
 
@@ -95,9 +110,9 @@ def make_test_case(scraper_enum, parser_enum):
         def _parser_validate(self, file_type):
             """test the sub case"""
             with tempfile.TemporaryDirectory() as tmpdirname:
-                self.__parser_validate(file_type, tmpdirname)
+                asyncio.run(self.__parser_validate(file_type, tmpdirname))
 
-        def __parser_validate(self, file_type, dump_path="temp"):
+        async def __parser_validate(self, file_type, dump_path="temp"):
             """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
 
@@ -105,14 +120,18 @@ def make_test_case(scraper_enum, parser_enum):
                 self._refresh_download_folder(sub_folder, file_type)
 
             parser = self.parser_class()
-            files = DataLoader(
+            # Collect files from async generator
+            files = []
+            async for file in DataLoader(
                 folder=sub_folder,
+            ).load(
                 store_names=[self.parser_name],
                 files_types=[file_type],
-            ).load()
+            ):
+                files.append(file)
 
             _validate_file_loading(files, sub_folder)
-            dfs = _process_files(files, parser)
+            dfs = await _process_files(files, parser)
 
             if dfs:
                 concatenated = pd.concat(dfs)

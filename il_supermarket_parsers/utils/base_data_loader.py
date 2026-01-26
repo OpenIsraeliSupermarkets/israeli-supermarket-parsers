@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import AsyncIterator, Optional
 from .loading_utils import DumpFile
 
 
@@ -8,14 +8,21 @@ class BaseDataLoader(ABC):
     """Abstract base class for data loaders"""
 
     @abstractmethod
-    def load(self, limit=None, store_names=None, files_types=None) -> List[DumpFile]:
+    async def load(
+        self, 
+        limit: Optional[int] = None, 
+        store_names: Optional[list] = None, 
+        files_types: Optional[list] = None
+    ) -> AsyncIterator[DumpFile]:
         """
-        Load dump files
+        Load dump files as async generator
 
         Args:
             limit: Optional limit on number of files to load
+            store_names: Optional list of store names to filter
+            files_types: Optional list of file types to filter
 
-        Returns:
-            List of DumpFile objects
+        Yields:
+            DumpFile objects as they are discovered
         """
         pass

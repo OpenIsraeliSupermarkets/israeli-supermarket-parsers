@@ -147,7 +147,7 @@ class XmlDataFrameConverter(BaseXMLParser):
             },
         }
 
-    def _parse(
+    async def _parse(
         self,
         root,
         found_folder,
@@ -155,31 +155,16 @@ class XmlDataFrameConverter(BaseXMLParser):
         root_store,
         **kwarg,
     ):
-
-        columns = [self.id_field.lower(), "found_folder", "file_name"]
-        if self.roots:
-            columns.extend(root.lower() for root in self.roots)
-
+        """parse file to async generator of row dicts"""
         if root is None:
             # If root is None, it means the list_key element was not found in the XML
             # This could happen if the XML structure is different than expected
-            # Return empty DataFrame with proper columns
-            return pd.DataFrame(columns=columns)
+            return
 
-        # Use generator instead of list comprehension to reduce memory
-        rows = (
-            self.list_single_entry(
-                elem, found_folder=found_folder, file_name=file_name, **root_store
-            )
-            for elem in root
-            if normalize_tag(elem.tag) not in self.ignore_column
-        )
-
-        # Convert generator to DataFrame directly
-        df = pd.DataFrame(rows)
-        if len(df) == 0:
-            # Root was found but has no children
-            # This could happen if the XML structure is different than expected
-            return pd.DataFrame(columns=columns)
-
-        return df
+        # Yield rows one by one as they're parsed
+        for elem in root:
+            if normalize_tag(elem.tag) not in self.ignore_column:
+                row = self.list_single_entry(
+                    elem, found_folder=found_folder, file_name=file_name, **root_store
+                )
+                yield row
