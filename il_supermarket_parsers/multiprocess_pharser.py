@@ -3,6 +3,7 @@ import json
 import datetime
 import os
 import pytz
+import asyncio
 from .raw_parsing_pipeline import ExecutionLog, RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .parser_factory import ParserFactory
@@ -16,31 +17,62 @@ class RawProcessing(ProcessJob):
         """read the dump folder and filter according to the requested filters
         start processing file according to thier "update_date"
         """
-        # take args
-        drop_folder = kwargs.pop("data_folder")
+        # Extract args
+        queue_handlers = kwargs.pop("queue_handlers", None)
+        kafka_config = kwargs.pop("kafka_config", None)
+        drop_folder = kwargs.pop("data_folder", None)
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
-        output_folder = kwargs.pop("output_folder")
+        output_folder = kwargs.pop("output_folder", None)
         limit = kwargs.pop("limit")
+        when_date = kwargs.pop("when_date", None)
 
-        # Create data loader
-        data_loader = DataLoader(
-            drop_folder,
-            store_names=[parser_name],
-            files_types=[file_type],
-        )
+        # Create data loader based on mode
+        if queue_handlers:
+            from .utils import QueueDataLoader
+            data_loader = QueueDataLoader(queue_handlers)
+        else:
+            data_loader = DataLoader(
+                drop_folder,
+                store_names=[parser_name],
+                files_types=[file_type],
+            )
 
-        # Create output writer (CSV)
-        output_path = os.path.join(
-            output_folder,
-            file_type.lower() + "_" + parser_name.lower() + ".csv",
-        )
-        output_writer = CSVOutputWriter(output_path)
+        # Create output writer based on mode
+        if kafka_config:
+            from .utils import KafkaOutputWriter
+            output_writer = KafkaOutputWriter(
+                bootstrap_servers=kafka_config["bootstrap_servers"],
+                topic=kafka_config["topic"],
+                key_columns=kafka_config.get("key_columns"),
+            )
+        else:
+            output_path = os.path.join(
+                output_folder,
+                file_type.lower() + "_" + parser_name.lower() + ".csv",
+            )
+            output_writer = CSVOutputWriter(output_path)
 
-        return RawParsingPipeline(
+        # Create pipeline and process (async)
+        pipeline = RawParsingPipeline(
             data_loader=data_loader,
             output_writer=output_writer,
-        ).process(limit=limit, store_names=[parser_name], files_types=[file_type], when_date=when_date)
+        )
+
+        try:
+            # Run async process in sync context
+            result = asyncio.run(
+                pipeline.process(
+                    limit=limit,
+                    store_names=[parser_name],
+                    files_types=[file_type],
+                )
+            )
+            return result
+        finally:
+            # Cleanup Kafka writer if used
+            if kafka_config:
+                output_writer.close()
 
 
 class ParallelParser(MultiProcessor):
@@ -54,6 +86,8 @@ class ParallelParser(MultiProcessor):
         multiprocessing=6,
         output_folder="output",
         when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
+        queue_handlers=None,
+        kafka_config=None,
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
@@ -61,6 +95,8 @@ class ParallelParser(MultiProcessor):
         self.enabled_file_types = enabled_file_types
         self.output_folder = output_folder
         self.when_date = when_date
+        self.queue_handlers = queue_handlers
+        self.kafka_config = kafka_config
 
     def task_to_execute(self):
         """the task to execute"""
@@ -87,6 +123,8 @@ class ParallelParser(MultiProcessor):
             "data_folder",
             "output_folder",
             "when_date",
+            "queue_handlers",
+            "kafka_config",
         ]
 
         Logger.info(
@@ -105,6 +143,8 @@ class ParallelParser(MultiProcessor):
                 [self.data_folder],
                 [self.output_folder],
                 [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
+                [self.queue_handlers],
+                [self.kafka_config],
             )
         )
         task_can_executed_independently = [

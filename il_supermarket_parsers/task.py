@@ -16,6 +16,8 @@ class ConvertingTask:
         limit=None,
         when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
         output_folder="outputs",
+        queue_handlers=None,
+        kafka_config=None,
     ):
         Logger.info(
             f"Starting Parser, data_folder={data_folder},"
@@ -25,6 +27,8 @@ class ConvertingTask:
             f"output_folder={output_folder}"
             f"limit={limit}"
             f"when_date={when_date}"
+            f"queue_handlers={'provided' if queue_handlers else 'None'}"
+            f"kafka_config={'provided' if kafka_config else 'None'}"
         )
         self.runner = ParallelParser(
             data_folder,
@@ -33,6 +37,8 @@ class ConvertingTask:
             multiprocessing=multiprocessing,
             output_folder=output_folder,
             when_date=when_date,
+            queue_handlers=queue_handlers,
+            kafka_config=kafka_config,
         )
         self.limit = limit
 
