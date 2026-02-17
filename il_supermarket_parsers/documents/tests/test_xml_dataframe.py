@@ -1,8 +1,16 @@
 import os
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
 from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
+from il_supermarket_parsers.parsers.other import (
+    WoltFileConverter,
+    RamiLevyFileConverter,
+    KeshetFileConverter,
+)
+from il_supermarket_parsers.parsers.salach_dabach import SalachDabachFileConverter
 import asyncio
 import pandas as pd
+
+TEST_DIR = "il_supermarket_parsers/documents/tests"
 
 def convert_to_dataframe(self, found_store, file_name, **kwarg):
     """Sync wrapper: run async convert and return a DataFrame."""
@@ -168,3 +176,50 @@ def test_nested_xml_dataframe():
         df,
         "il_supermarket_parsers/documents/tests/PromoFull7290058140886-013-202512120010",
     )
+
+
+def test_wolt_promofull():
+    """Test Wolt PromoFull with empty Promotions file (store without promos)."""
+    converter = WoltFileConverter().promofull_parser
+    df = convert_to_dataframe(
+        converter,
+        TEST_DIR,
+        "PromoFull7290058249350-000-038-20260217-000027",
+    )
+    assert df.shape[0] == 0
+
+
+def test_salach_dabach_promofull():
+    """Test Salach Dabach PromoFull parsing."""
+    converter = SalachDabachFileConverter().promofull_parser
+    df = convert_to_dataframe(
+        converter,
+        TEST_DIR,
+        "PromoFull7290526500006-013-202602170010",
+    )
+    assert df.shape[0] > 0
+    assert "promotionid" in df.columns.str.lower()
+
+
+def test_rami_levy_promofull():
+    """Test Rami Levy PromoFull parsing."""
+    converter = RamiLevyFileConverter().promofull_parser
+    df = convert_to_dataframe(
+        converter,
+        TEST_DIR,
+        "PromoFull7290058140886-001-202602170010",
+    )
+    assert df.shape[0] > 0
+    assert "promotionid" in df.columns.str.lower()
+
+
+def test_keshet_promofull():
+    """Test Keshet PromoFull parsing."""
+    converter = KeshetFileConverter().promofull_parser
+    df = convert_to_dataframe(
+        converter,
+        TEST_DIR,
+        "PromoFull7290785400000-002-202602170010",
+    )
+    assert df.shape[0] > 0
+    assert "promotionid" in df.columns.str.lower()
