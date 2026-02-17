@@ -41,7 +41,7 @@ class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
             return len(self.file_content) == 0
         # Otherwise check file system
         if os.path.exists(self.get_full_path):
-            return os.path.getsize(self.get_full_path()) == 0
+            return os.path.getsize(self.get_full_path) == 0
         return False
 
     @property
@@ -52,7 +52,7 @@ class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
             return len(self.file_content) > EMPTY_FILE_TOEHOLD
         # Otherwise check file system
         if os.path.exists(self.get_full_path):
-            return os.path.getsize(self.get_full_path()) > EMPTY_FILE_TOEHOLD
+            return os.path.getsize(self.get_full_path) > EMPTY_FILE_TOEHOLD
         return False
 
     @property

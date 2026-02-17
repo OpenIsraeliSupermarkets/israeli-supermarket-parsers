@@ -49,7 +49,7 @@ async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
                 df = pd.DataFrame()
             
             # Run validation against the created DataFrame
-            parser.run_validation(file, df)
+            parser.run_validation(df, file)
             
             if file.is_expected_to_have_records:
                 assert df.shape[0] > 0, f"File {file.file_name} is empty"

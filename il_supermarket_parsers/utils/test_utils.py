@@ -1,7 +1,6 @@
 import datetime
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
 from il_supermarket_scarper.utils import _now
-from il_supermarket_parsers.task import ConvertingTask
 
 
 def get_sample_data(
@@ -59,6 +58,9 @@ def get_sample_data(
                 for name, output in scraper.consume().items()
             }
         
+        # Lazy import to avoid circular dependency: utils -> task -> ... -> documents -> utils
+        from il_supermarket_parsers.task import ConvertingTask
+        
         # Create ConvertingTask with queue and Kafka config
         converter = ConvertingTask(
             enabled_parsers=enabled_scrapers if enabled_scrapers else None,
@@ -79,21 +81,21 @@ def get_sample_data(
         return result
     
     # File mode: traditional scraping to disk
-    if filter_type:
-        task = ScarpingTask(
-            dump_folder_name=dump_folder_name,
-            limit=limit,
-            files_types=[filter_type],
-            enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
-            lookup_in_db=False,
-            when_date=datetime.datetime.now(),  # get from today, some site remove old files
-            suppress_exception=True,
-        )
-        task.start()
-    else:
-        ScarpingTask(
-            dump_folder_name=dump_folder_name, limit=limit, lookup_in_db=True
-        ).start()
+    task = ScarpingTask(
+        output_configuration={
+            "output_mode": "disk",
+            "base_storage_path": dump_folder_name,
+        },
+        status_configuration={"database_type": "json", "base_path": "status_logs"},
+        multiprocessing=1,
+        enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
+        files_types=[filter_type] if filter_type else None,
+    )
+    task.start(
+        limit=limit,
+        when_date=datetime.datetime.now() if filter_type else None,
+    )
+    task.join()
     return dump_folder_name
 
 

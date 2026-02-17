@@ -1,3 +1,4 @@
+import asyncio
 import pandas as pd
 from il_supermarket_parsers.utils import (
     count_tag_in_xml,
@@ -27,9 +28,27 @@ class XmlDataFrameConverter(BaseXMLParser):
                 data[col] = data[col].mask(data[col] == data[col].shift())
         return data
 
+    def convert_to_dataframe(self, found_store, file_name, **kwarg):
+        """Sync wrapper: run async convert and return a DataFrame."""
+        async def _collect():
+            rows = []
+            async for row in self.convert(found_store, file_name, **kwarg):
+                rows.append(row)
+            return pd.DataFrame(rows)
+
+        return asyncio.run(_collect())
+
     def _validate_columns_and_counts(self, data, source_file, tag_count):
         """Validate required columns and row count match."""
-        if self.roots and tag_count > 0:
+        if tag_count == 0:
+            # Empty file: only check row count
+            if data.shape[0] != 0:
+                raise ValueError(
+                    f"for file {source_file}, expected empty data, got {data.shape[0]} rows"
+                )
+            return
+
+        if self.roots:
             for root in self.roots:
                 if root.lower() not in data.columns:
                     raise ValueError(
@@ -116,6 +135,10 @@ class XmlDataFrameConverter(BaseXMLParser):
             "tag_count", count_tag_in_xml(source_file, self.id_field)
         )
         self._validate_columns_and_counts(data, source_file, tag_count)
+
+        if tag_count == 0:
+            # Empty file: column/count checks done, skip rest
+            return
 
         # Use cached data if available, otherwise collect it
         xml_keys = cached_xml_data.get("xml_keys")
