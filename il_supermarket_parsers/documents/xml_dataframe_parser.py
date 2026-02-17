@@ -1,5 +1,3 @@
-import asyncio
-import pandas as pd
 from il_supermarket_parsers.utils import (
     count_tag_in_xml,
     collect_unique_keys_from_xml,
@@ -27,16 +25,6 @@ class XmlDataFrameConverter(BaseXMLParser):
             if data[col].notna().any():
                 data[col] = data[col].mask(data[col] == data[col].shift())
         return data
-
-    def convert_to_dataframe(self, found_store, file_name, **kwarg):
-        """Sync wrapper: run async convert and return a DataFrame."""
-        async def _collect():
-            rows = []
-            async for row in self.convert(found_store, file_name, **kwarg):
-                rows.append(row)
-            return pd.DataFrame(rows)
-
-        return asyncio.run(_collect())
 
     def _validate_columns_and_counts(self, data, source_file, tag_count):
         """Validate required columns and row count match."""

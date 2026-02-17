@@ -1,13 +1,25 @@
 import os
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
 from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
+import asyncio
+import pandas as pd
 
+def convert_to_dataframe(self, found_store, file_name, **kwarg):
+    """Sync wrapper: run async convert and return a DataFrame."""
+    async def _collect():
+        rows = []
+        async for row in self.convert(found_store, file_name, **kwarg):
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    return asyncio.run(_collect())
 
 def test_read_bad_encoding_1():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "PriceFull7290172900007-083-202409270311.xml",
     )
@@ -24,7 +36,8 @@ def test_read_bad_encoding_2():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "PromoFull7290172900007-667-202409290706.xml",
     )
@@ -40,7 +53,8 @@ def test_bad_element():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="STORES", id_field="STOREID")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "Stores7290027600007-000-202410020201",
     )
@@ -92,7 +106,8 @@ def test_file_1():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "PriceFull7290172900007-083-202409270311.xml",
     )
@@ -114,7 +129,8 @@ def test_file_2():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "PromoFull7290172900007-667-202409290706.xml",
     )
@@ -142,7 +158,8 @@ def test_nested_xml_dataframe():
         date_columns=["PromotionUpdateDate"],
         ignore_column=["XmlDocVersion", "DllVerNo"],
     )
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "PromoFull7290058140886-013-202512120010",
     )
