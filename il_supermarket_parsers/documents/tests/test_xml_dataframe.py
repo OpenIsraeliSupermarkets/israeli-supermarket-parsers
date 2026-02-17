@@ -70,7 +70,8 @@ def test_empty_file():
     """test reading files that are the encoding in the file is not correct"""
 
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
-    df = converter.convert_to_dataframe(
+    df = convert_to_dataframe(
+        converter,
         "il_supermarket_parsers/documents/tests",
         "Price7290725900003-9032-202410021600",
     )
