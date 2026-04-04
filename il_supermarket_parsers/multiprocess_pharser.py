@@ -1,11 +1,11 @@
 import itertools
-import json
 import datetime
 import os
 import pytz
 import asyncio
 from .raw_parsing_pipeline import ExecutionLog, RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
+from .utils.parser_status import create_parser_status
 from .parser_factory import ParserFactory
 from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 
@@ -17,7 +17,6 @@ class RawProcessing(ProcessJob):
         """read the dump folder and filter according to the requested filters
         start processing file according to thier "update_date"
         """
-        # Extract args
         queue_handlers = kwargs.pop("queue_handlers", None)
         kafka_config = kwargs.pop("kafka_config", None)
         drop_folder = kwargs.pop("data_folder", None)
@@ -26,8 +25,8 @@ class RawProcessing(ProcessJob):
         output_folder = kwargs.pop("output_folder", None)
         limit = kwargs.pop("limit")
         when_date = kwargs.pop("when_date", None)
+        status_config = kwargs.pop("status_config", None)
 
-        # Create data loader based on mode
         if queue_handlers:
             from .utils import QueueDataLoader
             data_loader = QueueDataLoader(queue_handlers)
@@ -38,7 +37,6 @@ class RawProcessing(ProcessJob):
                 files_types=[file_type],
             )
 
-        # Create output writer based on mode
         if kafka_config:
             from .utils import KafkaOutputWriter
             output_writer = KafkaOutputWriter(
@@ -53,14 +51,20 @@ class RawProcessing(ProcessJob):
             )
             output_writer = CSVOutputWriter(output_path)
 
-        # Create pipeline and process (async)
+        database_name = f"{parser_name}_{file_type}".lower()
+        parser_status = create_parser_status(
+            database_name,
+            status_configuration=status_config,
+            default_base_path=output_folder or "outputs",
+        )
+
         pipeline = RawParsingPipeline(
             data_loader=data_loader,
             output_writer=output_writer,
+            parser_status=parser_status,
         )
 
         try:
-            # Run async process in sync context
             result = asyncio.run(
                 pipeline.process(
                     limit=limit,
@@ -70,7 +74,6 @@ class RawProcessing(ProcessJob):
             )
             return result
         finally:
-            # Cleanup Kafka writer if used
             if kafka_config:
                 output_writer.close()
 
@@ -88,6 +91,7 @@ class ParallelParser(MultiProcessor):
         when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
         queue_handlers=None,
         kafka_config=None,
+        status_configuration=None,
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
@@ -97,6 +101,7 @@ class ParallelParser(MultiProcessor):
         self.when_date = when_date
         self.queue_handlers = queue_handlers
         self.kafka_config = kafka_config
+        self.status_configuration = status_configuration
 
     def task_to_execute(self):
         """the task to execute"""
@@ -125,6 +130,7 @@ class ParallelParser(MultiProcessor):
             "when_date",
             "queue_handlers",
             "kafka_config",
+            "status_config",
         ]
 
         Logger.info(
@@ -145,6 +151,7 @@ class ParallelParser(MultiProcessor):
                 [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
                 [self.queue_handlers],
                 [self.kafka_config],
+                [self.status_configuration],
             )
         )
         task_can_executed_independently = [
@@ -154,32 +161,4 @@ class ParallelParser(MultiProcessor):
 
     def post(self, results):
         """post process the results"""
-        status_file = os.path.join(self.output_folder, "parser-status.json")
-        if os.path.exists(status_file):
-            with open(status_file, "r", encoding="utf-8") as file:
-                existing_results = json.load(file)
-        else:
-            existing_results = []
-
-        # Convert ExecutionLog objects to dicts for JSON serialization
-        serializable_results = []
-        for result in results:
-            if isinstance(result, dict) and "response" in result:
-                # Check if response is an ExecutionLog object
-                if isinstance(result["response"], ExecutionLog):
-                    serializable_results.append(
-                        {
-                            **{k: v for k, v in result.items() if k != "response"},
-                            "response": result["response"].to_dict(),
-                        }
-                    )
-                else:
-                    serializable_results.append(result)
-            else:
-                serializable_results.append(result)
-
-        existing_results.extend(serializable_results)
-
-        with open(status_file, "w", encoding="utf-8") as file:
-            json.dump(existing_results, file)
         return super().post(results)

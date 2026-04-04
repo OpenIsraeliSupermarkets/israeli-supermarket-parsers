@@ -18,6 +18,7 @@ class ConvertingTask:
         output_folder="outputs",
         queue_handlers=None,
         kafka_config=None,
+        status_configuration=None,
     ):
         Logger.info(
             f"Starting Parser, data_folder={data_folder},"
@@ -29,6 +30,7 @@ class ConvertingTask:
             f"when_date={when_date}"
             f"queue_handlers={'provided' if queue_handlers else 'None'}"
             f"kafka_config={'provided' if kafka_config else 'None'}"
+            f"status_configuration={status_configuration}"
         )
         self.runner = ParallelParser(
             data_folder,
@@ -39,6 +41,7 @@ class ConvertingTask:
             when_date=when_date,
             queue_handlers=queue_handlers,
             kafka_config=kafka_config,
+            status_configuration=status_configuration,
         )
         self.limit = limit
 
