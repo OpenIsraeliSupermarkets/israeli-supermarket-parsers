@@ -241,7 +241,7 @@ class ProcessJob:
 
             else:
                 try:
-                    file_processed = self.job(**job_kwargs)
+                    self.job(**job_kwargs)
                     Logger.info(
                         f"{current_process().name}: Placing results for {job_kwargs}."
                     )
@@ -255,7 +255,6 @@ class ProcessJob:
                                 {
                                     **job_kwargs,
                                     "status": True,
-                                    "response": file_processed,
                                 },
                                 timeout=5,
                             )

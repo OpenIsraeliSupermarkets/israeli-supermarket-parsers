@@ -24,7 +24,6 @@ class RawProcessing(ProcessJob):
         parser_name = kwargs.pop("store_enum")
         output_folder = kwargs.pop("output_folder", None)
         limit = kwargs.pop("limit")
-        when_date = kwargs.pop("when_date", None)
         status_config = kwargs.pop("status_config", None)
 
         if queue_handlers:
@@ -65,14 +64,13 @@ class RawProcessing(ProcessJob):
         )
 
         try:
-            result = asyncio.run(
+            asyncio.run(
                 pipeline.process(
                     limit=limit,
                     store_names=[parser_name],
                     files_types=[file_type],
                 )
             )
-            return result
         finally:
             if kafka_config:
                 output_writer.close()
