@@ -37,25 +37,27 @@ class RawParsingPipeline:
 
     async def process(
         self,
+        enabled_scraper: str,
+        enabled_file_types: List[str],
         limit: Optional[int] = None,
-        store_names: Optional[List[str]] = None,
-        files_types: Optional[List[str]] = None,
+
     ) -> ExecutionLog:
         """start processing the files selected in the pipeline input with streaming"""
-        parser_class: BaseFileConverter = ParserFactory.get(store_names)
+        parser_class: BaseFileConverter = ParserFactory.get(enabled_scraper)
     
         await self.output_writer.initialize()
 
         Logger.info("Starting streaming file processing")
         
         files_to_process: List[str] = []
+        execution_errors = 0
         self.parser_status.on_parsing_start(
             limit=limit,
-            files_types=files_types,
-            store_name=store_names
+            enabled_file_types=enabled_file_types,
+            enabled_scraper=enabled_scraper
         )
 
-        async for file in self.data_loader.load(limit=limit, store_names=store_names, files_types=files_types):
+        async for file in self.data_loader.load(limit=limit, store_names=[enabled_scraper], files_types=enabled_file_types):
             Logger.debug(f"Processing file {file.file_name}")
 
             if not file.is_expected_to_be_readable:
@@ -76,7 +78,7 @@ class RawParsingPipeline:
                         write_error_count += 1
                     row_count += 1
 
-                self.parser_status.register_processed_file(file, row_count, write_error_count)
+                self.parser_status.register_processed_file(file, row_count)
                 Logger.debug(f"Successfully processed file {file.file_name} with {row_count} rows")
 
             except Exception as error:  # pylint: disable=broad-exception-caught
@@ -87,9 +89,8 @@ class RawParsingPipeline:
                 )
 
         self.parser_status.on_parsing_completed(
-            store_names=store_names,
+            enabled_scraper=enabled_scraper,
             had_errors=execution_errors > 0,
             output_path=self.output_writer.get_path(),
-            files_types=files_types,
-            files_to_process=files_to_process,
+            total_files=len(files_to_process),
         )

@@ -18,7 +18,7 @@ class StartedParsingStatus(BaseModel):
     status: str = "started"
     when: Optional[datetime] = None
     limit: Optional[int] = None
-    store_name: Optional[str] = None
+    scraper: Optional[str] = None
     files_types: Optional[List[str]] = None
 
 

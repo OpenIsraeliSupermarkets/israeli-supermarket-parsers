@@ -5,7 +5,6 @@ from il_supermarket_parsers.utils import (
     build_value, 
     get_root_and_search, 
     get_root_and_search_from_content,
-    iterparse_streaming
 )
 
 

@@ -105,15 +105,15 @@ class ParserStatus:
     def on_parsing_start(
         self,
         limit: Optional[int],
-        files_types: Optional[List[str]],
-        store_name: Optional[str],
+        enabled_file_types: Optional[List[str]],
+        enabled_scraper: Optional[str],
     ) -> None:
         """Record that a parsing run has started."""
         event = StartedParsingStatus(
             when=_now(),
             limit=limit,
-            store_name=store_name,
-            files_types=files_types,
+            scraper=enabled_scraper,
+            files_types=enabled_file_types,
         )
         self.database.insert_document("global_status", event.dict())
 
@@ -168,7 +168,7 @@ class ParserStatus:
 
     def on_parsing_completed(
         self,
-        store_name: str,
+        enabled_scraper: str,
         had_errors: bool,
         output_path: Optional[str],
         total_files: int,
@@ -176,7 +176,7 @@ class ParserStatus:
         """Record that the parsing run has finished."""
         event = CompletedParsingStatus(
             when=_now(),
-            store_name=store_name,
+            store_name=enabled_scraper,
             had_errors=had_errors,
             output_path=output_path,
             total_files=total_files,
@@ -193,7 +193,8 @@ class ParserStatus:
 
 
 def create_parser_status(
-    database_name: str,
+    enabled_scraper: str,
+    enabled_file_type: str,
     status_configuration: Optional[dict] = None,
     default_base_path: str = "outputs",
 ) -> ParserStatus:
@@ -207,6 +208,7 @@ def create_parser_status(
     The JsonDataBase creates one file per database_name:
         {base_path}/{database_name}.json
     """
+    database_name =f"{enabled_scraper}_{enabled_file_type}".lower()
     config = status_configuration or {
         "database_type": "json",
         "base_path": default_base_path,

@@ -10,17 +10,20 @@ from ..logger import Logger
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
-    def __init__(self, output_path: str):
+    def __init__(self, output_folder: str, enabled_scraper: str, enabled_file_type: str):
         """
         Initialize CSV output writer
 
         Args:
             output_path: Path to the CSV file
         """
-        self.output_path = output_path
         self._existing_columns: List[str] = []
         self._header_written = False
         self._initialized = False
+        self.output_path = os.path.join(
+                output_folder,
+                enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
+            )
 
     async def initialize(self) -> None:
         """Initialize the output writer"""

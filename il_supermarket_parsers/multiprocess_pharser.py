@@ -8,7 +8,8 @@ from .utils.multi_processing import MultiProcessor, ProcessJob
 from .utils.status import create_parser_status
 from .parser_factory import ParserFactory
 from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
-
+from .utils import QueueOutputWriter, KafkaOutputWriter
+from .utils import QueueDataLoader, KafkaDataLoader
 
 class RawProcessing(ProcessJob):
     """converting file to database"""
@@ -27,37 +28,28 @@ class RawProcessing(ProcessJob):
         status_config = kwargs.pop("status_config", None)
 
         if queue_handlers:
-            from .utils import QueueDataLoader
             data_loader = QueueDataLoader(queue_handlers)
         else:
-            data_loader = DataLoader(
-                drop_folder,
-                store_names=[parser_name],
-                files_types=[file_type],
-            )
+            data_loader = DataLoader(drop_folder)
+
 
         output_queues = kwargs.pop("output_queues", None)
 
         if output_queues and parser_name in output_queues:
-            from .utils import QueueOutputWriter
             output_writer = QueueOutputWriter(output_queues[parser_name])
         elif kafka_config:
-            from .utils import KafkaOutputWriter
             output_writer = KafkaOutputWriter(
                 bootstrap_servers=kafka_config["bootstrap_servers"],
-                topic=kafka_config["topic"],
                 key_columns=kafka_config.get("key_columns"),
+                enabled_scraper=parser_name,
+                enabled_file_type=file_type,
             )
         else:
-            output_path = os.path.join(
-                output_folder,
-                file_type.lower() + "_" + parser_name.lower() + ".csv",
-            )
-            output_writer = CSVOutputWriter(output_path)
+            output_writer = CSVOutputWriter(output_folder, parser_name, file_type)
 
-        database_name = f"{parser_name}_{file_type}".lower()
         parser_status = create_parser_status(
-            database_name,
+            enabled_scraper=parser_name,
+            enabled_file_type=file_type,
             status_configuration=status_config,
             default_base_path=output_folder or "outputs",
         )
@@ -72,8 +64,8 @@ class RawProcessing(ProcessJob):
             asyncio.run(
                 pipeline.process(
                     limit=limit,
-                    store_names=[parser_name],
-                    files_types=[file_type],
+                    enabled_scraper=parser_name,
+                    enabled_file_types=[file_type],
                 )
             )
         finally:
