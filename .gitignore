@@ -10,7 +10,7 @@ database/
 logging.log
 *.csv
 .env
-status/
+# status/
 build/
 il_supermarket_parsers.egg-info/
 israeli_supermarket_parsers.egg-info
