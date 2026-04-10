@@ -15,7 +15,7 @@ async def publish_results(parsers_queue_handlers):
             result = queue_handler.get()
             if result is None:
                 break
-            print(result)
+            print("Record published: ", result)
 
 async def main():
     """Main function to run the scraping task and consume results."""
@@ -62,8 +62,11 @@ async def main():
 
     await publish_results(parsers_queue_handlers)
 
-    scraper.stop()
-    scraper.join()
+    try:
+        scraper.stop()
+        scraper.join()
+    except RuntimeError:
+        pass  # Scraper already finished
 
     print("\nDone!")
     print(f"Processed files: {result}")

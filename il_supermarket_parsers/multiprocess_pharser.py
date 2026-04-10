@@ -9,7 +9,7 @@ from .utils.status import create_parser_status
 from .parser_factory import ParserFactory
 from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 from .utils import QueueOutputWriter, KafkaOutputWriter
-from .utils import QueueDataLoader, KafkaDataLoader
+from .utils import QueueDataLoader
 
 class RawProcessing(ProcessJob):
     """converting file to database"""
