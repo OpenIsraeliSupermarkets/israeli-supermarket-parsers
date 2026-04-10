@@ -1,6 +1,5 @@
 import asyncio
 from typing import AsyncIterator, Optional
-from il_supermarket_scarper import FileTypesFilters
 from .base_data_loader import BaseDataLoader
 from ..loading_utils import DumpFile, create_dumpfile_from_queue_message
 from ..logger import Logger
@@ -49,9 +48,6 @@ class QueueDataLoader(BaseDataLoader):
         Yields:
             DumpFile objects as they arrive from queues
         """
-        files_types = files_types if files_types else FileTypesFilters.all_types()
-        files_types_set = set(files_types) if isinstance(files_types, list) else set(files_types)
-
         count = 0
         for scraper_name, queue_handler in self.queue_handlers.items():
             # Only consume from queues matching the requested store names
@@ -74,13 +70,6 @@ class QueueDataLoader(BaseDataLoader):
                         metadata=metadata,
                         empty_store_id=self.empty_store_id,
                     )
-
-                    if dump_file.detected_filetype.name not in files_types_set:
-                        Logger.debug(
-                            f"Skipping file {file_name} - file type {dump_file.detected_filetype.name} "
-                            f"not in requested types {files_types}"
-                        )
-                        continue
 
                     yield dump_file
                     count += 1

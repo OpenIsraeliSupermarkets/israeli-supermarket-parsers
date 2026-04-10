@@ -35,13 +35,11 @@ class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
 
     @property
     def is_expected_to_be_readable(self) -> bool:
-        """get the file category"""
-        # If file_content is provided (queue-based), check content length
+        """Returns True if the file has content and can be parsed."""
         if self.file_content is not None:
-            return len(self.file_content) == 0
-        # Otherwise check file system
+            return len(self.file_content) > 0
         if os.path.exists(self.get_full_path):
-            return os.path.getsize(self.get_full_path) == 0
+            return os.path.getsize(self.get_full_path) > 0
         return False
 
     @property

@@ -35,7 +35,7 @@ async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
     dfs = []
     for file in files:
         try:
-            if file.is_expected_to_be_readable:
+            if not file.is_expected_to_be_readable:
                 continue
             # Collect rows from async generator
             rows = []
