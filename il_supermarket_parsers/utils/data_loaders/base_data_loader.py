@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import AsyncIterator, Optional
-from .loading_utils import DumpFile
+from ..loading_utils import DumpFile
 
 
 

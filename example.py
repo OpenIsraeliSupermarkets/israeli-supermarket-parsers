@@ -7,8 +7,20 @@ from il_supermarket_parsers import ConvertingTask
 Logger.set_logging_level("INFO")
 
 
+async def publish_results(parsers_queue_handlers):
+    """Publish results to Kafka"""
+    for parser_name, queue_handler in parsers_queue_handlers.items():
+        while True:
+            print(f"Publishing results for {parser_name}")
+            result = queue_handler.get()
+            if result is None:
+                break
+            print(result)
+
 async def main():
     """Main function to run the scraping task and consume results."""
+
+    enabled_scrapers = [ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name]
     scraper = ScarpingTask(
         output_configuration={
             "output_mode": "queue",
@@ -16,7 +28,7 @@ async def main():
         },
         status_configuration={"database_type": "json", "base_path": "status_logs"},
         multiprocessing=1,
-        enabled_scrapers=[ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name],
+        enabled_scrapers=enabled_scrapers,
     )
 
     # Start scraping (runs in background thread)
@@ -30,17 +42,25 @@ async def main():
 
     # Use ConvertingTask with queue and Kafka config
     converter = ConvertingTask(
-        enabled_parsers=[ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name],
+        enabled_parsers=enabled_scrapers,
         limit=1,
         queue_handlers=queue_handlers,
-        kafka_config={
-            "bootstrap_servers": ["localhost:9092"],
-            "topic": "supermarket-data",
+        output_configuration={
+            "output_mode": "queue",
+            "queue_type": "memory",
         },
+        status_configuration={"database_type": "json", "base_path": "status_logs"},
     )
+
+    parsers_queue_handlers = {
+        name: output.queue_handler
+        for name, output in converter.consume().items()
+    }
 
     # Process (sync, but handles async internally via asyncio.run)
     result = converter.start()
+
+    await publish_results(parsers_queue_handlers)
 
     scraper.stop()
     scraper.join()

@@ -1,8 +1,8 @@
 from typing import AsyncIterator, Optional
 from il_supermarket_scarper import FileTypesFilters
 from .base_data_loader import BaseDataLoader
-from .loading_utils import DumpFile, create_dumpfile_from_queue_message
-from .logger import Logger
+from ..loading_utils import DumpFile, create_dumpfile_from_queue_message
+from ..logger import Logger
 
 
 class QueueDataLoader(BaseDataLoader):

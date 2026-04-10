@@ -4,8 +4,8 @@ from typing import AsyncIterator, Optional
 
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
-from .logger import Logger
-from .loading_utils import DumpFile, file_name_to_components
+from ..logger import Logger
+from ..loading_utils import DumpFile, file_name_to_components
 from .base_data_loader import BaseDataLoader
 
 

@@ -3,7 +3,7 @@ import asyncio
 from typing import List, Optional
 from kafka import KafkaProducer
 from .base_output_writer import BaseOutputWriter
-from .logger import Logger
+from ..logger import Logger
 
 
 class KafkaOutputWriter(BaseOutputWriter):

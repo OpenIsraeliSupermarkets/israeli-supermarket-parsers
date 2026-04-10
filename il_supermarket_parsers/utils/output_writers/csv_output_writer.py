@@ -4,7 +4,7 @@ import asyncio
 from typing import List, Optional
 import pandas as pd
 from .base_output_writer import BaseOutputWriter
-from .logger import Logger
+from ..logger import Logger
 
 
 class CSVOutputWriter(BaseOutputWriter):

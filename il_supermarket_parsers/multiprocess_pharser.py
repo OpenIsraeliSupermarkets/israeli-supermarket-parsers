@@ -5,7 +5,7 @@ import pytz
 import asyncio
 from .raw_parsing_pipeline import ExecutionLog, RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
-from .utils.parser_status import create_parser_status
+from .utils.status import create_parser_status
 from .parser_factory import ParserFactory
 from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 
@@ -36,7 +36,12 @@ class RawProcessing(ProcessJob):
                 files_types=[file_type],
             )
 
-        if kafka_config:
+        output_queues = kwargs.pop("output_queues", None)
+
+        if output_queues and parser_name in output_queues:
+            from .utils import QueueOutputWriter
+            output_writer = QueueOutputWriter(output_queues[parser_name])
+        elif kafka_config:
             from .utils import KafkaOutputWriter
             output_writer = KafkaOutputWriter(
                 bootstrap_servers=kafka_config["bootstrap_servers"],
@@ -90,6 +95,7 @@ class ParallelParser(MultiProcessor):
         queue_handlers=None,
         kafka_config=None,
         status_configuration=None,
+        output_queues=None,
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.data_folder = data_folder
@@ -100,6 +106,7 @@ class ParallelParser(MultiProcessor):
         self.queue_handlers = queue_handlers
         self.kafka_config = kafka_config
         self.status_configuration = status_configuration
+        self.output_queues = output_queues
 
     def task_to_execute(self):
         """the task to execute"""
@@ -129,6 +136,7 @@ class ParallelParser(MultiProcessor):
             "queue_handlers",
             "kafka_config",
             "status_config",
+            "output_queues",
         ]
 
         Logger.info(
@@ -150,6 +158,7 @@ class ParallelParser(MultiProcessor):
                 [self.queue_handlers],
                 [self.kafka_config],
                 [self.status_configuration],
+                [self.output_queues],
             )
         )
         task_can_executed_independently = [
