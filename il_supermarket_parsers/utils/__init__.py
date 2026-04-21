@@ -1,15 +1,6 @@
 from il_supermarket_scarper import FileTypesFilters
 
 from .logger import Logger
-from .test_utils import (
-    get_sample_store_data,
-    get_sample_price_data,
-    get_sample_promo_data,
-    get_sample_price_full_data,
-    get_sample_promo_full_data,
-    get_all_chain_ids,
-    get_all_scrapers_names,
-)
 from .xml_utils import (
     get_root,
     build_value,
@@ -27,7 +18,6 @@ from .dataframe_utils import (
     collect_unique_columns_from_nested_json,
     count_elements_in_nested_json,
 )
-from .test_utils import get_sample_data
 from .data_loaders import BaseDataLoader, DataLoader, QueueDataLoader
 from .loading_utils import DumpFile, create_dumpfile_from_queue_message
 from .output_writers import (

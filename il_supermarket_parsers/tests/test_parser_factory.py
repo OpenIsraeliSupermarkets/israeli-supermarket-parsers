@@ -11,6 +11,6 @@ def test_enum_are_aligned():
     scraper_keys = set(ScraperFactory.__members__)
     parser_keys = set(ParserFactory.__members__)
     missing_parsers = scraper_keys - parser_keys
-    assert not missing_parsers, (
-        f"ScraperFactory entries without ParserFactory: {sorted(missing_parsers)}"
-    )
+    assert (
+        not missing_parsers
+    ), f"ScraperFactory entries without ParserFactory: {sorted(missing_parsers)}"
