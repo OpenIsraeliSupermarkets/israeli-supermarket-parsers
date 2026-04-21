@@ -69,7 +69,7 @@ class BaseXMLParser(XmlBaseConverter, ABC):
             # Queue-based file (in-memory)
             root, root_store = get_root_and_search_from_content(
                 file_content, 
-                self.list_key[0] if self.list_key else None, 
+                self.list_key if self.list_key else None, 
                 self.roots
             )
             found_folder = found_store if isinstance(found_store, str) else "queue"
