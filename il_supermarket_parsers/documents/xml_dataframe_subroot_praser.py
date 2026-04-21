@@ -73,9 +73,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
             if self.last_mile:
                 for last in self.last_mile:
                     current_elem = (
-                        current_elem.find(last)
-                        if current_elem is not None
-                        else None
+                        current_elem.find(last) if current_elem is not None else None
                     )
                     if current_elem is None:
                         break

@@ -2,6 +2,7 @@
 
 Mirrors il_supermarket_scarper.utils.scraper_status_contract.
 """
+
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Optional, Union
@@ -84,8 +85,8 @@ class ParserStatusOutput(BaseModel):
     global_status: List[Union[StartedParsingStatus, CompletedParsingStatus]] = Field(
         default_factory=list
     )
-    events: List[Union[ProcessedFileStatus, SkippedFileStatus, FailedFileStatus]] = Field(
-        default_factory=list
+    events: List[Union[ProcessedFileStatus, SkippedFileStatus, FailedFileStatus]] = (
+        Field(default_factory=list)
     )
 
     def validate_parsing_run(self) -> tuple:
@@ -99,8 +100,12 @@ class ParserStatusOutput(BaseModel):
         Returns:
             (True, "") on success or (False, reason_str) on failure.
         """
-        started_events = [e for e in self.global_status if isinstance(e, StartedParsingStatus)]
-        completed_events = [e for e in self.global_status if isinstance(e, CompletedParsingStatus)]
+        started_events = [
+            e for e in self.global_status if isinstance(e, StartedParsingStatus)
+        ]
+        completed_events = [
+            e for e in self.global_status if isinstance(e, CompletedParsingStatus)
+        ]
 
         if not started_events:
             return False, "No 'started' event found"
@@ -121,7 +126,9 @@ class ParserStatusOutput(BaseModel):
 
         started = started_events[0]
         completed = completed_events[0]
-        processed_count = sum(1 for e in self.events if isinstance(e, ProcessedFileStatus))
+        processed_count = sum(
+            1 for e in self.events if isinstance(e, ProcessedFileStatus)
+        )
 
         if started.limit is not None and started.limit > 0:
             if processed_count > started.limit:

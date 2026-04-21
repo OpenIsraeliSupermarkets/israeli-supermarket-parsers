@@ -77,13 +77,15 @@ class BaseFileConverter(ABC):
             )
         )
 
-    async def read(self, dump_file: DumpFile, run_validation: bool = False) -> AsyncIterator[dict]:
+    async def read(
+        self, dump_file: DumpFile, run_validation: bool = False
+    ) -> AsyncIterator[dict]:
         """covert the dump file to the target format according to the filetype
-        
+
         Args:
             dump_file: DumpFile object (can be file system or queue-based)
             run_validation: Whether to run validation (not supported in streaming mode yet)
-        
+
         Yields:
             dict: Row data as dictionaries
         """
@@ -110,7 +112,6 @@ class BaseFileConverter(ABC):
         if run_validation:
             raise NotImplementedError("Validation not yet supported in streaming mode")
 
-
     def _get_parser(self, dump_file: DumpFile) -> XmlBaseConverter:
         """get the appropriate parser based on file type"""
         if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
@@ -135,7 +136,7 @@ class BaseFileConverter(ABC):
             # For queue-based files, we can't validate against the original file
             # Skip validation or use a temporary file
             return
-        
+
         source_file = dump_file.get_full_path
         if not os.path.exists(source_file):
             raise FileNotFoundError(f"Source file not found: {source_file}")

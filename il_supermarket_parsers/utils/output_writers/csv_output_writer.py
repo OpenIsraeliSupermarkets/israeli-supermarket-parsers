@@ -10,7 +10,9 @@ from ..logger import Logger
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
-    def __init__(self, output_folder: str, enabled_scraper: str, enabled_file_type: str):
+    def __init__(
+        self, output_folder: str, enabled_scraper: str, enabled_file_type: str
+    ):
         """
         Initialize CSV output writer
 
@@ -21,18 +23,22 @@ class CSVOutputWriter(BaseOutputWriter):
         self._header_written = False
         self._initialized = False
         self.output_path = os.path.join(
-                output_folder,
-                enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
-            )
+            output_folder,
+            enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
+        )
 
     async def initialize(self) -> None:
         """Initialize the output writer"""
         if not self._initialized:
             # Load existing columns if file exists
             if self.exists():
-                self._existing_columns = await asyncio.to_thread(self.get_existing_columns)
+                self._existing_columns = await asyncio.to_thread(
+                    self.get_existing_columns
+                )
                 self._header_written = True
-                Logger.debug(f"Initialized CSV writer, found existing columns: {self._existing_columns}")
+                Logger.debug(
+                    f"Initialized CSV writer, found existing columns: {self._existing_columns}"
+                )
             else:
                 Logger.debug(f"Initializing new CSV file {self.output_path}")
             self._initialized = True
@@ -57,6 +63,7 @@ class CSVOutputWriter(BaseOutputWriter):
 
     async def _append_columns_to_csv(self, new_columns: List[str]) -> None:
         """Append new columns to an existing CSV file"""
+
         def _do_append():
             output_file = self.output_path.replace(".csv", "_temp.csv")
             with open(self.output_path, "r", encoding="utf-8") as infile, open(
@@ -93,7 +100,9 @@ class CSVOutputWriter(BaseOutputWriter):
         if not self._header_written:
             # First row - initialize columns
             self._existing_columns = row_columns
-            Logger.debug(f"Creating new file {self.output_path} with columns {self._existing_columns}")
+            Logger.debug(
+                f"Creating new file {self.output_path} with columns {self._existing_columns}"
+            )
         else:
             # Check if we need to add new columns
             missing_columns = set(row_columns) - set(self._existing_columns)
@@ -102,7 +111,9 @@ class CSVOutputWriter(BaseOutputWriter):
                     f"Appending missing columns {missing_columns} to {self.output_path}"
                 )
                 await self._append_columns_to_csv(list(missing_columns))
-                self._existing_columns = await asyncio.to_thread(self.get_existing_columns)
+                self._existing_columns = await asyncio.to_thread(
+                    self.get_existing_columns
+                )
 
         # Align row to match existing schema (add None for missing columns)
         aligned_row = {}

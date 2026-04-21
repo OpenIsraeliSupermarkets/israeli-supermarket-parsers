@@ -8,6 +8,7 @@ Reuses the JsonDataBase / MongoDataBase backends from the scraper package
 so that both systems write structured, collection-based JSON files with
 the same on-disk format.
 """
+
 import os
 import traceback as tb
 from datetime import datetime
@@ -134,7 +135,9 @@ class ParserStatus:
         self.database.insert_document("events", event.dict())
 
         fields = _dumpfile_to_execution_log_fields(dump_file)
-        fields.update({"loaded": True, "succusfull": True, "detected_num_rows": row_count})
+        fields.update(
+            {"loaded": True, "succusfull": True, "detected_num_rows": row_count}
+        )
         self._file_logs.append(FileExecutionLog(**fields))
 
     def register_failed_file(
@@ -208,7 +211,7 @@ def create_parser_status(
     The JsonDataBase creates one file per database_name:
         {base_path}/{database_name}.json
     """
-    database_name =f"{enabled_scraper}_{enabled_file_type}".lower()
+    database_name = f"{enabled_scraper}_{enabled_file_type}".lower()
     config = status_configuration or {
         "database_type": "json",
         "base_path": default_base_path,
@@ -225,6 +228,4 @@ def create_parser_status(
         db.create_connection()
         return ParserStatus(database_name, status_database=db)
 
-    raise ValueError(
-        f"Unknown database_type: {db_type!r}. Must be 'json' or 'mongo'."
-    )
+    raise ValueError(f"Unknown database_type: {db_type!r}. Must be 'json' or 'mongo'.")

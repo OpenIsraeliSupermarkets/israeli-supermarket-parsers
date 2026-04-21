@@ -250,7 +250,9 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
     return found_root
 
 
-def get_root_from_content(file_content: Union[str, bytes], file_path: Optional[str] = None):
+def get_root_from_content(
+    file_content: Union[str, bytes], file_path: Optional[str] = None
+):
     """get ET root from file content (bytes or string) or file path"""
     if isinstance(file_content, bytes):
         # Try to decode as UTF-8, fallback to ISO-8859-8
@@ -272,7 +274,11 @@ def get_root_from_content(file_content: Union[str, bytes], file_path: Optional[s
         except ET.ParseError:
             # Try with different encoding
             try:
-                content_str = file_content.decode("ISO-8859-8", errors="replace") if isinstance(file_content, bytes) else file_content
+                content_str = (
+                    file_content.decode("ISO-8859-8", errors="replace")
+                    if isinstance(file_content, bytes)
+                    else file_content
+                )
                 root = ET.fromstring(content_str)
             except ET.ParseError:
                 if file_path:
@@ -284,10 +290,10 @@ def get_root_from_content(file_content: Union[str, bytes], file_path: Optional[s
 
 
 def get_root_and_search_from_content(
-    file_content: Union[str, bytes], 
-    key_to_find: str, 
+    file_content: Union[str, bytes],
+    key_to_find: str,
     attributes_to_collect: Optional[list] = None,
-    file_path: Optional[str] = None
+    file_path: Optional[str] = None,
 ):
     """get the root and search for the key from file content or path"""
     root = get_root_from_content(file_content, file_path)
@@ -297,16 +303,15 @@ def get_root_and_search_from_content(
 
 
 def iterparse_streaming(
-    file_content: Union[str, bytes, io.BytesIO], 
-    file_path: Optional[str] = None
+    file_content: Union[str, bytes, io.BytesIO], file_path: Optional[str] = None
 ):
     """
     Create streaming XML parser that can handle both file paths and in-memory content
-    
+
     Args:
         file_content: XML content as bytes, string, or BytesIO, or None if using file_path
         file_path: Optional file path (used if file_content is None)
-    
+
     Yields:
         (event, element) tuples from iterparse
     """
@@ -322,8 +327,8 @@ def iterparse_streaming(
             file_content = file_content.encode("utf-8")
         elif not isinstance(file_content, bytes):
             raise ValueError(f"Unsupported file_content type: {type(file_content)}")
-        
+
         file_like = io.BytesIO(file_content)
         context = ET.iterparse(file_like, events=("start", "end"))
-    
+
     return context

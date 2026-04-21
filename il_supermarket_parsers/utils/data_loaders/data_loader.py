@@ -12,29 +12,33 @@ from .base_data_loader import BaseDataLoader
 class DataLoader(BaseDataLoader):
     """class for loading dump files from the folder"""
 
-    def __init__(
-        self, folder: str, empty_store_id: str = "0000"
-    ) -> None:
+    def __init__(self, folder: str, empty_store_id: str = "0000") -> None:
         self.folder = folder
         self.empty_store_id = empty_store_id
 
     async def load(
-        self, 
-        limit: Optional[int] = None, 
-        store_names: Optional[list] = None, 
-        files_types: Optional[list] = None
+        self,
+        limit: Optional[int] = None,
+        store_names: Optional[list] = None,
+        files_types: Optional[list] = None,
     ) -> AsyncIterator[DumpFile]:  # pylint: disable=too-many-branches
         """load details about the files in the folder as async generator"""
-        
+
         store_names = (
             store_names if store_names else DumpFolderNames.all_folders_names()
         )
         files_types = files_types if files_types else FileTypesFilters.all_types()
-        files_types_set = set(files_types) if isinstance(files_types, list) else set(files_types)
-        
+        files_types_set = (
+            set(files_types) if isinstance(files_types, list) else set(files_types)
+        )
+
         # Run file system operations in thread pool to avoid blocking
         files_in_dir = await asyncio.to_thread(os.listdir, self.folder)
-        stores_folders = [DumpFolderNames[enum].value for enum in store_names] if store_names else None
+        stores_folders = (
+            [DumpFolderNames[enum].value for enum in store_names]
+            if store_names
+            else None
+        )
 
         count = 0
         files_found = []
@@ -78,7 +82,7 @@ class DataLoader(BaseDataLoader):
                 dump_file: DumpFile = file_name_to_components(
                     store_folder, xml, empty_store_id=self.empty_store_id
                 )
-                
+
                 if dump_file.detected_filetype.name in files_types_set:
                     files_found.append(dump_file)
                     count += 1

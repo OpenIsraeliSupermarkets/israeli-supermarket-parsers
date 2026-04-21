@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from il_supermarket_scarper import FileTypesFilters
 from .logger import Logger
 from pydantic import BaseModel
-EMPTY_FILE_TOEHOLD = 300
 
+EMPTY_FILE_TOEHOLD = 300
 
 
 class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
@@ -122,7 +122,7 @@ def create_dumpfile_from_queue_message(
     file_content: bytes,
     file_link: str,
     metadata: dict,
-    empty_store_id: str = "0000"
+    empty_store_id: str = "0000",
 ) -> DumpFile:
     """Create DumpFile from queue message"""
     # Extract components from file name

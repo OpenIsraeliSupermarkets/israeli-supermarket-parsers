@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import List, AsyncIterator, Union, Optional
 import os
 from il_supermarket_parsers.utils import (
-    build_value, 
-    get_root_and_search, 
+    build_value,
+    get_root_and_search,
     get_root_and_search_from_content,
 )
 
@@ -13,11 +13,11 @@ class XmlBaseConverter(ABC):
 
     @abstractmethod
     async def convert(
-        self, 
-        found_store: Union[str, bytes], 
-        file_name: str, 
+        self,
+        found_store: Union[str, bytes],
+        file_name: str,
         file_content: Optional[bytes] = None,
-        **kwarg
+        **kwarg,
     ) -> AsyncIterator[dict]:
         """parse file to async generator of row dicts"""
 
@@ -50,11 +50,11 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         return build_value(name, self.additional_constant, no_content=no_content)
 
     async def convert(
-        self, 
-        found_store: Union[str, bytes], 
-        file_name: str, 
+        self,
+        found_store: Union[str, bytes],
+        file_name: str,
         file_content: Optional[bytes] = None,
-        **kwarg
+        **kwarg,
     ) -> AsyncIterator[dict]:
         """parse file to async generator of row dicts
 
@@ -68,15 +68,15 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         if file_content is not None:
             # Queue-based file (in-memory)
             root, root_store = get_root_and_search_from_content(
-                file_content, 
-                self.list_key if self.list_key else None, 
-                self.roots
+                file_content, self.list_key if self.list_key else None, self.roots
             )
             found_folder = found_store if isinstance(found_store, str) else "queue"
         else:
             # File system based
             source_file = os.path.join(found_store, file_name)
-            root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
+            root, root_store = get_root_and_search(
+                source_file, self.list_key, self.roots
+            )
             found_folder = found_store
 
         async for row in self._parse(

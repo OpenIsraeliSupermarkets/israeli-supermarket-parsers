@@ -12,8 +12,10 @@ import pandas as pd
 
 TEST_DIR = "il_supermarket_parsers/documents/tests"
 
+
 def convert_to_dataframe(self, found_store, file_name, **kwarg):
     """Sync wrapper: run async convert and return a DataFrame."""
+
     async def _collect():
         rows = []
         async for row in self.convert(found_store, file_name, **kwarg):
@@ -21,6 +23,7 @@ def convert_to_dataframe(self, found_store, file_name, **kwarg):
         return pd.DataFrame(rows)
 
     return asyncio.run(_collect())
+
 
 def test_read_bad_encoding_1():
     """test reading files that are the encoding in the file is not correct"""

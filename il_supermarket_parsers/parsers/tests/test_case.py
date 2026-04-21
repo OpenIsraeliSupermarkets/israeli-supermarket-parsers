@@ -5,7 +5,12 @@ import gc
 import asyncio
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
-from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters, DumpFile
+from il_supermarket_parsers.utils import (
+    get_sample_data,
+    DataLoader,
+    FileTypesFilters,
+    DumpFile,
+)
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 
@@ -41,16 +46,16 @@ async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
             rows = []
             async for row in parser.read(file):
                 rows.append(row)
-            
+
             # Convert to DataFrame for testing
             if rows:
                 df = pd.DataFrame(rows)
             else:
                 df = pd.DataFrame()
-            
+
             # Run validation against the created DataFrame
             parser.run_validation(df, file)
-            
+
             if file.is_expected_to_have_records:
                 assert df.shape[0] > 0, f"File {file.file_name} is empty"
                 sampled_df = df.sample(n=min(10, df.shape[0]))

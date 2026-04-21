@@ -258,7 +258,10 @@ class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTO
     Test case for Victory supermarket.
     """
 
-class VictoryNewTestCase(make_test_case(ScraperFactory.VICTORY_NEW, ParserFactory.VICTORY_NEW)):
+
+class VictoryNewTestCase(
+    make_test_case(ScraperFactory.VICTORY_NEW, ParserFactory.VICTORY_NEW)
+):
     """
     Test case for Victory New supermarket.
     """

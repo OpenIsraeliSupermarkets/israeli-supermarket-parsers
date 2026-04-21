@@ -88,7 +88,9 @@ class KafkaOutputWriter(BaseOutputWriter):
         # Create message key if key_columns specified
         key = None
         if self.key_columns:
-            key = {col: aligned_row[col] for col in self.key_columns if col in aligned_row}
+            key = {
+                col: aligned_row[col] for col in self.key_columns if col in aligned_row
+            }
 
         # Send message (run in thread pool to avoid blocking)
         def _send_message():

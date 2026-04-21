@@ -11,6 +11,7 @@ from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 from .utils import QueueOutputWriter, KafkaOutputWriter
 from .utils import QueueDataLoader
 
+
 class RawProcessing(ProcessJob):
     """converting file to database"""
 
@@ -31,7 +32,6 @@ class RawProcessing(ProcessJob):
             data_loader = QueueDataLoader(queue_handlers)
         else:
             data_loader = DataLoader(drop_folder)
-
 
         output_queues = kwargs.pop("output_queues", None)
 

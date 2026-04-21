@@ -17,6 +17,7 @@ async def publish_results(parsers_queue_handlers):
                 break
             print("Record published: ", result)
 
+
 async def main():
     """Main function to run the scraping task and consume results."""
 
@@ -36,8 +37,7 @@ async def main():
 
     # Get queue handlers from scraper
     queue_handlers = {
-        name: output.queue_handler
-        for name, output in scraper.consume().items()
+        name: output.queue_handler for name, output in scraper.consume().items()
     }
 
     # Use ConvertingTask with queue and Kafka config
@@ -53,8 +53,7 @@ async def main():
     )
 
     parsers_queue_handlers = {
-        name: output.queue_handler
-        for name, output in converter.consume().items()
+        name: output.queue_handler for name, output in converter.consume().items()
     }
 
     # Process (sync, but handles async internally via asyncio.run)

@@ -14,7 +14,7 @@ def get_sample_data(
 ):
     """
     Get data to scrape and optionally process it.
-    
+
     Args:
         dump_folder_name: Folder name to download files to (for file mode, ignored in streaming mode)
         filter_type: Optional file type filter
@@ -26,7 +26,7 @@ def get_sample_data(
             - topic: Kafka topic name
             - key_columns: Optional list of column names for message key
         use_streaming: If True and queue_handlers not provided, set up scraper with queue output
-    
+
     Returns:
         - For streaming mode (queue_handlers provided or use_streaming=True): Result from ConvertingTask
         - For file mode: dump_folder_name
@@ -42,25 +42,27 @@ def get_sample_data(
                     "output_mode": "queue",
                     "queue_type": "memory",
                 },
-                status_configuration={"database_type": "json", "base_path": "status_logs"},
+                status_configuration={
+                    "database_type": "json",
+                    "base_path": "status_logs",
+                },
                 multiprocessing=1,
                 enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
                 files_types=[filter_type] if filter_type else None,
                 suppress_exception=True,
             )
-            
+
             # Start scraping (runs in background thread)
             scraper.start(limit=limit, when_date=_now())
-            
+
             # Get queue handlers from scraper
             queue_handlers = {
-                name: output.queue_handler
-                for name, output in scraper.consume().items()
+                name: output.queue_handler for name, output in scraper.consume().items()
             }
-        
+
         # Lazy import to avoid circular dependency: utils -> task -> ... -> documents -> utils
         from il_supermarket_parsers.task import ConvertingTask
-        
+
         # Create ConvertingTask with queue and Kafka config
         converter = ConvertingTask(
             enabled_parsers=enabled_scrapers if enabled_scrapers else None,
@@ -69,17 +71,17 @@ def get_sample_data(
             queue_handlers=queue_handlers,
             kafka_config=kafka_config,
         )
-        
+
         # Process and return result
         result = converter.start()
-        
+
         # Cleanup scraper if we created it
         if scraper is not None:
             scraper.stop()
             scraper.join()
-        
+
         return result
-    
+
     # File mode: traditional scraping to disk
     task = ScarpingTask(
         output_configuration={

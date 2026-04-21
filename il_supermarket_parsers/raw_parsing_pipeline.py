@@ -40,24 +40,25 @@ class RawParsingPipeline:
         enabled_scraper: str,
         enabled_file_types: List[str],
         limit: Optional[int] = None,
-
     ) -> ExecutionLog:
         """start processing the files selected in the pipeline input with streaming"""
         parser_class: BaseFileConverter = ParserFactory.get(enabled_scraper)
-    
+
         await self.output_writer.initialize()
 
         Logger.info("Starting streaming file processing")
-        
+
         files_to_process: List[str] = []
         execution_errors = 0
         self.parser_status.on_parsing_start(
             limit=limit,
             enabled_file_types=enabled_file_types,
-            enabled_scraper=enabled_scraper
+            enabled_scraper=enabled_scraper,
         )
 
-        async for file in self.data_loader.load(limit=limit, store_names=[enabled_scraper], files_types=enabled_file_types):
+        async for file in self.data_loader.load(
+            limit=limit, store_names=[enabled_scraper], files_types=enabled_file_types
+        ):
             Logger.debug(f"Processing file {file.file_name}")
 
             if not file.is_expected_to_be_readable:
@@ -79,7 +80,9 @@ class RawParsingPipeline:
                     row_count += 1
 
                 self.parser_status.register_processed_file(file, row_count)
-                Logger.debug(f"Successfully processed file {file.file_name} with {row_count} rows")
+                Logger.debug(
+                    f"Successfully processed file {file.file_name} with {row_count} rows"
+                )
 
             except Exception as error:  # pylint: disable=broad-exception-caught
                 Logger.error(f"Error processing file {file.file_name}: {error}")
