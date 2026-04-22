@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest*)",
+      "Bash(pylint*)",
+      "Bash(black*)",
+      "Bash(pip install*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(find*)",
+      "Bash(grep*)"
+    ]
+  }
+}
