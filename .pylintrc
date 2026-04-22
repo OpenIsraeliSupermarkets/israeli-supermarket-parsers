@@ -2,3 +2,14 @@
 disable=
     C0114, # missing-module-docstring
 extension-pkg-allow-list=lxml.etree
+
+[DESIGN]
+max-args=8
+max-positional-arguments=8
+max-attributes=12
+min-public-methods=1
+max-public-methods=40
+max-locals=20
+
+[SIMILARITIES]
+min-similarity-lines=60
