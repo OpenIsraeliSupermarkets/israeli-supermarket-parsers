@@ -1,5 +1,6 @@
-from il_supermarket_parsers.utils.data_loaders import DataLoader
 import pytest
+
+from il_supermarket_parsers.utils.data_loaders import DataLoader
 
 
 @pytest.mark.asyncio
