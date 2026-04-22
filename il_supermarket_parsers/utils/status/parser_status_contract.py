@@ -11,8 +11,6 @@ from pydantic import BaseModel, Field
 
 
 # -- Global status events --
-
-
 class StartedParsingStatus(BaseModel):
     """Status event recorded when a parsing run begins."""
 
