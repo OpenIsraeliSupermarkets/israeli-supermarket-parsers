@@ -13,3 +13,7 @@ class VictoryFileConverter(BigIdBranchesFileConverter):
             roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
             date_columns=["PriceUpdateDate"],
         )
+
+
+class VictoryNewSourceFileConverter(VictoryFileConverter):
+    """ויקטורי - מקור חדש"""
