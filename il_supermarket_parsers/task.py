@@ -69,7 +69,10 @@ class ConvertingTask:
 
         # Build per-parser output queues when queue output mode is requested
         self._output_queues = {}
-        if cfg.output_configuration and cfg.output_configuration.get("output_mode") == "queue":
+        if (
+            cfg.output_configuration
+            and cfg.output_configuration.get("output_mode") == "queue"
+        ):
             parsers = cfg.enabled_parsers or ParserFactory.all_parsers_name()
             for parser_name in parsers:
                 self._output_queues[parser_name] = create_output_queue()

@@ -27,9 +27,7 @@ class DataLoader(BaseDataLoader):
         resolved_stores = (
             store_names if store_names else DumpFolderNames.all_folders_names()
         )
-        resolved_types = (
-            files_types if files_types else FileTypesFilters.all_types()
-        )
+        resolved_types = files_types if files_types else FileTypesFilters.all_types()
         files_types_set: Set[str] = (
             set(resolved_types)
             if isinstance(resolved_types, list)

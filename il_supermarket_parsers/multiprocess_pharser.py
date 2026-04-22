@@ -34,7 +34,6 @@ class ParallelParserParams:
     status_configuration: Any = None
     output_queues: Any = None
 
-
     def get_enabled_parsers(self) -> List[str]:
         return self.enabled_parsers or ParserFactory.all_parsers_name()
 
@@ -47,15 +46,16 @@ class ParallelParserParams:
     def get_when_date(self) -> datetime.datetime:
         return self.when_date
 
-
     def to_string(self) -> str:
-        return (f"limit={self.limit},"
+        return (
+            f"limit={self.limit},"
             f"parsers={self.get_enabled_parsers()},"
             f"file_types={self.get_enabled_file_types()},"
             f"data_folder={self.data_folder},"
             f"output_folder={self.get_output_folder()},"
             f"when_date={self.get_when_date().strftime('%Y-%m-%d %H:%M:%S %z')}"
         )
+
 
 class RawProcessing(ProcessJob):
     """converting file to database"""
@@ -137,7 +137,7 @@ class ParallelParser(MultiProcessor):
         """create list of arguments"""
 
         os.makedirs(self.params.output_folder, exist_ok=True)
-    
+
         params_order = [
             "limit",
             "store_enum",
@@ -151,9 +151,7 @@ class ParallelParser(MultiProcessor):
             "output_queues",
         ]
 
-        Logger.info(
-            f"Creating combinations for {self.params.to_string()},"
-        )
+        Logger.info(f"Creating combinations for {self.params.to_string()},")
         combinations = list(
             itertools.product(
                 [limit],

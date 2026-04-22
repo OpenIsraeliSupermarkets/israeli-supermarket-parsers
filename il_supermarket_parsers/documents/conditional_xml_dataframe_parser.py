@@ -47,9 +47,7 @@ class ConditionalXmlDataFrameConverter(XmlBaseConverter):
                 )
             else:
                 source_file = os.path.join(found_store, file_name)
-                root_elem, _ = get_root_and_search(
-                    source_file, self.check_key, roots
-                )
+                root_elem, _ = get_root_and_search(source_file, self.check_key, roots)
             return self.option_a if root_elem is not None else self.option_b
 
         path_hint = (

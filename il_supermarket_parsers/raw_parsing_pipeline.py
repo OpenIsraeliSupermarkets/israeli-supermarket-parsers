@@ -20,7 +20,7 @@ class RawParsingPipeline:
         self,
         data_loader: BaseDataLoader,
         output_writer: BaseOutputWriter,
-        parser_status: ParserStatus
+        parser_status: ParserStatus,
     ) -> None:
         """
         Initialize RawParsingPipeline
@@ -74,7 +74,13 @@ class RawParsingPipeline:
                 async for row in parser.read(file):
                     try:
                         await self.output_writer.write_row(row)
-                    except (OSError, TypeError, ValueError, RuntimeError, KeyError) as error:
+                    except (
+                        OSError,
+                        TypeError,
+                        ValueError,
+                        RuntimeError,
+                        KeyError,
+                    ) as error:
                         Logger.error(f"Error writing row {row} to output: {error}")
                         write_error_count += 1
                     row_count += 1
