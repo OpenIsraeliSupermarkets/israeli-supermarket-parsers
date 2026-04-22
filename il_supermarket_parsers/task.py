@@ -1,9 +1,34 @@
 import datetime
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
+
 import pytz
-from .multiprocess_pharser import ParallelParser
+
+from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
 from .utils.logger import Logger
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
+
+
+def _default_when_date() -> datetime.datetime:
+    return datetime.datetime.now(pytz.timezone("Asia/Jerusalem"))
+
+
+@dataclass
+class ConvertingTaskConfig:
+    """Configuration for :class:`ConvertingTask` (supports ``ConvertingTask(**kwargs)``)."""
+
+    data_folder: str = "dumps"
+    enabled_parsers: Optional[list] = None
+    files_types: Optional[list] = None
+    multiprocessing: int = 6
+    limit: Optional[int] = None
+    when_date: datetime.datetime = field(default_factory=_default_when_date)
+    output_folder: str = "outputs"
+    queue_handlers: Optional[Dict[str, Any]] = None
+    kafka_config: Optional[Dict[str, Any]] = None
+    status_configuration: Optional[Dict[str, Any]] = None
+    output_configuration: Optional[Dict[str, Any]] = None
 
 
 class OutputQueueResult:
@@ -12,60 +37,60 @@ class OutputQueueResult:
     def __init__(self, queue_handler: ParsedRowsQueue):
         self.queue_handler = queue_handler
 
+    def get_queue(self) -> ParsedRowsQueue:
+        """Return the underlying queue handle."""
+        return self.queue_handler
+
 
 class ConvertingTask:
     """main convert task"""
 
     def __init__(
         self,
-        data_folder="dumps",
-        enabled_parsers=None,
-        files_types=None,
-        multiprocessing=6,
-        limit=None,
-        when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
-        output_folder="outputs",
-        queue_handlers=None,
-        kafka_config=None,
-        status_configuration=None,
-        output_configuration=None,
-    ):
+        config: Optional[ConvertingTaskConfig] = None,
+        **kwargs: Any,
+    ) -> None:
+        cfg = config or ConvertingTaskConfig(**kwargs)
         Logger.info(
-            f"Starting Parser, data_folder={data_folder},"
-            f"number_of_processes={multiprocessing}"
-            f"parsers = {enabled_parsers}"
-            f"files_types = {files_types}"
-            f"output_folder={output_folder}"
-            f"limit={limit}"
-            f"when_date={when_date}"
-            f"queue_handlers={'provided' if queue_handlers else 'None'}"
-            f"kafka_config={'provided' if kafka_config else 'None'}"
-            f"status_configuration={status_configuration}"
-            f"output_configuration={output_configuration}"
+            f"Starting Parser, data_folder={cfg.data_folder},"
+            f"number_of_processes={cfg.multiprocessing}"
+            f"parsers = {cfg.enabled_parsers}"
+            f"files_types = {cfg.files_types}"
+            f"output_folder={cfg.output_folder}"
+            f"limit={cfg.limit}"
+            f"when_date={cfg.when_date}"
+            f"queue_handlers={'provided' if cfg.queue_handlers else 'None'}"
+            f"kafka_config={'provided' if cfg.kafka_config else 'None'}"
+            f"status_configuration={cfg.status_configuration}"
+            f"output_configuration={cfg.output_configuration}"
         )
+
+        self._config = cfg
 
         # Build per-parser output queues when queue output mode is requested
         self._output_queues = {}
-        if output_configuration and output_configuration.get("output_mode") == "queue":
-            parsers = enabled_parsers or ParserFactory.all_parsers_name()
+        if cfg.output_configuration and cfg.output_configuration.get("output_mode") == "queue":
+            parsers = cfg.enabled_parsers or ParserFactory.all_parsers_name()
             for parser_name in parsers:
                 self._output_queues[parser_name] = create_output_queue()
 
         self.runner = ParallelParser(
-            data_folder,
-            enabled_parsers=enabled_parsers,
-            enabled_file_types=files_types,
-            multiprocessing=multiprocessing,
-            output_folder=output_folder,
-            when_date=when_date,
-            queue_handlers=queue_handlers,
-            kafka_config=kafka_config,
-            status_configuration=status_configuration,
-            output_queues=self._output_queues if self._output_queues else None,
+            ParallelParserParams(
+                data_folder=cfg.data_folder,
+                enabled_parsers=cfg.enabled_parsers,
+                enabled_file_types=cfg.files_types,
+                output_folder=cfg.output_folder,
+                when_date=cfg.when_date,
+                queue_handlers=cfg.queue_handlers,
+                kafka_config=cfg.kafka_config,
+                status_configuration=cfg.status_configuration,
+                output_queues=self._output_queues if self._output_queues else None,
+            ),
+            multiprocessing=cfg.multiprocessing,
         )
-        self.limit = limit
+        self.limit = cfg.limit
 
-    def consume(self):
+    def consume(self) -> Dict[str, OutputQueueResult]:
         """Return a dict mapping parser names to OutputQueueResult objects.
 
         Must be called before start() so queue handles are ready for consumers.

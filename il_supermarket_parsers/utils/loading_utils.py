@@ -2,10 +2,11 @@ import re
 import os
 import datetime
 from typing import Optional
-from dataclasses import dataclass
-from il_supermarket_scarper import FileTypesFilters
-from .logger import Logger
+
 from pydantic import BaseModel
+from il_supermarket_scarper import FileTypesFilters
+
+from .logger import Logger
 
 EMPTY_FILE_TOEHOLD = 300
 

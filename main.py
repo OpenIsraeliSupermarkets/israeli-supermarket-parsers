@@ -44,16 +44,16 @@ def load_params():
     if number_of_processes:
         try:
             kwargs["multiprocessing"] = int(number_of_processes)
-        except ValueError:
-            raise ValueError("NUMBER_OF_PROCESSES must be an integer")
+        except ValueError as exc:
+            raise ValueError("NUMBER_OF_PROCESSES must be an integer") from exc
 
     # validate limit
     limit = os.getenv("LIMIT", None)
     if limit:
         try:
             kwargs["limit"] = int(limit)
-        except ValueError:
-            raise ValueError(f"LIMIT must be an integer, but got {limit}")
+        except ValueError as exc:
+            raise ValueError(f"LIMIT must be an integer, but got {limit}") from exc
 
     return kwargs
 

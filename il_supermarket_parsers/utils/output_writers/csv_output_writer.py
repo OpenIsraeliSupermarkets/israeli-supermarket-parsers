@@ -1,7 +1,7 @@
 import os
 import csv
 import asyncio
-from typing import List, Optional
+from typing import List
 import pandas as pd
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
@@ -58,7 +58,7 @@ class CSVOutputWriter(BaseOutputWriter):
         try:
             existing_df = pd.read_csv(self.output_path, nrows=0)
             return list(existing_df.columns)
-        except Exception:
+        except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError, ValueError):
             return []
 
     async def _append_columns_to_csv(self, new_columns: List[str]) -> None:

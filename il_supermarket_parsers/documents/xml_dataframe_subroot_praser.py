@@ -1,6 +1,19 @@
-import pandas as pd
+from dataclasses import dataclass
+from typing import List, Optional
+
 from .xml_dataframe_parser import XmlDataFrameConverter
 from ..utils import normalize_tag
+
+
+@dataclass
+class SubRootedXmlOptions:
+    """Layout and column options for :class:`SubRootedXmlDataFrameConverter`."""
+
+    roots: Optional[List[str]] = None
+    ignore_column: Optional[List[str]] = None
+    sub_roots: Optional[List[str]] = None
+    list_sub_key: str = ""
+    last_mile: Optional[List[str]] = None
 
 
 class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
@@ -10,23 +23,21 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
         self,
         list_key,
         id_field,
-        roots=None,
-        sub_roots=None,
-        list_sub_key="",
-        ignore_column=None,
-        last_mile=None,
+        *,
+        options: Optional[SubRootedXmlOptions] = None,
         **additional_constant,
     ):
+        opts = options or SubRootedXmlOptions()
         super().__init__(
             list_key=list_key,
             id_field=id_field,
-            roots=roots,
-            ignore_column=ignore_column,
+            roots=opts.roots,
+            ignore_column=opts.ignore_column,
             additional_constant=additional_constant,
         )
-        self.sub_roots = sub_roots if sub_roots else []
-        self.last_mile = last_mile if last_mile else []
-        self.list_sub_key = list_sub_key
+        self.sub_roots = opts.sub_roots if opts.sub_roots is not None else []
+        self.last_mile = opts.last_mile if opts.last_mile is not None else []
+        self.list_sub_key = opts.list_sub_key
 
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None, cached_xml_data=None

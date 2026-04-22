@@ -1,6 +1,6 @@
 import json
 import asyncio
-from typing import List, Optional
+from typing import List
 from kafka import KafkaProducer
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger

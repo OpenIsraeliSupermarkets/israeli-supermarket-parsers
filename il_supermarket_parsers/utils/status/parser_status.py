@@ -10,7 +10,6 @@ the same on-disk format.
 """
 
 import os
-import traceback as tb
 from datetime import datetime
 from typing import List, Optional
 
@@ -100,6 +99,7 @@ class ParserStatus:
     COMPLETED = "completed"
 
     def __init__(self, database_name: str, status_database: AbstractDataBase) -> None:
+        self.database_name = database_name
         self.database = status_database
         self._file_logs: List[FileExecutionLog] = []
 

@@ -1,5 +1,8 @@
 from il_supermarket_parsers.engines import BaseFileConverter
-from il_supermarket_parsers.documents import SubRootedXmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
+)
 
 
 class MeshmatYosef1FileConverter(BaseFileConverter):
@@ -10,12 +13,14 @@ class MeshmatYosef1FileConverter(BaseFileConverter):
     def __init__(self) -> None:
         super().__init__(
             stores_parser=SubRootedXmlDataFrameConverter(
-                id_field="StoreID",
                 list_key="SubChains",
-                roots=["ChainID", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                list_sub_key="Stores",
-                sub_roots=["SubChainName", "SubChainID"],
-                ignore_column=["XmlDocVersion"],
+                id_field="StoreID",
+                options=SubRootedXmlOptions(
+                    roots=["ChainID", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                    list_sub_key="Stores",
+                    sub_roots=["SubChainName", "SubChainID"],
+                    ignore_column=["XmlDocVersion"],
+                ),
             )
         )
 

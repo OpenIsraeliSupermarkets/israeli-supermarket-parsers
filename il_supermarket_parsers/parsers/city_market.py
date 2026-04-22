@@ -2,6 +2,7 @@ from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
     ConditionalXmlDataFrameConverter,
 )
 
@@ -47,11 +48,13 @@ class CityMarketShops(BaseFileConverter):
             ),
             stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChainsXMLObject",
-                sub_roots=["SubChainId", "SubChainName"],
                 id_field="StoreId",
-                list_sub_key="Store",
-                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                ignore_column=["XmlDocVersion", "DllVerNo"],
-                last_mile=["Stores", "SubChainStoresXMLObject"],
+                options=SubRootedXmlOptions(
+                    sub_roots=["SubChainId", "SubChainName"],
+                    list_sub_key="Store",
+                    roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                    ignore_column=["XmlDocVersion", "DllVerNo"],
+                    last_mile=["Stores", "SubChainStoresXMLObject"],
+                ),
             ),
         )

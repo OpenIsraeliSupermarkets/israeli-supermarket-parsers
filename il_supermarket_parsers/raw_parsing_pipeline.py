@@ -1,5 +1,5 @@
 import traceback
-from datetime import datetime
+import xml.etree.ElementTree as ET
 from typing import List, Optional
 
 from .parser_factory import ParserFactory
@@ -20,7 +20,7 @@ class RawParsingPipeline:
         self,
         data_loader: BaseDataLoader,
         output_writer: BaseOutputWriter,
-        parser_status: Optional[ParserStatus] = None,
+        parser_status: ParserStatus
     ) -> None:
         """
         Initialize RawParsingPipeline
@@ -33,7 +33,7 @@ class RawParsingPipeline:
         """
         self.data_loader = data_loader
         self.output_writer = output_writer
-        self.parser_status = parser_status or create_parser_status("default")
+        self.parser_status = parser_status
 
     async def process(
         self,
@@ -74,7 +74,7 @@ class RawParsingPipeline:
                 async for row in parser.read(file):
                     try:
                         await self.output_writer.write_row(row)
-                    except Exception as error:  # pylint: disable=broad-exception-caught
+                    except (OSError, TypeError, ValueError, RuntimeError, KeyError) as error:
                         Logger.error(f"Error writing row {row} to output: {error}")
                         write_error_count += 1
                     row_count += 1
@@ -84,7 +84,14 @@ class RawParsingPipeline:
                     f"Successfully processed file {file.file_name} with {row_count} rows"
                 )
 
-            except Exception as error:  # pylint: disable=broad-exception-caught
+            except (
+                OSError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                ET.ParseError,
+            ) as error:
                 Logger.error(f"Error processing file {file.file_name}: {error}")
                 execution_errors += 1
                 self.parser_status.register_failed_file(
@@ -97,3 +104,7 @@ class RawParsingPipeline:
             output_path=self.output_writer.get_path(),
             total_files=len(files_to_process),
         )
+
+    def get_parser_status(self) -> ParserStatus:
+        """Return the status tracker used by this pipeline."""
+        return self.parser_status

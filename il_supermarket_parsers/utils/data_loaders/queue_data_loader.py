@@ -20,14 +20,18 @@ class QueueDataLoader(BaseDataLoader):
         self.queue_handlers = queue_handlers
         self.empty_store_id = empty_store_id
 
+    def queue_count(self) -> int:
+        """Return the number of scraper queues connected to this loader."""
+        return len(self.queue_handlers)
+
     async def _consume_queue(self, queue_handler):
         """Consume messages from a queue, re-broadcasting the None sentinel for other workers."""
         loop = asyncio.get_event_loop()
         while True:
-            msg = await loop.run_in_executor(None, queue_handler._queue.get)
+            msg = await loop.run_in_executor(None, queue_handler.get)
             if msg is None:
                 # Re-broadcast sentinel so other workers on this queue can also terminate
-                queue_handler._queue.put(None)
+                queue_handler.put(None)
                 break
             yield msg
 

@@ -1,10 +1,9 @@
-import unittest
-import time
 import queue
-from unittest.mock import patch, MagicMock
+import time
+import unittest
 from multiprocessing import Queue
+from unittest.mock import MagicMock, patch
 
-# pylint: disable=wrong-import-position
 from il_supermarket_parsers.utils.multi_processing import MultiProcessor, ProcessJob
 
 
@@ -34,6 +33,10 @@ class DummyTaskFactory:
     def __init__(self, delay=0, should_fail=False):
         self.delay = delay
         self.should_fail = should_fail
+
+    def clone(self) -> "DummyTaskFactory":
+        """Return a new factory with the same settings."""
+        return DummyTaskFactory(delay=self.delay, should_fail=self.should_fail)
 
     def __call__(self):
         return DummyTask(delay=self.delay, should_fail=self.should_fail)
@@ -264,7 +267,11 @@ class TestMultiProcessing(unittest.TestCase):
             """Factory for MixedTask instances."""
 
             def __init__(self):
-                pass
+                self._seed = 0
+
+            def reset(self) -> None:
+                """Reset factory state (test hook)."""
+                self._seed = 0
 
             def __call__(self):
                 return MixedTask(0)

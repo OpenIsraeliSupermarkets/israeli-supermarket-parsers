@@ -6,6 +6,10 @@ from ..loading_utils import DumpFile
 class BaseDataLoader(ABC):
     """Abstract base class for data loaders"""
 
+    def loader_label(self) -> str:
+        """Short name for this loader (for logging and diagnostics)."""
+        return self.__class__.__name__
+
     @abstractmethod
     async def load(
         self,
@@ -24,4 +28,4 @@ class BaseDataLoader(ABC):
         Yields:
             DumpFile objects as they are discovered
         """
-        pass
+        raise NotImplementedError

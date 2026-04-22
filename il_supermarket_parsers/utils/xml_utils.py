@@ -1,8 +1,9 @@
-from collections import Counter
-import xml.etree.ElementTree as ET
-from lxml import etree
 import io
-from typing import Union, Optional
+from collections import Counter
+from typing import Optional, Union
+import xml.etree.ElementTree as ET
+
+from lxml import etree
 
 
 def strip_namespace(tag):

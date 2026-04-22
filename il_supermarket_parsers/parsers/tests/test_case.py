@@ -6,7 +6,7 @@ import asyncio
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
-from il_supermarket_parsers.utils.test_utils import get_sample_data
+from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 
@@ -60,8 +60,8 @@ async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
             else:
                 assert df.shape[0] == 0, f"File {file.file_name} should be empty"
                 del df
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            raise ValueError(f"File {file.file_name}, Failed with {e}")
+        except Exception as e:
+            raise ValueError(f"File {file.file_name}, Failed with {e}") from e
     return dfs
 
 
@@ -103,9 +103,11 @@ def make_test_case(scraper_enum, parser_enum):
 
             get_sample_data(
                 download_path,
-                filter_type=file_type,
-                enabled_scrapers=[self.scraper_enum.name],
-                limit=5,
+                SampleDataOptions(
+                    filter_type=file_type,
+                    enabled_scrapers=[self.scraper_enum.name],
+                    limit=5,
+                ),
             )
 
         def _parser_validate(self, file_type):

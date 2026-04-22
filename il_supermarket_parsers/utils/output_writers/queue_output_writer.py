@@ -1,17 +1,21 @@
 import multiprocessing
-from typing import List
+from typing import Any, List
+
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
 
 
-_manager = None
+class _QueueManagerHolder:
+    """Lazily create one shared ``multiprocessing.Manager()`` for queue output."""
 
+    _instance: Any = None
 
-def _get_manager():
-    global _manager
-    if _manager is None:
-        _manager = multiprocessing.Manager()
-    return _manager
+    @classmethod
+    def manager(cls) -> Any:
+        """Return a shared ``multiprocessing.Manager`` (singleton)."""
+        if cls._instance is None:
+            cls._instance = multiprocessing.Manager()
+        return cls._instance
 
 
 class ParsedRowsQueue:
@@ -24,10 +28,14 @@ class ParsedRowsQueue:
         """Return the next parsed row dict, or None when the stream ends."""
         return self._queue.get()
 
+    def put(self, item) -> None:
+        """Put an item (e.g. end sentinel) onto the underlying queue."""
+        self._queue.put(item)
+
 
 def create_output_queue():
     """Create a new process-safe queue for parsed row output."""
-    return _get_manager().Queue()
+    return _QueueManagerHolder.manager().Queue()
 
 
 class QueueOutputWriter(BaseOutputWriter):
@@ -41,7 +49,8 @@ class QueueOutputWriter(BaseOutputWriter):
         self._queue.put(row)
 
     async def initialize(self) -> None:
-        pass
+        """No-op for in-memory queue output."""
+        return
 
     def exists(self) -> bool:
         return True

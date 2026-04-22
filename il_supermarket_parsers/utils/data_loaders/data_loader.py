@@ -1,6 +1,6 @@
 import os
 import asyncio
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, List, Optional, Set
 
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
@@ -21,19 +21,35 @@ class DataLoader(BaseDataLoader):
         limit: Optional[int] = None,
         store_names: Optional[list] = None,
         files_types: Optional[list] = None,
-    ) -> AsyncIterator[DumpFile]:  # pylint: disable=too-many-branches
+    ) -> AsyncIterator[DumpFile]:
         """load details about the files in the folder as async generator"""
 
-        store_names = (
+        resolved_stores = (
             store_names if store_names else DumpFolderNames.all_folders_names()
         )
-        files_types = files_types if files_types else FileTypesFilters.all_types()
-        files_types_set = (
-            set(files_types) if isinstance(files_types, list) else set(files_types)
+        resolved_types = (
+            files_types if files_types else FileTypesFilters.all_types()
+        )
+        files_types_set: Set[str] = (
+            set(resolved_types)
+            if isinstance(resolved_types, list)
+            else set(resolved_types)
         )
 
-        # Run file system operations in thread pool to avoid blocking
-        files_in_dir = await asyncio.to_thread(os.listdir, self.folder)
+        files_found = await self._gather_matching_files(
+            limit, resolved_stores, files_types_set
+        )
+
+        for dump_file in sorted(files_found, key=lambda x: x.extracted_date):
+            yield dump_file
+
+    async def _gather_matching_files(
+        self,
+        limit: Optional[int],
+        store_names: Optional[list],
+        files_types_set: Set[str],
+    ) -> List[DumpFile]:
+        """Scan ``self.folder`` and return matching dump files up to ``limit``."""
         stores_folders = (
             [DumpFolderNames[enum].value for enum in store_names]
             if store_names
@@ -41,12 +57,13 @@ class DataLoader(BaseDataLoader):
         )
 
         count = 0
-        files_found = []
+        files_found: List[DumpFile] = []
+
+        files_in_dir = await asyncio.to_thread(os.listdir, self.folder)
 
         for store_name in files_in_dir:
             store_folder = os.path.join(self.folder, store_name)
 
-            # ignore list
             if store_name.startswith("."):
                 Logger.debug(f"Skipping folder {store_folder} because it contains '.'")
                 continue
@@ -65,15 +82,13 @@ class DataLoader(BaseDataLoader):
                 )
                 continue
 
-            # List files in store folder
             try:
                 xml_files = await asyncio.to_thread(os.listdir, store_folder)
-            except Exception as e:
-                Logger.warning(f"Error listing files in {store_folder}: {e}")
+            except OSError as err:
+                Logger.warning(f"Error listing files in {store_folder}: {err}")
                 continue
 
             for xml in xml_files:
-                # skip files that are not xml
                 extension = xml.split(".")[-1]
                 if extension != "xml":
                     Logger.warning(f"Skipping file {xml} because it is not xml file")
@@ -94,6 +109,4 @@ class DataLoader(BaseDataLoader):
             if limit and count >= limit:
                 break
 
-        # Sort by date and yield
-        for dump_file in sorted(files_found, key=lambda x: x.extracted_date):
-            yield dump_file
+        return files_found

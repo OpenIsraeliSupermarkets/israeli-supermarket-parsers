@@ -7,6 +7,7 @@ from .xml_utils import (
     strip_namespace,
     get_root_and_search,
     get_root_and_search_from_content,
+    get_root_from_content,
     iterparse_streaming,
     count_tag_in_xml,
     collect_unique_keys_from_xml,

@@ -1,14 +1,16 @@
+import asyncio
 import os
+
+import pandas as pd
+
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
-from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
 from il_supermarket_parsers.parsers.other import (
-    WoltFileConverter,
-    RamiLevyFileConverter,
     KeshetFileConverter,
+    RamiLevyFileConverter,
+    WoltFileConverter,
 )
 from il_supermarket_parsers.parsers.salach_dabach import SalachDabachFileConverter
-import asyncio
-import pandas as pd
+from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
 
 TEST_DIR = "il_supermarket_parsers/documents/tests"
 

@@ -5,7 +5,7 @@ Mirrors il_supermarket_scarper.utils.scraper_status_contract.
 
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -89,7 +89,7 @@ class ParserStatusOutput(BaseModel):
         Field(default_factory=list)
     )
 
-    def validate_parsing_run(self) -> tuple:
+    def validate_parsing_run(self) -> Tuple[bool, str]:
         """Validate that the stored events form a coherent lifecycle.
 
         Rules:
@@ -100,6 +100,18 @@ class ParserStatusOutput(BaseModel):
         Returns:
             (True, "") on success or (False, reason_str) on failure.
         """
+        reason = self._started_completed_errors()
+        if reason is not None:
+            return False, reason
+        reason = self._per_file_unique_errors()
+        if reason is not None:
+            return False, reason
+        reason = self._limit_and_totals_errors()
+        if reason is not None:
+            return False, reason
+        return True, ""
+
+    def _started_completed_errors(self) -> Optional[str]:
         started_events = [
             e for e in self.global_status if isinstance(e, StartedParsingStatus)
         ]
@@ -108,22 +120,32 @@ class ParserStatusOutput(BaseModel):
         ]
 
         if not started_events:
-            return False, "No 'started' event found"
+            return "No 'started' event found"
         if len(started_events) > 1:
-            return False, f"Multiple 'started' events found: {len(started_events)}"
+            return f"Multiple 'started' events found: {len(started_events)}"
         if not completed_events:
-            return False, "No 'completed' event found"
+            return "No 'completed' event found"
         if len(completed_events) > 1:
-            return False, f"Multiple 'completed' events found: {len(completed_events)}"
+            return f"Multiple 'completed' events found: {len(completed_events)}"
+        return None
 
+    def _per_file_unique_errors(self) -> Optional[str]:
         per_file: dict = defaultdict(list)
         for event in self.events:
             per_file[event.file_name].append(event.status)
 
         for file_name, statuses in per_file.items():
             if len(statuses) > 1:
-                return False, f"File '{file_name}' has multiple events: {statuses}"
+                return f"File '{file_name}' has multiple events: {statuses}"
+        return None
 
+    def _limit_and_totals_errors(self) -> Optional[str]:
+        started_events = [
+            e for e in self.global_status if isinstance(e, StartedParsingStatus)
+        ]
+        completed_events = [
+            e for e in self.global_status if isinstance(e, CompletedParsingStatus)
+        ]
         started = started_events[0]
         completed = completed_events[0]
         processed_count = sum(
@@ -133,15 +155,12 @@ class ParserStatusOutput(BaseModel):
         if started.limit is not None and started.limit > 0:
             if processed_count > started.limit:
                 return (
-                    False,
-                    f"Processed {processed_count} files but limit was {started.limit}",
+                    f"Processed {processed_count} files but limit was {started.limit}"
                 )
 
         if completed.total_files != len(self.events):
             return (
-                False,
                 f"completed.total_files={completed.total_files} but "
-                f"{len(self.events)} file events recorded",
+                f"{len(self.events)} file events recorded"
             )
-
-        return True, ""
+        return None

@@ -2,6 +2,7 @@ from il_supermarket_parsers.engines import BaseFileConverter
 from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
 )
 
 
@@ -35,11 +36,13 @@ class CofixFileConverter(BaseFileConverter):
                 ignore_column=["XmlDocVersion", "DllVerNo"],
             ),
             stores_parser=SubRootedXmlDataFrameConverter(
-                id_field="StoreId",
                 list_key="SubChains",
-                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                list_sub_key="Stores",
-                sub_roots=["SubChainName", "SubChainId"],
-                ignore_column=["XmlDocVersion"],
+                id_field="StoreId",
+                options=SubRootedXmlOptions(
+                    roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                    list_sub_key="Stores",
+                    sub_roots=["SubChainName", "SubChainId"],
+                    ignore_column=["XmlDocVersion"],
+                ),
             ),
         )

@@ -7,6 +7,7 @@ from il_supermarket_parsers.documents import (
     XmlBaseConverter,
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
 )
 from il_supermarket_parsers.utils import DumpFile
 
@@ -48,11 +49,13 @@ class BaseFileConverter(ABC):
             if stores_parser
             else SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
-                sub_roots=["SubChainId", "SubChainName"],
                 id_field="StoreId",
-                list_sub_key="Stores",
-                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                ignore_column=["XmlDocVersion", "DllVerNo"],
+                options=SubRootedXmlOptions(
+                    sub_roots=["SubChainId", "SubChainName"],
+                    list_sub_key="Stores",
+                    roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                    ignore_column=["XmlDocVersion", "DllVerNo"],
+                ),
             )
         )
         self.price_parser: XmlBaseConverter = (
@@ -116,16 +119,15 @@ class BaseFileConverter(ABC):
         """get the appropriate parser based on file type"""
         if dump_file.detected_filetype == FileTypesFilters.PRICE_FILE:
             return self.price_parser
-        elif dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
+        if dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
             return self.pricefull_parser
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
+        if dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
             return self.promo_parsers
-        elif dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
+        if dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             return self.promofull_parser
-        elif dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
+        if dump_file.detected_filetype == FileTypesFilters.STORE_FILE:
             return self.stores_parser
-        else:
-            raise ValueError(f"Unknown file type: {dump_file.detected_filetype}")
+        raise ValueError(f"Unknown file type: {dump_file.detected_filetype}")
 
     def run_validation(self, df: pd.DataFrame, dump_file: DumpFile) -> None:
         """run the validation"""

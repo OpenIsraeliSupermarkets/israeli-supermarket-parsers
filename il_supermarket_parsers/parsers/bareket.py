@@ -2,6 +2,7 @@ from il_supermarket_parsers.engines import BigIdBranchesFileConverter
 from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
 )
 
 
@@ -11,11 +12,13 @@ class BareketFileConverter(BigIdBranchesFileConverter):
     def __init__(self):
         super().__init__(
             stores_parser=SubRootedXmlDataFrameConverter(
-                id_field="StoreId",
                 list_key="SubChains",
-                roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                list_sub_key="Stores",
-                sub_roots=["SubChainName", "SubChainId"],
+                id_field="StoreId",
+                options=SubRootedXmlOptions(
+                    roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
+                    list_sub_key="Stores",
+                    sub_roots=["SubChainName", "SubChainId"],
+                ),
             ),
             price_parser=XmlDataFrameConverter(
                 list_key="Items",

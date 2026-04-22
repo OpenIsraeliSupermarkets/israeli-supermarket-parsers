@@ -1,9 +1,13 @@
 import itertools
 import datetime
 import os
-import pytz
 import asyncio
-from .raw_parsing_pipeline import ExecutionLog, RawParsingPipeline
+from dataclasses import dataclass, field
+from typing import Any, List, Optional
+
+import pytz
+
+from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .utils.status import create_parser_status
 from .parser_factory import ParserFactory
@@ -11,6 +15,47 @@ from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
 from .utils import QueueOutputWriter, KafkaOutputWriter
 from .utils import QueueDataLoader
 
+
+def _default_parallel_when() -> datetime.datetime:
+    return datetime.datetime.now(pytz.timezone("Asia/Jerusalem"))
+
+
+@dataclass
+class ParallelParserParams:
+    """Runtime parameters for :class:`ParallelParser`."""
+
+    data_folder: str
+    enabled_parsers: Optional[List[str]] = None
+    enabled_file_types: Optional[List[str]] = None
+    output_folder: str = "output"
+    when_date: datetime.datetime = field(default_factory=_default_parallel_when)
+    queue_handlers: Any = None
+    kafka_config: Any = None
+    status_configuration: Any = None
+    output_queues: Any = None
+
+
+    def get_enabled_parsers(self) -> List[str]:
+        return self.enabled_parsers or ParserFactory.all_parsers_name()
+
+    def get_enabled_file_types(self) -> List[str]:
+        return self.enabled_file_types or FileTypesFilters.all_types()
+
+    def get_output_folder(self) -> str:
+        return self.output_folder
+
+    def get_when_date(self) -> datetime.datetime:
+        return self.when_date
+
+
+    def to_string(self) -> str:
+        return (f"limit={self.limit},"
+            f"parsers={self.get_enabled_parsers()},"
+            f"file_types={self.get_enabled_file_types()},"
+            f"data_folder={self.data_folder},"
+            f"output_folder={self.get_output_folder()},"
+            f"when_date={self.get_when_date().strftime('%Y-%m-%d %H:%M:%S %z')}"
+        )
 
 class RawProcessing(ProcessJob):
     """converting file to database"""
@@ -78,27 +123,11 @@ class ParallelParser(MultiProcessor):
 
     def __init__(
         self,
-        data_folder,
-        enabled_parsers=None,
-        enabled_file_types=None,
-        multiprocessing=6,
-        output_folder="output",
-        when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
-        queue_handlers=None,
-        kafka_config=None,
-        status_configuration=None,
-        output_queues=None,
+        params: ParallelParserParams,
+        multiprocessing: int = 6,
     ):
         super().__init__(multiprocessing=multiprocessing)
-        self.data_folder = data_folder
-        self.enabled_parsers = enabled_parsers
-        self.enabled_file_types = enabled_file_types
-        self.output_folder = output_folder
-        self.when_date = when_date
-        self.queue_handlers = queue_handlers
-        self.kafka_config = kafka_config
-        self.status_configuration = status_configuration
-        self.output_queues = output_queues
+        self.params = params
 
     def task_to_execute(self):
         """the task to execute"""
@@ -107,17 +136,8 @@ class ParallelParser(MultiProcessor):
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
 
-        os.makedirs(self.output_folder, exist_ok=True)
-        all_parsers = (
-            self.enabled_parsers
-            if self.enabled_parsers
-            else ParserFactory.all_parsers_name()
-        )
-        all_file_types = (
-            self.enabled_file_types
-            if self.enabled_file_types
-            else FileTypesFilters.all_types()
-        )
+        os.makedirs(self.params.output_folder, exist_ok=True)
+    
         params_order = [
             "limit",
             "store_enum",
@@ -132,32 +152,23 @@ class ParallelParser(MultiProcessor):
         ]
 
         Logger.info(
-            f"Creating combinations for limit={limit},"
-            f"parsers={all_parsers},"
-            f"file_types={all_file_types},"
-            f"data_folder={self.data_folder},"
-            f"output_folder={self.output_folder},"
-            f"when_date={self.when_date.strftime('%Y-%m-%d %H:%M:%S %z')}"
+            f"Creating combinations for {self.params.to_string()},"
         )
         combinations = list(
             itertools.product(
                 [limit],
-                all_parsers,
-                all_file_types,
-                [self.data_folder],
-                [self.output_folder],
-                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
-                [self.queue_handlers],
-                [self.kafka_config],
-                [self.status_configuration],
-                [self.output_queues],
+                self.params.get_enabled_parsers(),
+                self.params.get_enabled_file_types(),
+                [self.params.data_folder],
+                [self.params.output_folder],
+                [self.params.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
+                [self.params.queue_handlers],
+                [self.params.kafka_config],
+                [self.params.status_configuration],
+                [self.params.output_queues],
             )
         )
         task_can_executed_independently = [
             dict(zip(params_order, combo)) for combo in combinations
         ]
         return task_can_executed_independently
-
-    def post(self, results):
-        """post process the results"""
-        return super().post(results)

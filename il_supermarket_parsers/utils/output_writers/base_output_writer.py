@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 
 class BaseOutputWriter(ABC):
@@ -13,7 +13,7 @@ class BaseOutputWriter(ABC):
         Args:
             row: Dictionary representing a single row
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def initialize(self) -> None:
@@ -21,7 +21,7 @@ class BaseOutputWriter(ABC):
         Initialize the output writer (e.g., create file, detect columns)
         Called before first row is written
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def exists(self) -> bool:
@@ -31,7 +31,7 @@ class BaseOutputWriter(ABC):
         Returns:
             True if output exists, False otherwise
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_path(self) -> str:
@@ -41,7 +41,7 @@ class BaseOutputWriter(ABC):
         Returns:
             Path or identifier string
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_existing_columns(self) -> List[str]:
@@ -51,4 +51,4 @@ class BaseOutputWriter(ABC):
         Returns:
             List of column names, empty list if output doesn't exist
         """
-        pass
+        raise NotImplementedError
