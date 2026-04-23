@@ -5,7 +5,7 @@ description: Diagnose and fix failing Israeli supermarket XML parser tests in th
 
 # Fix Supermarket Parser
 
-Fix a failing parser test by changing **only the converter configuration** in the chain's parser class (e.g., `il_supermarket_parsers/parsers/victory.py`). Do not touch the shared engines, document converters, or validation code — they are correct; the per-chain configuration is what drifts when a chain changes its XML shape.
+Fix a failing parser test by changing **only the converter configuration** in the chain's parser class (e.g., `il_supermarket_parsers/parsers/*.py`). Do not touch the shared engines, document converters, or validation code — they are correct; the per-chain configuration is what drifts when a chain changes its XML shape.
 
 ## Workflow
 

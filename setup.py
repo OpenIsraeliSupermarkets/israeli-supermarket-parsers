@@ -27,7 +27,7 @@ setup(
     # Needed for dependencies
     install_requires=required,
     tests_require=dev_required,
-    extras_require={"test": ["pytest", "pytest-xdist"]},
+    extras_require={"test": ["pytest", "pytest-xdist", "pytest-asyncio"]},
     # *strongly* suggested for sharing
     version="0.2.2",
     # The license can be anything you like
