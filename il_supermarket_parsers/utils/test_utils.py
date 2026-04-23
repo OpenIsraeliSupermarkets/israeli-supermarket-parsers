@@ -4,21 +4,19 @@ from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactor
 
 def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None, limit=3):
     """get data to scrape"""
+    output_config = {"output_mode": "disk", "base_storage_path": dump_folder_name}
     if filter_type:
         task = ScarpingTask(
-            dump_folder_name=dump_folder_name,
-            limit=limit,
             files_types=[filter_type],
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
-            lookup_in_db=False,
-            when_date=datetime.datetime.now(),  # get from today, some site remove old files
-            suppress_exception=True,
+            output_configuration=output_config,
         )
-        task.start()
+        task.start(limit=limit, when_date=datetime.datetime.now())
+        task.join()
     else:
-        ScarpingTask(
-            dump_folder_name=dump_folder_name, limit=limit, lookup_in_db=True
-        ).start()
+        task = ScarpingTask(output_configuration=output_config)
+        task.start(limit=limit)
+        task.join()
     return dump_folder_name
 
 
