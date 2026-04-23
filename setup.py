@@ -19,10 +19,8 @@ setup(
     # Needed to actually package something
     packages=[
         "il_supermarket_parsers",
-        "il_supermarket_parsers.conf",
         "il_supermarket_parsers.documents",
         "il_supermarket_parsers.engines",
-        "il_supermarket_parsers.normlizers",
         "il_supermarket_parsers.parsers",
         "il_supermarket_parsers.utils",
     ],
