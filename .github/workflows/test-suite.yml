@@ -38,7 +38,7 @@ jobs:
     - name: Build with Docker
       run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
     - name: Remove all build
-      run: (docker stop parsers-test-runner 2>/dev/null || true) && (docker rm parsers-test-runner 2>/dev/null || true)
+      run: docker rm -f parsers-test-runner 2>/dev/null || true
     - name: Test with pytest
       run: |
            mkdir -p temp &&
