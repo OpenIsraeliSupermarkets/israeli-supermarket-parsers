@@ -11,12 +11,9 @@ def get_sample_data(dump_folder_name, filter_type=None, enabled_scrapers=None, l
             enabled_scrapers=enabled_scrapers if enabled_scrapers else None,
             output_configuration=output_config,
         )
-        task.start(limit=limit, when_date=datetime.datetime.now())
-        task.join()
+        task.start(limit=limit, when_date=datetime.datetime.now()).join()
     else:
-        task = ScarpingTask(output_configuration=output_config)
-        task.start(limit=limit)
-        task.join()
+        ScarpingTask(output_configuration=output_config).start(limit=limit).join()
     return dump_folder_name
 
 
