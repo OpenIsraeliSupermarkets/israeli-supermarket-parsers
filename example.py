@@ -74,12 +74,14 @@ async def main():
 
     # Start converting in background, then consume results
     converter.start(limit=1)
-    await publish_results(parsers_queue_handlers)
-    converter.join()
 
+    # print things as they come in
+    await publish_results(parsers_queue_handlers)
+    
     try:
         scraper.stop()
         scraper.join()
+        converter.join()
     except RuntimeError:
         pass  # Scraper already finished
 
