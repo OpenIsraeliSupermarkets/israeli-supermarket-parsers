@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import FileCompleteMessage
 
 
 class BaseOutputWriter(ABC):
@@ -52,3 +55,7 @@ class BaseOutputWriter(ABC):
             List of column names, empty list if output doesn't exist
         """
         raise NotImplementedError
+
+    async def write_file_complete(self, message: "FileCompleteMessage") -> None:
+        """Signal that all rows for a file have been written. No-op by default."""
+        return

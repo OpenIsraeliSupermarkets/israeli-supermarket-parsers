@@ -3,6 +3,7 @@ from typing import Any, List
 
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
+from ..types import FileCompleteMessage
 
 
 class _QueueManagerHolder:
@@ -46,6 +47,9 @@ class QueueOutputWriter(BaseOutputWriter):
 
     async def write_row(self, row: dict) -> None:
         self._queue.put(row)
+
+    async def write_file_complete(self, message: FileCompleteMessage) -> None:
+        self._queue.put(message.model_dump())
 
     async def initialize(self) -> None:
         """No-op for in-memory queue output."""

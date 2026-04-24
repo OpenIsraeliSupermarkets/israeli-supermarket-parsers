@@ -7,7 +7,7 @@ from .utils import Logger
 from .utils.data_loaders import BaseDataLoader
 from .utils.output_writers import BaseOutputWriter
 from .utils.status import ParserStatus
-from .utils.types import ExecutionLog
+from .utils.types import ExecutionLog, FileCompleteMessage
 from .engines.base import BaseFileConverter
 
 
@@ -86,6 +86,12 @@ class RawParsingPipeline:
                     row_count += 1
 
                 self.parser_status.register_processed_file(file, row_count)
+                await self.output_writer.write_file_complete(
+                    FileCompleteMessage(
+                        file_name=file.file_name,
+                        total_expected_records=row_count,
+                    )
+                )
                 Logger.debug(
                     f"Successfully processed file {file.file_name} with {row_count} rows"
                 )

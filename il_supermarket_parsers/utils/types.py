@@ -1,6 +1,14 @@
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, Field
+
+
+class FileCompleteMessage(BaseModel):
+    """Message to signal end-of-file with total expected records."""
+
+    file_complete: Literal["true"] = "true"
+    file_name: str
+    total_expected_records: int
 
 
 class FileExecutionLog(BaseModel):
