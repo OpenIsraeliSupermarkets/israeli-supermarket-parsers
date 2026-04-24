@@ -92,8 +92,9 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
             if current_elem is not None:
                 list_sub_elem = current_elem.find(self.list_sub_key)
                 if list_sub_elem is not None:
+                    ignore = {normalize_tag(x) for x in self.ignore_column}
                     for elem in list_sub_elem:
-                        if normalize_tag(elem.tag) not in self.ignore_column:
+                        if normalize_tag(elem.tag) not in ignore:
                             row = self.list_single_entry(
                                 elem,
                                 found_folder=found_folder,

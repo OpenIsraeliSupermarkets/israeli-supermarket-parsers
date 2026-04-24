@@ -2,6 +2,7 @@ from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.documents import (
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
+    XmlDataFrameConverter,
 )
 
 from .confix import CofixFileConverter
@@ -33,6 +34,20 @@ class KeshetFileConverter(BaseFileConverter):
     File converter for Keshet supermarket chain.
     Extends: BaseFileConverter
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                ],
+            ),
+        )
 
 
 class KingStoreFileConverter(BaseFileConverter):
@@ -83,6 +98,22 @@ class RamiLevyFileConverter(BaseFileConverter):
     Extends: BaseFileConverter
     """
 
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                    "Remarks",
+                    "Remark",
+                ],
+            ),
+        )
+
 
 class ShefaBarcartAshemFileConverter(BaseFileConverter):
     """
@@ -111,6 +142,22 @@ class SuperYudaFileConverter(BaseFileConverter):
     Extends: BaseFileConverter
     """
 
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                    "Remarks",
+                    "Remark",
+                ],
+            ),
+        )
+
 
 class SuperSapirFileConverter(BaseFileConverter):
     """
@@ -124,6 +171,21 @@ class FreshMarketAndSuperDoshFileConverter(CofixFileConverter):
     File converter for Fresh Market and Super Dosh supermarket chains.
     Extends: CofixFileConverter
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                    "Remarks",
+                    "Remark",
+                ],
+            ),
+        )
 
 
 class QuikFileConverter(BaseFileConverter):
@@ -145,6 +207,22 @@ class YohananofFileConverter(BaseFileConverter):
     File converter for Yohananof supermarket chain.
     Extends: BaseFileConverter
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                    "Remarks",
+                    "Remark",
+                ],
+            ),
+        )
 
 
 class ZolVebegadolFileConverter(BaseFileConverter):

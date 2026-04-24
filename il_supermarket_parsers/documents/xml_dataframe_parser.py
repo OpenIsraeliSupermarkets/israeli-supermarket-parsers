@@ -149,12 +149,15 @@ class XmlDataFrameConverter(BaseXMLParser):
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""
+        ignore = {normalize_tag(x) for x in self.ignore_column}
         return {
             "found_folder": found_folder,
             "file_name": file_name,
             **sub_root_store,
             **{
-                name.tag.lower(): self.build_value(name, no_content="") for name in elem
+                name.tag.lower(): self.build_value(name, no_content="")
+                for name in elem
+                if normalize_tag(name.tag) not in ignore
             },
         }
 
@@ -173,8 +176,9 @@ class XmlDataFrameConverter(BaseXMLParser):
             return
 
         # Yield rows one by one as they're parsed
+        ignore = {normalize_tag(x) for x in self.ignore_column}
         for elem in root:
-            if normalize_tag(elem.tag) not in self.ignore_column:
+            if normalize_tag(elem.tag) not in ignore:
                 row = self.list_single_entry(
                     elem, found_folder=found_folder, file_name=file_name, **root_store
                 )
