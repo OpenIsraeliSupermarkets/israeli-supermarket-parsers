@@ -63,6 +63,7 @@ class QueueDataLoader(BaseDataLoader):
                         empty_store_id=self.empty_store_id,
                     )
 
+                    Logger.debug(f"Yielding dump file: {dump_file.file_name} from {scraper_name} queue")
                     yield dump_file
                     count += 1
 
