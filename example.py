@@ -8,22 +8,22 @@ from il_supermarket_parsers import ConvertingTask
 Logger.set_logging_level("INFO")
 
 
-def _consume_parser_queue(parser_name, queue_handler):
+def _consume_parser_queue(scraper, file_type, queue_handler):
     for result in iter(queue_handler.get_queue().get, None):
-        print(f"Publishing results for {parser_name}")
+        print(f"Publishing results for {scraper} / {file_type}")
         print("Record published: ", result)
 
 
 async def publish_results(parsers_queue_handlers):
-    """Publish results to Kafka, each parser in its own thread."""
+    """Publish results to Kafka, each (scraper, file_type) in its own thread."""
     threads = [
         threading.Thread(
             target=_consume_parser_queue,
-            args=(parser_name, queue_handler),
-            name=f"publisher-{parser_name}",
+            args=(scraper, file_type, queue_handler),
+            name=f"publisher-{scraper}-{file_type}",
             daemon=True,
         )
-        for parser_name, queue_handler in parsers_queue_handlers.items()
+        for (scraper, file_type), queue_handler in parsers_queue_handlers.items()
     ]
     for t in threads:
         t.start()

@@ -8,6 +8,7 @@ import pytz
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
 from .utils.logger import Logger
+from .utils import FileTypesFilters
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
 
 
@@ -96,8 +97,10 @@ class ConvertingTask:
             and cfg.output_configuration.get("output_mode") == "queue"
         ):
             parsers = cfg.enabled_parsers or ParserFactory.all_parsers_name()
+            file_types = cfg.files_types or FileTypesFilters.all_types()
             for parser_name in parsers:
-                self._output_queues[parser_name] = create_output_queue()
+                for file_type in file_types:
+                    self._output_queues[(parser_name, file_type)] = create_output_queue()
 
         self.runner = ParallelParser(
             ParallelParserParams(

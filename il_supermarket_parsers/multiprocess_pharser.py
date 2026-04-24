@@ -84,8 +84,9 @@ class RawProcessing(ProcessJob):
 
         output_queues = kwargs.pop("output_queues", None)
 
-        if output_queues and parser_name in output_queues:
-            output_writer = QueueOutputWriter(output_queues[parser_name])
+        queue_key = (parser_name, file_type)
+        if output_queues and queue_key in output_queues:
+            output_writer = QueueOutputWriter(output_queues[queue_key])
         elif kafka_config:
             output_writer = KafkaOutputWriter(
                 bootstrap_servers=kafka_config["bootstrap_servers"],
