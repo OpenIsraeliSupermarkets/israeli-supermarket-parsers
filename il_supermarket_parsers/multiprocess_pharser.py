@@ -121,7 +121,8 @@ class RawProcessing(ProcessJob):
         finally:
             if kafka_config:
                 output_writer.close()
-
+            if output_queues and queue_key in output_queues:
+                output_queues[queue_key].put(None) 
 
 class ParallelParser(MultiProcessor):
     """run insert task on parallel"""
