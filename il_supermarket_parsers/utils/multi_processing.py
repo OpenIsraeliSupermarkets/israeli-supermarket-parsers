@@ -113,14 +113,18 @@ class MultiProcessor:
             tasks_to_accomplish.close()
             tasks_to_accomplish.join_thread()
             #
-            Logger.info(f"Total Processing... {size} tasks")
+            # Expected result count is `size`, not qsize(): the results queue is
+            # empty until workers finish, so qsize() here was always 0 and the
+            # loop exited immediately without collecting any completions.
+            task_to_process = size
+            Logger.info(f"Total Processing... {task_to_process} tasks")
             with tqdm(
-                total=size, desc="Total Processing...", file=Logger.get_stream()
+                total=task_to_process, desc="Total Processing...", file=Logger.get_stream()
             ) as pbar:
                 start_time = time.time()
                 timeout_seconds = 3600  # 1 hour timeout
 
-                while (not tasks_accomplished.empty() or len(results) < size) and (
+                while (not tasks_accomplished.empty() or len(results) < task_to_process) and (
                     time.time() - start_time
                 ) < timeout_seconds:
                     try:
@@ -131,12 +135,15 @@ class MultiProcessor:
                         pbar.update(1)
                     except queue.Empty:
                         # Check if all processes are still alive
-                        alive_processes = [p for p in self.processes if p.is_alive()]
-                        if not alive_processes and tasks_accomplished.empty():
+                        if tasks_accomplished.empty():
                             Logger.warning(
                                 "All processes finished but results incomplete"
                             )
                             break
+                        else:
+                            alive_processes = [p for p in self.processes if p.is_alive()]
+                            if not alive_processes:
+                                raise RuntimeError("All processes finished but results incomplete")
                         continue
 
                 # Check if we timed out

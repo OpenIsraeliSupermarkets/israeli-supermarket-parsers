@@ -39,7 +39,7 @@ async def main():
         "base_path": "status_logs",
     }
 
-    enabled_scrapers = [ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name]
+    enabled_scrapers = [ScraperFactory.VICTORY.name]
     scraper = ScarpingTask(
         output_configuration={
             "output_mode": "queue",
@@ -82,8 +82,9 @@ async def main():
     try:
         scraper.stop()
         scraper.join()
-    except RuntimeError:
-        pass  # Scraper already finished
+    except (RuntimeError, OSError, FileNotFoundError, AttributeError):
+        # Manager/socket may be gone if scraper already shut down or after pool fork.
+        pass
 
     try:
         converter.join()
