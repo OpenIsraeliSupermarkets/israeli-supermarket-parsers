@@ -63,3 +63,6 @@ class QueueOutputWriter(BaseOutputWriter):
 
     def get_existing_columns(self) -> List[str]:
         return []
+
+    def close(self) -> None:
+        self._queue.put(None)

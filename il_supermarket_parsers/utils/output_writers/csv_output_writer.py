@@ -132,3 +132,7 @@ class CSVOutputWriter(BaseOutputWriter):
                 writer.writerow(aligned_row)
 
         await asyncio.to_thread(_write_row)
+
+    def close(self) -> None:
+        """Close the CSV file"""
+        pass

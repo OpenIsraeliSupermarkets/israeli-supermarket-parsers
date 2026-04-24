@@ -9,11 +9,14 @@ import pytz
 
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
-from .utils.status import create_parser_status
 from .parser_factory import ParserFactory
-from .utils import FileTypesFilters, Logger, DataLoader, CSVOutputWriter
-from .utils import QueueOutputWriter, KafkaOutputWriter
-from .utils import QueueDataLoader
+from .utils import (
+    FileTypesFilters,
+    Logger,
+    create_parser_status,
+    get_data_loader,
+    get_output_writer,
+)
 
 
 def _default_parallel_when() -> datetime.datetime:
@@ -73,35 +76,25 @@ class RawProcessing(ProcessJob):
         drop_folder = kwargs.pop("data_folder", None)
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
-        output_folder = kwargs.pop("output_folder", None)
+        output_folder = kwargs.pop("output_folder", "outputs")
         limit = kwargs.pop("limit")
         status_config = kwargs.pop("status_config", None)
-
-        if queue_handlers:
-            data_loader = QueueDataLoader(queue_handlers)
-        else:
-            data_loader = DataLoader(drop_folder)
-
         output_queues = kwargs.pop("output_queues", None)
 
-        queue_key = (parser_name, file_type)
-        if output_queues and queue_key in output_queues:
-            output_writer = QueueOutputWriter(output_queues[queue_key])
-        elif kafka_config:
-            output_writer = KafkaOutputWriter(
-                bootstrap_servers=kafka_config["bootstrap_servers"],
-                key_columns=kafka_config.get("key_columns"),
-                enabled_scraper=parser_name,
-                enabled_file_type=file_type,
-            )
-        else:
-            output_writer = CSVOutputWriter(output_folder, parser_name, file_type)
+        # get the data loader based on the queue handlers or the folder
+        data_loader = get_data_loader(queue_handlers, drop_folder)
 
+        # get the output writer based on the queue handlers or the kafka config or the output folder
+        output_writer = get_output_writer(
+            parser_name, file_type, output_queues, kafka_config, output_folder
+        )
+
+        # create the parser status
         parser_status = create_parser_status(
             enabled_scraper=parser_name,
             enabled_file_type=file_type,
             status_configuration=status_config,
-            default_base_path=output_folder or "outputs",
+            default_base_path=output_folder,
         )
 
         pipeline = RawParsingPipeline(
@@ -119,10 +112,8 @@ class RawProcessing(ProcessJob):
                 )
             )
         finally:
-            if kafka_config:
-                output_writer.close()
-            if output_queues and queue_key in output_queues:
-                output_queues[queue_key].put(None) 
+            output_writer.close()
+
 
 class ParallelParser(MultiProcessor):
     """run insert task on parallel"""

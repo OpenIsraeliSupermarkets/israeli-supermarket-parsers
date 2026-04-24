@@ -60,10 +60,7 @@ class KeshetFileConverter(BaseFileConverter):
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
                 date_columns=["PromotionUpdateDate"],
-                ignore_column=[
-                    "XmlDocVersion",
-                    "DllVerNo"
-                ],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             ),
         )
 

@@ -14,6 +14,7 @@ class KafkaOutputWriter(BaseOutputWriter):
         bootstrap_servers: List[str],
         enabled_scraper: str,
         enabled_file_type: str,
+        topic_template: str = "{enabled_scraper}_{enabled_file_type}",
         key_columns: List[str] = None,
     ):
         """
@@ -25,7 +26,9 @@ class KafkaOutputWriter(BaseOutputWriter):
             key_columns: Optional list of column names to use as message key
         """
         self.bootstrap_servers = bootstrap_servers
-        self.topic = f"{enabled_scraper}_{enabled_file_type}".lower()
+        self.topic = topic_template.format(
+            enabled_scraper=enabled_scraper, enabled_file_type=enabled_file_type
+        )
         self.key_columns = key_columns or []
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,

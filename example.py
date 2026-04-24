@@ -38,7 +38,7 @@ async def main():
         "database_type": "json",
         "base_path": "status_logs",
     }
-    
+
     enabled_scrapers = [ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name]
     scraper = ScarpingTask(
         output_configuration={
@@ -52,9 +52,10 @@ async def main():
 
     # Start scraping (runs in background thread)
     scraper.start(limit=1, when_date=_now())
-    
+
     # patch to wait for the queue to be populated
     import time
+
     time.sleep(10)
 
     # Use ConvertingTask with queue output mode
@@ -77,7 +78,7 @@ async def main():
 
     # print things as they come in
     await publish_results(parsers_queue_handlers)
-    
+
     try:
         scraper.stop()
         scraper.join()

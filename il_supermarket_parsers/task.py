@@ -100,7 +100,9 @@ class ConvertingTask:
             file_types = cfg.files_types or FileTypesFilters.all_types()
             for parser_name in parsers:
                 for file_type in file_types:
-                    self._output_queues[(parser_name, file_type)] = create_output_queue()
+                    self._output_queues[(parser_name, file_type)] = (
+                        create_output_queue()
+                    )
 
         self.runner = ParallelParser(
             ParallelParserParams(
