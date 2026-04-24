@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 from il_supermarket_scarper import ScarpingTask, ScraperFactory
 from il_supermarket_scarper.utils import _now, Logger
@@ -7,12 +8,27 @@ from il_supermarket_parsers import ConvertingTask
 Logger.set_logging_level("INFO")
 
 
+def _consume_parser_queue(parser_name, queue_handler):
+    for result in iter(queue_handler.get_queue().get, None):
+        print(f"Publishing results for {parser_name}")
+        print("Record published: ", result)
+
+
 async def publish_results(parsers_queue_handlers):
-    """Publish results to Kafka"""
-    for parser_name, queue_handler in parsers_queue_handlers.items():
-        for result in iter(queue_handler.get_queue().get, None):
-            print(f"Publishing results for {parser_name}")
-            print("Record published: ", result)
+    """Publish results to Kafka, each parser in its own thread."""
+    threads = [
+        threading.Thread(
+            target=_consume_parser_queue,
+            args=(parser_name, queue_handler),
+            name=f"publisher-{parser_name}",
+            daemon=True,
+        )
+        for parser_name, queue_handler in parsers_queue_handlers.items()
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
 
 async def main():
