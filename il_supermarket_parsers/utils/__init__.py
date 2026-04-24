@@ -19,7 +19,7 @@ from .dataframe_utils import (
     collect_unique_columns_from_nested_json,
     count_elements_in_nested_json,
 )
-from .data_loaders import get_data_loader
+from .data_loaders import DataLoader, get_data_loader
 from .output_writers import get_output_writer
 from .status import create_parser_status
 from .loading_utils import (
@@ -30,6 +30,7 @@ from .loading_utils import (
 
 __all__ = [
     "Logger",
+    "DataLoader",
     "get_data_loader",
     "get_output_writer",
     "create_parser_status",
