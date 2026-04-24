@@ -57,12 +57,12 @@ async def main():
         status_configuration=status_configuration,
     )
 
+    # Process first so queues are populated
+    result = converter.start()
+
     parsers_queue_handlers = {
         name: output.queue_handler for name, output in converter.consume().items()
     }
-
-    # Process (sync, but handles async internally via asyncio.run)
-    result = converter.start()
 
     await publish_results(parsers_queue_handlers)
 
