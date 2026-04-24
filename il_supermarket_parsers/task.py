@@ -141,9 +141,11 @@ class ConvertingTask:
             raise RuntimeError("Parsing is already running")
 
         def _run():
-            self.runner.execute(limit=limit)
-            for q in self._output_queues.values():
-                q.put(None)
+            try:
+                self.runner.execute(limit=limit)
+            finally:
+                for q in self._output_queues.values():
+                    q.put(None)
 
         self._thread = threading.Thread(target=_run, daemon=True)
         self._thread.start()

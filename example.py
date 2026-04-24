@@ -81,9 +81,13 @@ async def main():
     try:
         scraper.stop()
         scraper.join()
-        converter.join()
     except RuntimeError:
         pass  # Scraper already finished
+
+    try:
+        converter.join()
+    except RuntimeError:
+        pass  # Converter already finished
 
     print("\nDone!")
 
