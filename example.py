@@ -21,13 +21,18 @@ async def publish_results(parsers_queue_handlers):
 async def main():
     """Main function to run the scraping task and consume results."""
 
+    status_configuration = {
+        "database_type": "json",
+        "base_path": "status_logs",
+    }
+    
     enabled_scrapers = [ScraperFactory.BAREKET.name, ScraperFactory.VICTORY.name]
     scraper = ScarpingTask(
         output_configuration={
             "output_mode": "queue",
             "queue_type": "memory",
         },
-        status_configuration={"database_type": "json", "base_path": "status_logs"},
+        status_configuration=status_configuration,
         multiprocessing=1,
         enabled_scrapers=enabled_scrapers,
     )
@@ -49,7 +54,7 @@ async def main():
             "output_mode": "queue",
             "queue_type": "memory",
         },
-        status_configuration={"database_type": "json", "base_path": "status_logs"},
+        status_configuration=status_configuration,
     )
 
     parsers_queue_handlers = {
