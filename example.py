@@ -53,11 +53,6 @@ async def main():
     # Start scraping (runs in background thread)
     scraper.start(limit=1, when_date=_now())
 
-    # patch to wait for the queue to be populated
-    import time
-
-    time.sleep(10)
-
     # Use ConvertingTask with queue output mode
     converter = ConvertingTask(
         enabled_parsers=enabled_scrapers,
