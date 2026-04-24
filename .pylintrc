@@ -2,10 +2,11 @@
 disable=
     C0114, # missing-module-docstring
 extension-pkg-allow-list=lxml.etree
+# Helps inference for asyncio.to_thread and other 3.9+ APIs
+py-version=3.9
 
 [DESIGN]
 max-args=8
-max-positional-arguments=8
 max-attributes=12
 min-public-methods=1
 max-public-methods=40

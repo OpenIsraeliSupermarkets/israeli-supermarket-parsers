@@ -6,7 +6,7 @@ from .parser_factory import ParserFactory
 from .utils import Logger
 from .utils.data_loaders import BaseDataLoader
 from .utils.output_writers import BaseOutputWriter
-from .utils.status import ParserStatus, create_parser_status
+from .utils.status import ParserStatus
 from .utils.types import ExecutionLog
 from .engines.base import BaseFileConverter
 

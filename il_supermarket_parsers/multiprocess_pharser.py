@@ -35,20 +35,24 @@ class ParallelParserParams:
     output_queues: Any = None
 
     def get_enabled_parsers(self) -> List[str]:
+        """Return configured parser names, or all parsers if none are set."""
         return self.enabled_parsers or ParserFactory.all_parsers_name()
 
     def get_enabled_file_types(self) -> List[str]:
+        """Return configured file types, or all types if none are set."""
         return self.enabled_file_types or FileTypesFilters.all_types()
 
     def get_output_folder(self) -> str:
+        """Return the base output directory path."""
         return self.output_folder
 
     def get_when_date(self) -> datetime.datetime:
+        """Return the run timestamp (Jerusalem) used for filtering."""
         return self.when_date
 
     def to_string(self) -> str:
+        """Summarize these params for logging."""
         return (
-            f"limit={self.limit},"
             f"parsers={self.get_enabled_parsers()},"
             f"file_types={self.get_enabled_file_types()},"
             f"data_folder={self.data_folder},"

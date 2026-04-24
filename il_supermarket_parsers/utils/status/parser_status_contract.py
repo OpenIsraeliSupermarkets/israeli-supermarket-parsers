@@ -2,6 +2,8 @@
 
 Mirrors il_supermarket_scarper.utils.scraper_status_contract.
 """
+# Pydantic models are data-only; min-public-methods in pylint is not applicable.
+# pylint: disable=too-few-public-methods
 
 from collections import defaultdict
 from datetime import datetime

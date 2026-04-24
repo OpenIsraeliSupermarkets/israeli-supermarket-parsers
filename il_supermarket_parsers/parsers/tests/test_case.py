@@ -3,6 +3,8 @@ import os
 import tempfile
 import gc
 import asyncio
+from typing import List
+
 import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
@@ -11,7 +13,7 @@ from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 
 
-def _validate_file_loading(files: list[DumpFile], sub_folder: str):
+def _validate_file_loading(files: List[DumpFile], sub_folder: str):
     """Validate that all files were loaded correctly."""
     complete_file_loaded = list(map(lambda x: x.get_full_path, files))
     files_from_folder = _list_xml_files_recursive(sub_folder)
@@ -31,7 +33,7 @@ def _list_xml_files_recursive(directory):
     return file_list
 
 
-async def _process_files(files: list[DumpFile], parser: BaseFileConverter):
+async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
     """Process all files and return sampled dataframes."""
     dfs = []
     for file in files:
