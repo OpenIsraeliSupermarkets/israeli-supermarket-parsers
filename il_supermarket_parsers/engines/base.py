@@ -122,7 +122,7 @@ class BaseFileConverter(ABC):
         if dump_file.detected_filetype == FileTypesFilters.PRICE_FULL_FILE:
             return self.pricefull_parser
         if dump_file.detected_filetype == FileTypesFilters.PROMO_FILE:
-            return self.promo_parsers
+            return self.promo_parser
         if dump_file.detected_filetype == FileTypesFilters.PROMO_FULL_FILE:
             return self.promofull_parser
         if dump_file.detected_filetype == FileTypesFilters.STORE_FILE:

@@ -1,5 +1,6 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.documents import (
+    ConditionalXmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
     XmlDataFrameConverter,
@@ -13,6 +14,23 @@ class YaynoBitanFileConverter(BaseFileConverter):
     File converter for Yayno Bitan supermarket chain.
     Extends: BaseFileConverter
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            promofull_parser=XmlDataFrameConverter(
+                list_key="Promotions",
+                id_field="PromotionId",
+                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=[
+                    "XmlDocVersion",
+                    "DllVerNo",
+                    "remark",
+                    "Remark",
+                    "Remarks",
+                ],
+            ),
+        )
 
 
 class DorAlonFileConverter(CofixFileConverter):
@@ -44,7 +62,7 @@ class KeshetFileConverter(BaseFileConverter):
                 date_columns=["PromotionUpdateDate"],
                 ignore_column=[
                     "XmlDocVersion",
-                    "DllVerNo",
+                    "DllVerNo"
                 ],
             ),
         )
@@ -238,26 +256,37 @@ class WoltFileConverter(BaseFileConverter):
     """
 
     def __init__(self) -> None:
+        wolt_promo_with_items = SubRootedXmlDataFrameConverter(
+            list_key="Promotions",
+            id_field="ItemCode",
+            options=SubRootedXmlOptions(
+                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                list_sub_key="PromotionItems",
+                sub_roots=[
+                    "Remarks",
+                    "AdditionalRestrictions",
+                    "ClubId",
+                    "PromotionEndHour",
+                    "PromotionUpdateTime",
+                    "PromotionId",
+                    "PromotionDescription",
+                    "PromotionStartDate",
+                    "PromotionStartHour",
+                    "PromotionEndDate",
+                ],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
+            ),
+        )
+        wolt_promo_empty_store = XmlDataFrameConverter(
+            list_key="Promotions",
+            id_field="ItemCode",
+            roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+            ignore_column=["XmlDocVersion", "DllVerNo"],
+        )
         super().__init__(
-            promofull_parser=SubRootedXmlDataFrameConverter(
-                list_key="Promotions",
-                id_field="ItemCode",
-                options=SubRootedXmlOptions(
-                    roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-                    list_sub_key="PromotionItems",
-                    sub_roots=[
-                        "Remarks",
-                        "AdditionalRestrictions",
-                        "ClubId",
-                        "PromotionEndHour",
-                        "PromotionUpdateTime",
-                        "PromotionId",
-                        "PromotionDescription",
-                        "PromotionStartDate",
-                        "PromotionStartHour",
-                        "PromotionEndDate",
-                    ],
-                    ignore_column=["XmlDocVersion", "DllVerNo"],
-                ),
+            promofull_parser=ConditionalXmlDataFrameConverter(
+                option_a=wolt_promo_with_items,
+                option_b=wolt_promo_empty_store,
+                check_key="Promotion",
             )
         )
