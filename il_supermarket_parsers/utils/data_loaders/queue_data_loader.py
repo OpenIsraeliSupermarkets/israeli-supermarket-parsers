@@ -1,4 +1,3 @@
-import asyncio
 from typing import AsyncIterator, Optional
 from .base_data_loader import BaseDataLoader
 from ..loading_utils import DumpFile, create_dumpfile_from_queue_message
@@ -23,17 +22,6 @@ class QueueDataLoader(BaseDataLoader):
     def queue_count(self) -> int:
         """Return the number of scraper queues connected to this loader."""
         return len(self.queue_handlers)
-
-    async def _consume_queue(self, queue_handler):
-        """Consume messages from a queue, re-broadcasting the None sentinel for other workers."""
-        loop = asyncio.get_event_loop()
-        while True:
-            msg = await loop.run_in_executor(None, queue_handler.get)
-            if msg is None:
-                # Re-broadcast sentinel so other workers on this queue can also terminate
-                queue_handler.put(None)
-                break
-            yield msg
 
     async def load(
         self,
@@ -61,7 +49,7 @@ class QueueDataLoader(BaseDataLoader):
             Logger.debug(f"Consuming files from {scraper_name} queue")
 
             try:
-                async for msg in self._consume_queue(queue_handler):
+                async for msg in queue_handler.get_all_messages():
                     file_name = msg["file_name"]
                     file_content = msg["file_content"]
                     file_link = msg.get("file_link", "")

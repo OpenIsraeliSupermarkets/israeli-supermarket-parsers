@@ -39,7 +39,7 @@ async def main():
 
     # Start scraping (runs in background thread)
     scraper.start(limit=1, when_date=_now())
-
+    
     # Get queue handlers from scraper
     queue_handlers = {
         name: output.queue_handler for name, output in scraper.consume().items()
@@ -59,6 +59,7 @@ async def main():
 
     # Process first so queues are populated
     result = converter.start()
+    
 
     parsers_queue_handlers = {
         name: output.queue_handler for name, output in converter.consume().items()
