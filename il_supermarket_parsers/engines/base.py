@@ -68,7 +68,7 @@ class BaseFileConverter(ABC):
                 ignore_column=["XmlDocVersion", "DllVerNo"],
             )
         )
-        self.promo_parsers: XmlBaseConverter = (
+        self.promo_parser: XmlBaseConverter = (
             promo_parser
             if promo_parser
             else XmlDataFrameConverter(
