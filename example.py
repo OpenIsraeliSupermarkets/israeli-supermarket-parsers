@@ -10,11 +10,8 @@ Logger.set_logging_level("INFO")
 async def publish_results(parsers_queue_handlers):
     """Publish results to Kafka"""
     for parser_name, queue_handler in parsers_queue_handlers.items():
-        while True:
+        for result in iter(queue_handler.get_queue().get, None):
             print(f"Publishing results for {parser_name}")
-            result = queue_handler.get()
-            if result is None:
-                break
             print("Record published: ", result)
 
 
