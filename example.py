@@ -40,16 +40,15 @@ async def main():
     # Start scraping (runs in background thread)
     scraper.start(limit=1, when_date=_now())
     
-    # Get queue handlers from scraper
-    queue_handlers = {
-        name: output.queue_handler for name, output in scraper.consume().items()
-    }
+    # patch to wait for the queue to be populated
+    import time
+    time.sleep(10)
 
-    # Use ConvertingTask with queue and Kafka config
+    # Use ConvertingTask with queue output mode
     converter = ConvertingTask(
         enabled_parsers=enabled_scrapers,
         limit=1,
-        queue_handlers=queue_handlers,
+        queue_handlers=scraper.consume(),
         output_configuration={
             "output_mode": "queue",
             "queue_type": "memory",
@@ -57,15 +56,13 @@ async def main():
         status_configuration=status_configuration,
     )
 
-    # Process first so queues are populated
-    result = converter.start()
-    
+    # Grab output queue handles before starting (queues must exist before producers run)
+    parsers_queue_handlers = converter.consume()
 
-    parsers_queue_handlers = {
-        name: output.queue_handler for name, output in converter.consume().items()
-    }
-
+    # Start converting in background, then consume results
+    converter.start(limit=1)
     await publish_results(parsers_queue_handlers)
+    converter.join()
 
     try:
         scraper.stop()
@@ -74,7 +71,6 @@ async def main():
         pass  # Scraper already finished
 
     print("\nDone!")
-    print(f"Processed files: {result}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import datetime
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -43,7 +44,27 @@ class OutputQueueResult:
 
 
 class ConvertingTask:
-    """main convert task"""
+    """Encapsulates a parsing task that can be run in a separate thread.
+
+    Example::
+
+        task = ConvertingTask(data_folder="dumps", output_folder="outputs")
+        task.start()
+        task.join()
+
+    With queue output::
+
+        task = ConvertingTask(
+            data_folder="dumps",
+            output_configuration={"output_mode": "queue"},
+        )
+        queues = task.consume()
+        task.start()
+        for name, result in queues.items():
+            for row in iter(result.get_queue().get, None):
+                print(row)
+        task.join()
+    """
 
     def __init__(
         self,
@@ -66,6 +87,7 @@ class ConvertingTask:
         )
 
         self._config = cfg
+        self._thread = None
 
         # Build per-parser output queues when queue output mode is requested
         self._output_queues = {}
@@ -91,12 +113,11 @@ class ConvertingTask:
             ),
             multiprocessing=cfg.multiprocessing,
         )
-        self.limit = cfg.limit
 
     def consume(self) -> Dict[str, OutputQueueResult]:
         """Return a dict mapping parser names to OutputQueueResult objects.
 
-        Must be called before start() so queue handles are ready for consumers.
+        Call before start() so queue handles are ready for consumers.
         Only returns entries when output_configuration was set to queue mode.
         """
         return {
@@ -104,13 +125,48 @@ class ConvertingTask:
             for name, q in self._output_queues.items()
         }
 
-    def start(self):
-        """Run the parsing synchronously and return execution results.
+    def start(self, limit: Optional[int] = None) -> threading.Thread:
+        """Start the parsing task in a new background thread.
 
-        When queue output mode is active, a None sentinel is placed in every
-        output queue after processing completes so consumers can detect the end.
+        Args:
+            limit: Maximum number of files to process. If None, processes all.
+
+        Returns:
+            The thread running the parsing task.
+
+        Raises:
+            RuntimeError: If parsing is already running.
         """
-        result = self.runner.execute(limit=self.limit)
-        for q in self._output_queues.values():
-            q.put(None)
-        return result
+        if self._thread is not None and self._thread.is_alive():
+            raise RuntimeError("Parsing is already running")
+
+        def _run():
+            self.runner.execute(limit=limit)
+            for q in self._output_queues.values():
+                q.put(None)
+
+        self._thread = threading.Thread(target=_run, daemon=True)
+        self._thread.start()
+        return self._thread
+
+    def join(self) -> bool:
+        """Wait for the parsing thread to complete.
+
+        Returns:
+            True if the thread was joined successfully.
+
+        Raises:
+            RuntimeError: If parsing is not running.
+        """
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join()
+            return True
+        raise RuntimeError("Parsing is not running")
+
+    def stop(self) -> None:
+        """Terminate worker processes and stop the parsing task."""
+        for process in self.runner.processes:
+            if process.is_alive():
+                Logger.warning(f"Terminating process {process.name}")
+                process.terminate()
+                process.join(timeout=5)

@@ -49,7 +49,7 @@ class QueueDataLoader(BaseDataLoader):
             Logger.debug(f"Consuming files from {scraper_name} queue")
 
             try:
-                async for msg in queue_handler.get_all_messages():
+                async for msg in queue_handler.queue_handler.get_all_messages():
                     file_name = msg["file_name"]
                     file_content = msg["file_content"]
                     file_link = msg.get("file_link", "")

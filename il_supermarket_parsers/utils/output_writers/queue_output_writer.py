@@ -45,7 +45,6 @@ class QueueOutputWriter(BaseOutputWriter):
         self._queue = queue
 
     async def write_row(self, row: dict) -> None:
-        Logger.debug(f"Enqueuing parsed row: {row}")
         self._queue.put(row)
 
     async def initialize(self) -> None:

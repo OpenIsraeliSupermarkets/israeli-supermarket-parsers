@@ -60,4 +60,6 @@ def load_params():
 
 if __name__ == "__main__":
     args = load_params()
-    ConvertingTask(**args).start()
+    task = ConvertingTask(**args)
+    task.start()
+    task.join()
