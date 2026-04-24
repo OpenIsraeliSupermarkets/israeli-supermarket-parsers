@@ -135,4 +135,4 @@ class CSVOutputWriter(BaseOutputWriter):
 
     def close(self) -> None:
         """Close the CSV file"""
-        pass
+        return

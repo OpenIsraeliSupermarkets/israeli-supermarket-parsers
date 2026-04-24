@@ -15,7 +15,7 @@ def get_output_writer(
     queue_key = (parser_name, file_type)
     if output_queues and queue_key in output_queues:
         return QueueOutputWriter(output_queues[queue_key])
-    elif kafka_config:
+    if kafka_config:
         return KafkaOutputWriter(
             bootstrap_servers=kafka_config["bootstrap_servers"],
             key_columns=kafka_config.get("key_columns"),
@@ -25,5 +25,4 @@ def get_output_writer(
                 "topic_template", "{enabled_scraper}_{enabled_file_type}"
             ),
         )
-    else:
-        return CSVOutputWriter(output_folder, parser_name, file_type)
+    return CSVOutputWriter(output_folder, parser_name, file_type)

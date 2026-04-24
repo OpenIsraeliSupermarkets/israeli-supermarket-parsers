@@ -56,7 +56,7 @@ class BaseOutputWriter(ABC):
         """
         raise NotImplementedError
 
-    async def write_file_complete(self, message: "FileCompleteMessage") -> None:
+    async def write_file_complete(self, _message: "FileCompleteMessage") -> None:
         """Signal that all rows for a file have been written. No-op by default."""
         return
 

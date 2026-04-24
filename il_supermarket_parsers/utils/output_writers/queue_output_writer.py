@@ -2,7 +2,6 @@ import multiprocessing
 from typing import Any, List
 
 from .base_output_writer import BaseOutputWriter
-from ..logger import Logger
 from ..types import FileCompleteMessage
 
 

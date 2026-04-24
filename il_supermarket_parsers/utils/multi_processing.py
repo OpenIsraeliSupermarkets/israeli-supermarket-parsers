@@ -133,17 +133,18 @@ class MultiProcessor:
                         )  # Add 1 second timeout
                         results.append(output)
                         pbar.update(1)
-                    except queue.Empty:
+                    except queue.Empty as exc:
                         # Check if all processes are still alive
                         if tasks_accomplished.empty():
                             Logger.warning(
                                 "All processes finished but results incomplete"
                             )
                             break
-                        else:
-                            alive_processes = [p for p in self.processes if p.is_alive()]
-                            if not alive_processes:
-                                raise RuntimeError("All processes finished but results incomplete")
+                        alive_processes = [p for p in self.processes if p.is_alive()]
+                        if not alive_processes:
+                            raise RuntimeError(
+                                "All processes finished but results incomplete"
+                            ) from exc
                         continue
 
                 # Check if we timed out
