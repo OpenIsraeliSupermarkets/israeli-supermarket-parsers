@@ -259,6 +259,14 @@ class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTO
     """
 
 
+class VictoryNewSourceTestCase(
+    make_test_case(ScraperFactory.VICTORY_NEW_SOURCE, ParserFactory.VICTORY_NEW_SOURCE)
+):
+    """
+    Test case for Victory New Source supermarket.
+    """
+
+
 class YellowTestCase(make_test_case(ScraperFactory.YELLOW, ParserFactory.YELLOW)):
     """
     Test case for Yellow convenience store.
