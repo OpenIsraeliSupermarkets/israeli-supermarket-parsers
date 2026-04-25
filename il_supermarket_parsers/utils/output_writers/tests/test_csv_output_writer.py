@@ -75,7 +75,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[0], {"id": "0", "k": "v0"})
-        self.assertEqual(rows[1], {"id": "1", "k": None})
+        self.assertEqual(rows[1], {"id": "1", "k": "v1"})
         self.assertEqual(rows[2], {"id": "2", "k": "v2"})
 
     async def test_schema_evolution_adds_new_column(self) -> None:
@@ -85,7 +85,16 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": ""})
-        self.assertEqual(rows[1], {"a": None, "b": "3"})
+        self.assertEqual(rows[1], {"a": "2", "b": "3"})
+
+    async def test_schema_evolution_removes_column(self) -> None:
+        writer = self._new_writer()
+        await writer.write_row({"a": 1, "b": 2})
+        await writer.write_row({"a": 1})
+        rows = self._read_data_rows()
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
+        self.assertEqual(rows[1], {"a": "1", "b": ""})
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
         writer = self._new_writer(reduce_duplicates=True)
