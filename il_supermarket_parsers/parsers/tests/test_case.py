@@ -9,6 +9,7 @@ import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
+from il_supermarket_parsers.utils.output_writers.csv_output_writer import CSVOutputWriter
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 
@@ -40,19 +41,29 @@ async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
         try:
             if not file.is_expected_to_be_readable:
                 continue
-            # Collect rows from async generator
-            rows = []
-            async for row in parser.read(file):
-                rows.append(row)
 
-            # Convert to DataFrame for testing
-            if rows:
-                df = pd.DataFrame(rows)
-            else:
-                df = pd.DataFrame()
+            with tempfile.TemporaryDirectory() as file_tmp_dir:
+                writer = CSVOutputWriter(
+                    output_folder=file_tmp_dir,
+                    enabled_scraper=file.extracted_chain_id,
+                    enabled_file_type=file.detected_filetype.name,
+                    reduce_duplicates=True,
+                )
+                await writer.initialize()
+
+                async for row in parser.read(file):
+                    await writer.write_row(row)
+
+                writer.close()
+
+                # load the data from the writer
+                if writer.exists():
+                    df = pd.read_csv(writer.get_path())
+                else:
+                    df = pd.DataFrame()
 
             # Run validation against the created DataFrame
-            parser.run_validation(df, file)
+            parser.run_validation(df.ffill(), file)
 
             if file.is_expected_to_have_records:
                 assert df.shape[0] > 0, f"File {file.file_name} is empty"
