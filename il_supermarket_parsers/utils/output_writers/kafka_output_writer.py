@@ -4,6 +4,7 @@ from typing import List
 from kafka import KafkaProducer
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
+from ..loading_utils import DumpFile
 
 
 class KafkaOutputWriter(BaseOutputWriter):
@@ -43,6 +44,11 @@ class KafkaOutputWriter(BaseOutputWriter):
     async def initialize(self) -> None:
         """Initialize the output writer"""
         self._initialized = True
+        Logger.debug(f"Initialized Kafka output writer for topic {self.topic}")
+
+    async def initialize_new_file(self, file: DumpFile) -> None:
+        """Initialize the output writer for a new file"""
+        self._existing_columns = []
         Logger.debug(f"Initialized Kafka output writer for topic {self.topic}")
 
     def exists(self) -> bool:

@@ -5,7 +5,7 @@ from typing import List
 import pandas as pd
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
-
+from ..loading_utils import DumpFile
 
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
@@ -33,18 +33,10 @@ class CSVOutputWriter(BaseOutputWriter):
             enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
         )
 
-    # def _reduce_size(self, data: pd.DataFrame) -> pd.DataFrame:
-    #     """reduce the size"""
-    #     if len(data) == 0:
-    #         return data
-    #     # Use inplace operations to avoid creating copies
-    #     data = data.fillna("", inplace=False)
-    #     # remove duplicate columns - optimize by only processing non-empty columns
-    #     for col in data.columns:
-    #         # Only process if column has data
-    #         if data[col].notna().any():
-    #             data[col] = data[col].mask(data[col] == data[col].shift())
-    #     return data
+    async def initialize_new_file(self, file: DumpFile) -> None:
+        """Initialize the output writer for a new file"""
+        self._previous_row = {}
+   
 
     async def initialize(self) -> None:
         """Initialize the output writer"""
@@ -103,6 +95,24 @@ class CSVOutputWriter(BaseOutputWriter):
 
         await asyncio.to_thread(_do_append)
 
+    async def _update_columns_for_row(self, row_columns: List[str]) -> None:
+        """Set or extend CSV schema to include columns from this row."""
+        if not self._header_written:
+            self._existing_columns = row_columns
+            Logger.debug(
+                f"Creating new file {self.output_path} with columns {self._existing_columns}"
+            )
+        else:
+            missing_columns = set(row_columns) - set(self._existing_columns)
+            if missing_columns:
+                Logger.debug(
+                    f"Appending missing columns {missing_columns} to {self.output_path}"
+                )
+                await self._append_columns_to_csv(list(missing_columns))
+                self._existing_columns = await asyncio.to_thread(
+                    self.get_existing_columns
+                )
+
     async def write_row(self, row: dict) -> None:
         """
         Write a single row to CSV with column alignment
@@ -114,25 +124,7 @@ class CSVOutputWriter(BaseOutputWriter):
             await self.initialize()
 
         row_columns = list(row.keys())
-
-        # Update existing columns with any new ones from this row
-        if not self._header_written:
-            # First row - initialize columns
-            self._existing_columns = row_columns
-            Logger.debug(
-                f"Creating new file {self.output_path} with columns {self._existing_columns}"
-            )
-        else:
-            # Check if we need to add new columns
-            missing_columns = set(row_columns) - set(self._existing_columns)
-            if missing_columns:
-                Logger.debug(
-                    f"Appending missing columns {missing_columns} to {self.output_path}"
-                )
-                await self._append_columns_to_csv(list(missing_columns))
-                self._existing_columns = await asyncio.to_thread(
-                    self.get_existing_columns
-                )
+        await self._update_columns_for_row(row_columns)
 
         # Align row to match existing schema (add None for missing columns)
         aligned_row = {}

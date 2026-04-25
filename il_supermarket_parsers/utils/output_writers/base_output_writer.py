@@ -3,7 +3,7 @@ from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..types import FileCompleteMessage
-
+    from ..loading_utils import DumpFile
 
 class BaseOutputWriter(ABC):
     """Abstract base class for output writers"""
@@ -26,6 +26,15 @@ class BaseOutputWriter(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    async def initialize_new_file(self, file: DumpFile) -> None:
+        """
+        Initialize the output writer for a new file
+
+        Args:
+            file: File object
+        """
+        raise NotImplementedError
     @abstractmethod
     def exists(self) -> bool:
         """
