@@ -188,7 +188,7 @@ class ParserStatus:
         )
         self.database.insert_document("global_status", event.dict())
         Logger.info(
-            f"Parser status saved: store={enabled_scraper}, "
+            f"Parser status saved: store={enabled_scraper}, enabled_file_types={enabled_file_types} "
             f"files={total_files}, errors={had_errors}"
         )
 

@@ -86,6 +86,11 @@ class QueueDataLoader(BaseDataLoader):
                         Logger.info(f"Reached limit of {limit} files, stopping")
                         return
 
+                # The sentinel (None) was consumed by this process. Re-publish it so
+                # other concurrent consumers of the same queue can also terminate.
+                await queue_handler.queue_handler.close()
+                Logger.debug(f"Re-published end-of-stream sentinel for {scraper_name} queue")
+
             except Exception as e:
                 Logger.error(f"Error consuming from {scraper_name} queue: {e}")
                 raise
