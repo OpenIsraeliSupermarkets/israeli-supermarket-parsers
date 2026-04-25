@@ -22,23 +22,24 @@ class CSVOutputWriter(BaseOutputWriter):
         self._existing_columns: List[str] = []
         self._header_written = False
         self._initialized = False
+        self._previous_row: dict = {}
         self.output_path = os.path.join(
             output_folder,
             enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
         )
 
-    def _reduce_size(self, data: pd.DataFrame) -> pd.DataFrame:
-        """reduce the size"""
-        if len(data) == 0:
-            return data
-        # Use inplace operations to avoid creating copies
-        data = data.fillna("", inplace=False)
-        # remove duplicate columns - optimize by only processing non-empty columns
-        for col in data.columns:
-            # Only process if column has data
-            if data[col].notna().any():
-                data[col] = data[col].mask(data[col] == data[col].shift())
-        return data
+    # def _reduce_size(self, data: pd.DataFrame) -> pd.DataFrame:
+    #     """reduce the size"""
+    #     if len(data) == 0:
+    #         return data
+    #     # Use inplace operations to avoid creating copies
+    #     data = data.fillna("", inplace=False)
+    #     # remove duplicate columns - optimize by only processing non-empty columns
+    #     for col in data.columns:
+    #         # Only process if column has data
+    #         if data[col].notna().any():
+    #             data[col] = data[col].mask(data[col] == data[col].shift())
+    #     return data
 
     async def initialize(self) -> None:
         """Initialize the output writer"""
@@ -132,6 +133,13 @@ class CSVOutputWriter(BaseOutputWriter):
         aligned_row = {}
         for col in self._existing_columns:
             aligned_row[col] = row.get(col, None)
+
+        # Mask values that are identical to the previous row (same as _reduce_size)
+        for col in self._existing_columns:
+            val = aligned_row[col]
+            if val is not None and val != "" and val == self._previous_row.get(col):
+                aligned_row[col] = None
+        self._previous_row = {col: row.get(col, None) for col in self._existing_columns}
 
         # Write row to CSV
         def _write_row():
