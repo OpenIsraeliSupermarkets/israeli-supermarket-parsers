@@ -136,10 +136,14 @@ class CSVOutputWriter(BaseOutputWriter):
                 val = aligned_row[col]
                 if val is not None and val == self._previous_row.get(col):
                     aligned_row[col] = None
-                    
+
             self._previous_row = {
                 col: row.get(col, None) for col in self._existing_columns
             }
+
+        for col in self._existing_columns:
+            if aligned_row[col] is None:
+                aligned_row[col] = ""
 
         # Write row to CSV
         def _write_row():
