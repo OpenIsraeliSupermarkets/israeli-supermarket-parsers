@@ -65,7 +65,6 @@ async def main():
     # Use ConvertingTask with queue output mode
     converter = ConvertingTask(
         enabled_parsers=enabled_scrapers,
-        limit=1,
         queue_handlers=scraper.consume(),
         output_configuration={
             "output_mode": "queue",
@@ -78,7 +77,7 @@ async def main():
     parsers_queue_handlers = converter.consume()
 
     # Start converting in background, then consume results
-    converter.start(limit=1)
+    converter.start()
 
     # print things as they come in
     await publish_results(parsers_queue_handlers)
