@@ -67,7 +67,6 @@ class ConvertingTask:
             f"parsers = {cfg.enabled_parsers}"
             f"files_types = {cfg.files_types}"
             f"output_folder={cfg.output_folder}"
-            f"limit={cfg.limit}"
             f"when_date={cfg.when_date}"
             f"queue_handlers={'provided' if cfg.queue_handlers else 'None'}"
             f"kafka_config={'provided' if cfg.kafka_config else 'None'}"

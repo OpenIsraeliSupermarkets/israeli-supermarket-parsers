@@ -228,3 +228,18 @@ def test_keshet_promofull():
     )
     assert df.shape[0] > 0
     assert "promotionid" in df.columns.str.lower()
+
+
+def test_nested_xml_dataframe_with_ignore_column():
+    """Test nested XML DataFrame Converter with ignore column."""
+    converter = KeshetFileConverter().promofull_parser
+    df = convert_to_dataframe(
+        converter,
+        TEST_DIR,
+        "PromoFull7290785400000-002-202604250011",
+    )
+    converter.validate_succussful_extraction(
+        df,
+        "il_supermarket_parsers/documents/tests/PromoFull7290785400000-002-202604250011",
+        ignore_missing_columns=["XmlDocVersion", "DllVerNo"],
+    )
