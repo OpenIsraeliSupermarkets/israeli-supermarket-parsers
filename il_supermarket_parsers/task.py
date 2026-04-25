@@ -24,7 +24,6 @@ class ConvertingTaskConfig:
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
     multiprocessing: int = 6
-    limit: Optional[int] = None
     when_date: datetime.datetime = field(default_factory=_default_when_date)
     output_folder: str = "outputs"
     queue_handlers: Optional[Dict[str, Any]] = None
