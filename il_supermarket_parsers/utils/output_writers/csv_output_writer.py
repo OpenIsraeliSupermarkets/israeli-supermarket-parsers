@@ -27,6 +27,19 @@ class CSVOutputWriter(BaseOutputWriter):
             enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
         )
 
+    def _reduce_size(self, data: pd.DataFrame) -> pd.DataFrame:
+        """reduce the size"""
+        if len(data) == 0:
+            return data
+        # Use inplace operations to avoid creating copies
+        data = data.fillna("", inplace=False)
+        # remove duplicate columns - optimize by only processing non-empty columns
+        for col in data.columns:
+            # Only process if column has data
+            if data[col].notna().any():
+                data[col] = data[col].mask(data[col] == data[col].shift())
+        return data
+
     async def initialize(self) -> None:
         """Initialize the output writer"""
         if not self._initialized:

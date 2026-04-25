@@ -13,19 +13,6 @@ from .base import BaseXMLParser
 class XmlDataFrameConverter(BaseXMLParser):
     """parser the xml docuement"""
 
-    def reduce_size(self, data):
-        """reduce the size"""
-        if len(data) == 0:
-            return data
-        # Use inplace operations to avoid creating copies
-        data = data.fillna("", inplace=False)
-        # remove duplicate columns - optimize by only processing non-empty columns
-        for col in data.columns:
-            # Only process if column has data
-            if data[col].notna().any():
-                data[col] = data[col].mask(data[col] == data[col].shift())
-        return data
-
     def _validate_columns_and_counts(self, data, source_file, tag_count):
         """Validate required columns and row count match."""
         if tag_count == 0:
