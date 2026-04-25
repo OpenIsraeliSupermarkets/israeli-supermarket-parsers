@@ -1,13 +1,25 @@
 import abc
-import time
+import multiprocessing
 import queue
-from multiprocessing import Queue, Process, current_process
+import time
+from multiprocessing import Queue, current_process
 from tqdm import tqdm
 from .logger import Logger
 
 
+def _run_job(job_and_kwargs):
+    """Module-level worker function for Pool — must be at module level to be picklable."""
+    job_factory, kwargs = job_and_kwargs
+    try:
+        job_factory().job(**kwargs)
+        return {"status": True}
+    except Exception as error:  # pylint: disable=broad-except
+        Logger.error(f"{current_process().name}: Task failed with {error}")
+        return {"status": False, "error": str(error)}
+
+
 def task(static_job, *arg, **kwarg):
-    """execute the job"""
+    """execute the job (kept for backward compatibility)"""
     return static_job().processes_job(*arg, **kwarg)
 
 
@@ -17,60 +29,12 @@ class MultiProcessor:
     def __init__(self, multiprocessing=6):
         self.multiprocessing = multiprocessing
         self.processes = []
-        self.files_to_process = None
+        self._pool = None
 
-    def start_processes(self, static_job, *arg, **kwargs):
-        """start the number of processers"""
-
-        if self.multiprocessing:
-            for index in range(self.multiprocessing):
-                processor = Process(
-                    name=f"Process {index}",
-                    target=task,
-                    args=tuple([static_job] + list(arg)),
-                    kwargs=kwargs,
-                )
-                self.processes.append(processor)
-
-            for processor in self.processes:
-                processor.start()
-
-            Logger.info(f"Starting process {index}.")
-
-    def wait_to_finish(self, tasks_accomplished, timeout_seconds=60 * 60):
-        """wait until all finish with timeout protection"""
-
-        if self.multiprocessing:
-            Logger.info("Starting waiting to all processes")
-            start_time = time.time()
-
-            while (
-                not tasks_accomplished.full()
-                and (time.time() - start_time) < timeout_seconds
-            ):
-                Logger.info(f"Waiting to all processes {tasks_accomplished.qsize()}")
-
-                # Check if all processes are still alive
-                alive_processes = [p for p in self.processes if p.is_alive()]
-                if not alive_processes:
-                    Logger.warning("All processes finished but queue not full")
-                    break
-
-                time.sleep(10)
-
-            # Check if we timed out
-            if (time.time() - start_time) >= timeout_seconds:
-                Logger.error(
-                    f"wait_to_finish timed out after {timeout_seconds} seconds"
-                )
-                # Terminate remaining processes
-                for process in self.processes:
-                    if process.is_alive():
-                        Logger.warning(f"Terminating process {process.name}")
-                        process.terminate()
-                        process.join(timeout=5)
-
-        Logger.info("Finished waiting to all processes")
+    def terminate(self):
+        """Terminate the worker pool if running."""
+        if self._pool is not None:
+            self._pool.terminate()
 
     @abc.abstractmethod
     def task_to_execute(self):
@@ -95,73 +59,39 @@ class MultiProcessor:
             tasks_to_accomplish.put(raw)
         return tasks_to_accomplish, len(task_can_executed_indepentlly)
 
-    def execute(self, limit=None):  # pylint: disable=too-many-locals,too-many-branches
+    def execute(self, limit=None):
         """execute task"""
-        tasks_to_accomplish, size = self.get_tasks_queue(limit=limit)
+        task_args_list = self.get_arguments_list(limit=limit)
+        size = len(task_args_list)
         results = []
 
         if self.multiprocessing:
-            tasks_accomplished = Queue(maxsize=size)
+            job_factory = self.task_to_execute()
+            pool_args = [(job_factory, kwargs) for kwargs in task_args_list]
 
-            self.start_processes(
-                self.task_to_execute(),
-                tasks_to_accomplish=tasks_to_accomplish,
-                tasks_accomplished=tasks_accomplished,
-            )
-
-            # no more jobs
-            tasks_to_accomplish.close()
-            tasks_to_accomplish.join_thread()
-            #
-            # Expected result count is `size`, not qsize(): the results queue is
-            # empty until workers finish, so qsize() here was always 0 and the
-            # loop exited immediately without collecting any completions.
-            task_to_process = size
-            Logger.info(f"Total Processing... {task_to_process} tasks")
-            with tqdm(
-                total=task_to_process, desc="Total Processing...", file=Logger.get_stream()
-            ) as pbar:
-                start_time = time.time()
-                timeout_seconds = 3600  # 1 hour timeout
-
-                while (not tasks_accomplished.empty() or len(results) < task_to_process) and (
-                    time.time() - start_time
-                ) < timeout_seconds:
-                    try:
-                        output = tasks_accomplished.get(
-                            True, timeout=1
-                        )  # Add 1 second timeout
-                        results.append(output)
+            Logger.info(f"Total Processing... {size} tasks")
+            self._pool = multiprocessing.Pool(processes=self.multiprocessing)
+            try:
+                with tqdm(
+                    total=size,
+                    desc="Total Processing...",
+                    file=Logger.get_stream(),
+                ) as pbar:
+                    for result in self._pool.imap_unordered(_run_job, pool_args):
+                        results.append(result)
                         pbar.update(1)
-                    except queue.Empty as exc:
-                        # Check if all processes are still alive
-                        if tasks_accomplished.empty():
-                            Logger.warning(
-                                "All processes finished but results incomplete"
-                            )
-                            break
-                        alive_processes = [p for p in self.processes if p.is_alive()]
-                        if not alive_processes:
-                            raise RuntimeError(
-                                "All processes finished but results incomplete"
-                            ) from exc
-                        continue
-
-                # Check if we timed out
-                if (time.time() - start_time) >= timeout_seconds:
-                    Logger.error(
-                        f"Processing timed out after {timeout_seconds} seconds"
-                    )
-                    # Terminate remaining processes
-                    for process in self.processes:
-                        if process.is_alive():
-                            Logger.warning(f"Terminating process {process.name}")
-                            process.terminate()
-                            process.join(timeout=5)
+            finally:
+                self._pool.close()
+                self._pool.join()
+                self._pool = None
 
         else:
             internal_task = self.task_to_execute()
-            while tasks_to_accomplish.qsize() > 0:  # or 'while' instead of 'if'
+            tasks_to_accomplish = Queue()
+            for kwargs in task_args_list:
+                tasks_to_accomplish.put(kwargs)
+
+            while tasks_to_accomplish.qsize() > 0:
                 task_kwargs = tasks_to_accomplish.get()
                 try:
                     result = internal_task().job(**task_kwargs)
@@ -171,13 +101,10 @@ class MultiProcessor:
                         {**task_kwargs, "status": False, "error": str(error)}
                     )
 
-        # More flexible assertion with better error handling
         if len(results) != size:
             Logger.warning(
                 f"Expected {size} results but got {len(results)}. Some tasks may have failed."
             )
-
-            # Check for failed tasks
             failed_tasks = [r for r in results if r.get("status") is False]
             if failed_tasks:
                 Logger.error(f"Found {len(failed_tasks)} failed tasks")
@@ -198,7 +125,7 @@ class ProcessJob:
     def processes_job(
         self, tasks_to_accomplish=None, tasks_accomplished=None
     ):  # pylint: disable=too-many-locals,too-many-branches
-        """job to run on process"""
+        """job to run on process (kept for backward compatibility / direct test use)"""
         max_empty_retries = 3
         empty_retry_count = 0
         max_timeout_retries = 5
@@ -213,12 +140,10 @@ class ProcessJob:
                 job_kwargs = tasks_to_accomplish.get(True, timeout=5)
                 Logger.info(f"{current_process().name}: Start processing {job_kwargs}")
 
-                # Reset retry counters on successful get
                 empty_retry_count = 0
                 timeout_retry_count = 0
 
             except queue.Empty:
-                # Check if queue is actually empty or just timing out
                 if tasks_to_accomplish.empty():
                     empty_retry_count += 1
                     Logger.info(
@@ -243,7 +168,6 @@ class ProcessJob:
                         )
                         break
 
-                # Small delay before retrying
                 time.sleep(1)
                 continue
 
@@ -254,7 +178,6 @@ class ProcessJob:
                         f"{current_process().name}: Placing results for {job_kwargs}."
                     )
 
-                    # Add retry logic for putting results
                     put_retry_count = 0
                     max_put_retries = 3
                     while put_retry_count < max_put_retries:
@@ -287,7 +210,6 @@ class ProcessJob:
                 except Exception as error:  # pylint: disable=broad-except
                     Logger.error(f"{current_process().name}: Task failed with {error}")
 
-                    # Try to put error result
                     try:
                         tasks_accomplished.put(
                             {**job_kwargs, "status": False, "error": str(error)},

@@ -1,7 +1,7 @@
 import datetime
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import pytz
 
@@ -31,17 +31,6 @@ class ConvertingTaskConfig:
     kafka_config: Optional[Dict[str, Any]] = None
     status_configuration: Optional[Dict[str, Any]] = None
     output_configuration: Optional[Dict[str, Any]] = None
-
-
-class OutputQueueResult:
-    """Returned by ConvertingTask.consume() – holds the consumer-side queue handle."""
-
-    def __init__(self, queue_handler: ParsedRowsQueue):
-        self.queue_handler = queue_handler
-
-    def get_queue(self) -> ParsedRowsQueue:
-        """Return the underlying queue handle."""
-        return self.queue_handler
 
 
 class ConvertingTask:
@@ -119,14 +108,14 @@ class ConvertingTask:
             multiprocessing=cfg.multiprocessing,
         )
 
-    def consume(self) -> Dict[str, OutputQueueResult]:
-        """Return a dict mapping parser names to OutputQueueResult objects.
+    def consume(self) -> Dict[Tuple[str, str], ParsedRowsQueue]:
+        """Return a dict mapping (parser, file_type) tuples to ParsedRowsQueue handles.
 
         Call before start() so queue handles are ready for consumers.
         Only returns entries when output_configuration was set to queue mode.
         """
         return {
-            name: OutputQueueResult(queue_handler=ParsedRowsQueue(q))
+            name: ParsedRowsQueue(q)
             for name, q in self._output_queues.items()
         }
 
@@ -171,9 +160,5 @@ class ConvertingTask:
         raise RuntimeError("Parsing is not running")
 
     def stop(self) -> None:
-        """Terminate worker processes and stop the parsing task."""
-        for process in self.runner.processes:
-            if process.is_alive():
-                Logger.warning(f"Terminating process {process.name}")
-                process.terminate()
-                process.join(timeout=5)
+        """Terminate the worker pool and stop the parsing task."""
+        self.runner.terminate()

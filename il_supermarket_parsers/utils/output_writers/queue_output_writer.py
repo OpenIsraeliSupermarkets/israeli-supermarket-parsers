@@ -32,6 +32,10 @@ class ParsedRowsQueue:
         """Put an item (e.g. end sentinel) onto the underlying queue."""
         self._queue.put(item)
 
+    def get_all_messages(self):
+        """Iterate parsed rows until the None end-of-stream sentinel."""
+        return iter(self._queue.get, None)
+
 
 def create_output_queue():
     """Create a new process-safe queue for parsed row output."""

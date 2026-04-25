@@ -9,7 +9,7 @@ Logger.set_logging_level("INFO")
 
 
 def _consume_parser_queue(scraper, file_type, queue_handler):
-    for result in iter(queue_handler.get_queue().get, None):
+    for result in queue_handler.get_all_messages():
         print(f"Publishing results for {scraper} / {file_type}")
         print("Record published: ", result)
 
