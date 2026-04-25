@@ -172,6 +172,7 @@ class ParserStatus:
     def on_parsing_completed(
         self,
         enabled_scraper: str,
+        enabled_file_types: List[str],
         had_errors: bool,
         output_path: Optional[str],
         total_files: int,
@@ -180,6 +181,7 @@ class ParserStatus:
         event = CompletedParsingStatus(
             when=_now(),
             store_name=enabled_scraper,
+            files_types=enabled_file_types,
             had_errors=had_errors,
             output_path=output_path,
             total_files=total_files,

@@ -30,6 +30,7 @@ class CompletedParsingStatus(BaseModel):
     status: str = "completed"
     when: Optional[datetime] = None
     store_name: Optional[str] = None
+    files_types: Optional[List[str]] = None
     had_errors: bool = False
     output_path: Optional[str] = None
     total_files: int = 0

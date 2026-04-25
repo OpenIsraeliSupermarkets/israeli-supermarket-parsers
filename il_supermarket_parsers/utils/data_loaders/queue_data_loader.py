@@ -49,19 +49,32 @@ class QueueDataLoader(BaseDataLoader):
             Logger.debug(f"Consuming files from {scraper_name} queue")
 
             try:
+                already_rejected = set()
                 async for msg in queue_handler.queue_handler.get_all_messages():
                     file_name = msg["file_name"]
                     file_content = msg["file_content"]
                     file_link = msg.get("file_link", "")
                     metadata = msg.get("metadata", {})
 
-                    dump_file = create_dumpfile_from_queue_message(
+                    dump_file: DumpFile = create_dumpfile_from_queue_message(
                         file_name=file_name,
                         file_content=file_content,
                         file_link=file_link,
                         metadata=metadata,
                         empty_store_id=self.empty_store_id,
                     )
+
+                    if files_types and dump_file.detected_filetype.name not in files_types:
+                        if file_name in already_rejected:
+                            Logger.warning(
+                                f"File {file_name} was already put back once and returned to this consumer — "
+                                f"no other consumer is handling type {dump_file.detected_filetype}. Skipping."
+                            )
+                            continue
+                        Logger.debug(f"Skipping file {file_name} (type {dump_file.detected_filetype} not in {files_types}), putting back for another consumer")
+                        already_rejected.add(file_name)
+                        await queue_handler.queue_handler.send(msg)
+                        continue
 
                     Logger.debug(
                         f"Yielding dump file: {dump_file.file_name} from {scraper_name} queue"
@@ -77,4 +90,4 @@ class QueueDataLoader(BaseDataLoader):
                 Logger.error(f"Error consuming from {scraper_name} queue: {e}")
                 raise
 
-        Logger.info(f"Finished consuming {count} files from queues")
+        Logger.info(f"Finished consuming {store_names} with {files_types} {count} files from queues")

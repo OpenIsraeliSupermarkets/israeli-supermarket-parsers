@@ -9,10 +9,19 @@ Logger.set_logging_level("INFO")
 
 
 def _consume_parser_queue(scraper, file_type, queue_handler):
+    count = 0
     for result in queue_handler.get_all_messages():
         print(f"Publishing results for {scraper} / {file_type}")
         print("Record published: ", result)
-
+        
+        if "total_expected_records" in result:
+            if result["total_expected_records"] == count:
+                break
+            else:
+                print(f"Expected {result['total_expected_records']} records, but got {count}")
+                break
+        count += 1
+    print(f"Finished consuming {count} records from {scraper} / {file_type}")
 
 async def publish_results(parsers_queue_handlers):
     """Publish results to Kafka, each (scraper, file_type) in its own thread."""

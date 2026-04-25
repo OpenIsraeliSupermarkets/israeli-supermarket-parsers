@@ -112,6 +112,7 @@ class RawParsingPipeline:
 
         self.parser_status.on_parsing_completed(
             enabled_scraper=enabled_scraper,
+            enabled_file_types=enabled_file_types,
             had_errors=execution_errors > 0,
             output_path=self.output_writer.get_path(),
             total_files=len(files_to_process),
