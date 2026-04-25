@@ -129,7 +129,7 @@ class CSVOutputWriter(BaseOutputWriter):
         # Align row to match existing schema (add None for missing columns)
         aligned_row = {}
         for col in self._existing_columns:
-            aligned_row[col] = row.get(col, None)
+            aligned_row[col] = row.get(col, "")
 
         if self._reduce_duplicates:
             for col in self._existing_columns:
@@ -140,10 +140,6 @@ class CSVOutputWriter(BaseOutputWriter):
             self._previous_row = {
                 col: row.get(col, None) for col in self._existing_columns
             }
-
-        for col in self._existing_columns:
-            if aligned_row[col] is None:
-                aligned_row[col] = ""
 
         # Write row to CSV
         def _write_row():
