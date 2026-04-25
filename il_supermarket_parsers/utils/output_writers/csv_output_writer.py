@@ -11,7 +11,11 @@ class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
     def __init__(
-        self, output_folder: str, enabled_scraper: str, enabled_file_type: str
+        self,
+        output_folder: str,
+        enabled_scraper: str,
+        enabled_file_type: str,
+        reduce_duplicates: bool = True,
     ):
         """
         Initialize CSV output writer
@@ -22,6 +26,7 @@ class CSVOutputWriter(BaseOutputWriter):
         self._existing_columns: List[str] = []
         self._header_written = False
         self._initialized = False
+        self._reduce_duplicates = reduce_duplicates
         self._previous_row: dict = {}
         self.output_path = os.path.join(
             output_folder,
@@ -134,12 +139,12 @@ class CSVOutputWriter(BaseOutputWriter):
         for col in self._existing_columns:
             aligned_row[col] = row.get(col, None)
 
-        # Mask values that are identical to the previous row (same as _reduce_size)
-        for col in self._existing_columns:
-            val = aligned_row[col]
-            if val is not None and val != "" and val == self._previous_row.get(col):
-                aligned_row[col] = None
-        self._previous_row = {col: row.get(col, None) for col in self._existing_columns}
+        if self._reduce_duplicates:
+            for col in self._existing_columns:
+                val = aligned_row[col]
+                if val is not None and val != "" and val == self._previous_row.get(col):
+                    aligned_row[col] = None
+            self._previous_row = {col: row.get(col, None) for col in self._existing_columns}
 
         # Write row to CSV
         def _write_row():
