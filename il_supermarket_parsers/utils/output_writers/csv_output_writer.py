@@ -25,6 +25,7 @@ class CSVOutputWriter(BaseOutputWriter):
             output_path: Path to the CSV file
         """
         self._existing_columns: List[str] = []
+        self._missing_columns: List[str] = []
         self._header_written = False
         self._initialized = False
         self._reduce_duplicates = reduce_duplicates
@@ -103,12 +104,12 @@ class CSVOutputWriter(BaseOutputWriter):
                 f"Creating new file {self.output_path} with columns {self._existing_columns}"
             )
         else:
-            missing_columns = set(row_columns) - set(self._existing_columns)
-            if missing_columns:
+            self._missing_columns = set(row_columns) - set(self._existing_columns)
+            if self._missing_columns:
                 Logger.debug(
-                    f"Appending missing columns {missing_columns} to {self.output_path}"
+                    f"Appending missing columns {self._missing_columns} to {self.output_path}"
                 )
-                await self._append_columns_to_csv(list(missing_columns))
+                await self._append_columns_to_csv(list(self._missing_columns))
                 self._existing_columns = await asyncio.to_thread(
                     self.get_existing_columns
                 )
@@ -134,7 +135,7 @@ class CSVOutputWriter(BaseOutputWriter):
         if self._reduce_duplicates:
             for col in self._existing_columns:
                 val = aligned_row[col]
-                if val is not None and val == self._previous_row.get(col):
+                if val is not None and val != "" and val == self._previous_row.get(col):
                     aligned_row[col] = None
 
             self._previous_row = {
