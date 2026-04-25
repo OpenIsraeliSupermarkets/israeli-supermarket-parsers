@@ -7,6 +7,7 @@ from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
 from ..loading_utils import DumpFile
 
+
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
@@ -36,7 +37,6 @@ class CSVOutputWriter(BaseOutputWriter):
     async def initialize_new_file(self, file: DumpFile) -> None:
         """Initialize the output writer for a new file"""
         self._previous_row = {}
-   
 
     async def initialize(self) -> None:
         """Initialize the output writer"""
@@ -136,7 +136,9 @@ class CSVOutputWriter(BaseOutputWriter):
                 val = aligned_row[col]
                 if val is not None and val == self._previous_row.get(col):
                     aligned_row[col] = None
-            self._previous_row = {col: row.get(col, None) for col in self._existing_columns}
+            self._previous_row = {
+                col: row.get(col, None) for col in self._existing_columns
+            }
 
         # Write row to CSV
         def _write_row():

@@ -134,7 +134,9 @@ class BaseFileConverter(ABC):
         parser: XmlBaseConverter = self._get_parser(dump_file)
 
         # Get source file path
-        assert not dump_file.is_queue_based, "Validation not supported for queue-based files"
+        assert (
+            not dump_file.is_queue_based
+        ), "Validation not supported for queue-based files"
 
         source_file = dump_file.get_full_path
         if not os.path.exists(source_file):

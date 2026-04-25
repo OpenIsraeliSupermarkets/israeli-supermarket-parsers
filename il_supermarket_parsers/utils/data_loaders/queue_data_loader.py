@@ -64,14 +64,19 @@ class QueueDataLoader(BaseDataLoader):
                         empty_store_id=self.empty_store_id,
                     )
 
-                    if files_types and dump_file.detected_filetype.name not in files_types:
+                    if (
+                        files_types
+                        and dump_file.detected_filetype.name not in files_types
+                    ):
                         if file_name in already_rejected:
                             Logger.warning(
                                 f"File {file_name} was already put back once and returned to this consumer — "
                                 f"no other consumer is handling type {dump_file.detected_filetype}. Skipping."
                             )
                             continue
-                        Logger.debug(f"Skipping file {file_name} (type {dump_file.detected_filetype} not in {files_types}), putting back for another consumer")
+                        Logger.debug(
+                            f"Skipping file {file_name} (type {dump_file.detected_filetype} not in {files_types}), putting back for another consumer"
+                        )
                         already_rejected.add(file_name)
                         await queue_handler.queue_handler.send(msg)
                         continue
@@ -89,10 +94,14 @@ class QueueDataLoader(BaseDataLoader):
                 # The sentinel (None) was consumed by this process. Re-publish it so
                 # other concurrent consumers of the same queue can also terminate.
                 await queue_handler.queue_handler.close()
-                Logger.debug(f"Re-published end-of-stream sentinel for {scraper_name} queue")
+                Logger.debug(
+                    f"Re-published end-of-stream sentinel for {scraper_name} queue"
+                )
 
             except Exception as e:
                 Logger.error(f"Error consuming from {scraper_name} queue: {e}")
                 raise
 
-        Logger.info(f"Finished consuming {store_names} with {files_types} {count} files from queues")
+        Logger.info(
+            f"Finished consuming {store_names} with {files_types} {count} files from queues"
+        )

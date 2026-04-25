@@ -112,10 +112,7 @@ class ConvertingTask:
         Call before start() so queue handles are ready for consumers.
         Only returns entries when output_configuration was set to queue mode.
         """
-        return {
-            name: ParsedRowsQueue(q)
-            for name, q in self._output_queues.items()
-        }
+        return {name: ParsedRowsQueue(q) for name, q in self._output_queues.items()}
 
     def start(self, limit: Optional[int] = None) -> threading.Thread:
         """Start the parsing task in a new background thread.

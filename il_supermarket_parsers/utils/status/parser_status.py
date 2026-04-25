@@ -228,7 +228,11 @@ def create_parser_status(
     if db_type == "mongo":
         connection_url = status_configuration.get("connection_url", "localhost")
         collection_name = status_configuration.get("collection_name", "scraper_status")
-        db = MongoDataBase(database_name, connection_url=connection_url, collection_name=collection_name)
+        db = MongoDataBase(
+            database_name,
+            connection_url=connection_url,
+            collection_name=collection_name,
+        )
         db.create_connection()
         return ParserStatus(database_name, status_database=db)
 

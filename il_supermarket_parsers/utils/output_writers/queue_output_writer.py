@@ -5,6 +5,7 @@ from .base_output_writer import BaseOutputWriter
 from ..types import FileCompleteMessage
 from ..loading_utils import DumpFile
 
+
 class _QueueManagerHolder:
     """Lazily create one shared ``multiprocessing.Manager()`` for queue output."""
 
@@ -51,7 +52,6 @@ class QueueOutputWriter(BaseOutputWriter):
     async def write_row(self, row: dict) -> None:
         self._queue.put(row)
 
-    
     async def write_file_complete(self, message: FileCompleteMessage) -> None:
         self._queue.put(message.model_dump())
 

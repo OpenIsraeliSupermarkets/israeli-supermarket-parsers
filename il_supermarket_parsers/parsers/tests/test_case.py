@@ -9,7 +9,9 @@ import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
-from il_supermarket_parsers.utils.output_writers.csv_output_writer import CSVOutputWriter
+from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
+    CSVOutputWriter,
+)
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 

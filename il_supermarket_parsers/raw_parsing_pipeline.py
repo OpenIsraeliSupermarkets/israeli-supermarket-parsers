@@ -72,7 +72,7 @@ class RawParsingPipeline:
                 parser: BaseFileConverter = parser_class()
 
                 await self.output_writer.initialize_new_file(file)
-                
+
                 async for row in parser.read(file):
                     try:
                         await self.output_writer.write_row(row)

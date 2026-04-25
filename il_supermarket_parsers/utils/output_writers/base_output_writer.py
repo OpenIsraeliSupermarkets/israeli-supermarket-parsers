@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from ..types import FileCompleteMessage
     from ..loading_utils import DumpFile
 
+
 class BaseOutputWriter(ABC):
     """Abstract base class for output writers"""
 
@@ -37,6 +38,7 @@ class BaseOutputWriter(ABC):
             file: File object
         """
         raise NotImplementedError
+
     @abstractmethod
     def exists(self) -> bool:
         """
