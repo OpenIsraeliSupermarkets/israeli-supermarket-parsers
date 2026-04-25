@@ -8,6 +8,7 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
 )
 import pandas as pd
+import numpy as np
 
 
 class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
@@ -99,7 +100,9 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": 1, "b": 2})
-        self.assertEqual(rows[1], {"a": 1, "b": ""})
+
+        self.assertTrue(pd.isna(rows[1]["a"]))
+        self.assertEqual(rows[1]["b"], "")
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
         writer = self._new_writer(reduce_duplicates=True)
@@ -108,7 +111,9 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": 1, "b": 2})
-        self.assertEqual(rows[1], {"a": None, "b": 3})
+        # NaN != NaN in Python; assert the repeated value was elided in CSV (empty → NaN)
+        self.assertTrue(pd.isna(rows[1]["a"]))
+        self.assertEqual(rows[1]["b"], 3)
 
         rows = self._read_data_rows(ffill=True)
         self.assertEqual(len(rows), 2)
