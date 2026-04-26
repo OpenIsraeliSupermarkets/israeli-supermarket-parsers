@@ -11,6 +11,8 @@ from ..loading_utils import DumpFile
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
+    EMPTY_STRING = ""
+
     def __init__(
         self,
         output_folder: str,
@@ -90,7 +92,7 @@ class CSVOutputWriter(BaseOutputWriter):
 
                 # Add data row-by-row
                 for row in reader:
-                    writer.writerow(row + [""] * len(new_columns))
+                    writer.writerow(row + [self.EMPTY_STRING] * len(new_columns))
             os.remove(self.output_path)
             os.rename(output_file, self.output_path)
 
@@ -113,6 +115,9 @@ class CSVOutputWriter(BaseOutputWriter):
                 self._existing_columns = await asyncio.to_thread(
                     self.get_existing_columns
                 )
+                if self._previous_row:
+                    for col in self._missing_columns:
+                        self._previous_row[col] = self.EMPTY_STRING
 
     async def write_row(self, row: dict) -> None:
         """
@@ -130,12 +135,12 @@ class CSVOutputWriter(BaseOutputWriter):
         # Align row to match existing schema (add None for missing columns)
         aligned_row = {}
         for col in self._existing_columns:
-            aligned_row[col] = row.get(col, "")
+            aligned_row[col] = row.get(col, self.EMPTY_STRING)
 
         if self._reduce_duplicates:
             for col in self._existing_columns:
                 val = aligned_row[col]
-                if val is not None and val != "" and val == self._previous_row.get(col):
+                if val is not None and val != self.EMPTY_STRING and val == self._previous_row.get(col):
                     aligned_row[col] = None
 
             self._previous_row = {

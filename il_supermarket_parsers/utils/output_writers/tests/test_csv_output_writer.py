@@ -8,7 +8,6 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
 )
 import pandas as pd
-import numpy as np
 
 
 class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
