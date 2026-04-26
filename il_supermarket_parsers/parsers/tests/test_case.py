@@ -49,7 +49,7 @@ async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
                     output_folder=file_tmp_dir,
                     enabled_scraper=file.extracted_chain_id,
                     enabled_file_type=file.detected_filetype.name,
-                    reduce_duplicates=True,
+                    reduce_duplicates=False, # Since 'run_validation' count tags, we don't want to reduce duplicates
                 )
                 await writer.initialize()
 
@@ -60,7 +60,7 @@ async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
 
                 # load the data from the writer
                 if writer.exists():
-                    df = pd.read_csv(writer.get_path(), dtype=str).ffill()
+                    df = pd.read_csv(writer.get_path(), dtype=str)
                 else:
                     df = pd.DataFrame()
 
