@@ -14,7 +14,7 @@ class SampleDataOptions:
 
     filter_type: Optional[Any] = None
     enabled_scrapers: Optional[List[str]] = None
-    limit: int = 3
+    limit: int = None
     queue_handlers: Optional[Dict[str, Any]] = None
     kafka_config: Optional[Dict[str, Any]] = None
     use_streaming: bool = False
