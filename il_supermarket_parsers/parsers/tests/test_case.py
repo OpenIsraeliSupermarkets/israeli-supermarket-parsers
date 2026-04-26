@@ -60,12 +60,12 @@ async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
 
                 # load the data from the writer
                 if writer.exists():
-                    df = pd.read_csv(writer.get_path())
+                    df = pd.read_csv(writer.get_path(), dtype=str).ffill()
                 else:
                     df = pd.DataFrame()
 
             # Run validation against the created DataFrame
-            parser.run_validation(df.ffill(), file)
+            parser.run_validation(df, file)
 
             if file.is_expected_to_have_records:
                 assert df.shape[0] > 0, f"File {file.file_name} is empty"
