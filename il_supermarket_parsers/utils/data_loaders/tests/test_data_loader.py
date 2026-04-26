@@ -1,3 +1,5 @@
+"""Unit tests for filesystem DataLoader."""
+
 import os
 import tempfile
 import unittest
@@ -19,7 +21,9 @@ def _make_store_dir(root: str, store_folder_name: str = STORE_FOLDER_NAME) -> st
 
 
 def _touch(folder: str, filename: str) -> None:
-    open(os.path.join(folder, filename), "w").close()
+    path = os.path.join(folder, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("")
 
 
 async def _collect(loader: DataLoader, **kwargs) -> list:
@@ -33,7 +37,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
     """DataLoader reads real files from a temporary directory."""
 
     def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.root = self._tmp.name
         self.store_dir = _make_store_dir(self.root)
 
@@ -41,6 +45,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         self._tmp.cleanup()
 
     async def test_returns_xml_files(self) -> None:
+        """Test that the DataLoader returns XML files."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         loader = DataLoader(self.root)
         results = await _collect(loader)
@@ -50,6 +55,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_skips_non_xml_files(self) -> None:
+        """Test that the DataLoader skips non-XML files."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         _touch(self.store_dir, "readme.txt")
         _touch(self.store_dir, "data.csv")
@@ -65,11 +71,13 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(results), 0)
 
     async def test_empty_directory_returns_nothing(self) -> None:
+        """Test that the DataLoader returns nothing if the directory is empty."""
         loader = DataLoader(self.root)
         results = await _collect(loader)
         self.assertEqual(results, [])
 
     async def test_results_sorted_by_date(self) -> None:
+        """Test that the DataLoader returns files sorted by date."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250103.xml")
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         _touch(self.store_dir, "PriceFull7290000000000-001-20250102.xml")
@@ -79,6 +87,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(dates, sorted(dates))
 
     async def test_detects_file_type(self) -> None:
+        """Test that the DataLoader detects the file type."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         _touch(self.store_dir, "Promo7290000000000-001-20250101.xml")
         loader = DataLoader(self.root)
@@ -88,6 +97,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         self.assertIn("PROMO_FILE", detected)
 
     async def test_detects_store_folder(self) -> None:
+        """Test that the DataLoader detects the store folder."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         loader = DataLoader(self.root)
         results = await _collect(loader)
@@ -98,7 +108,7 @@ class TestDataLoaderLimit(unittest.IsolatedAsyncioTestCase):
     """DataLoader respects the ``limit`` parameter."""
 
     def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.root = self._tmp.name
         self.store_dir = _make_store_dir(self.root)
         for day in range(1, 6):
@@ -111,11 +121,13 @@ class TestDataLoaderLimit(unittest.IsolatedAsyncioTestCase):
         self._tmp.cleanup()
 
     async def test_limit_respected(self) -> None:
+        """Test that the DataLoader respects the limit parameter."""
         loader = DataLoader(self.root)
         results = await _collect(loader, limit=2)
         self.assertEqual(len(results), 2)
 
     async def test_no_limit_returns_all(self) -> None:
+        """Test that the DataLoader returns all files if no limit is specified."""
         loader = DataLoader(self.root)
         results = await _collect(loader)
         self.assertEqual(len(results), 5)
@@ -125,7 +137,7 @@ class TestDataLoaderStoreFilter(unittest.IsolatedAsyncioTestCase):
     """DataLoader respects the ``enabled_scraper`` parameter."""
 
     def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.root = self._tmp.name
         self.store_a_dir = _make_store_dir(self.root, DumpFolderNames.BAREKET.value)
         self.store_b_dir = _make_store_dir(self.root, DumpFolderNames.COFIX.value)
@@ -136,12 +148,14 @@ class TestDataLoaderStoreFilter(unittest.IsolatedAsyncioTestCase):
         self._tmp.cleanup()
 
     async def test_filter_by_store_name(self) -> None:
+        """Test that the DataLoader filters by store name."""
         loader = DataLoader(self.root)
         results = await _collect(loader, enabled_scraper=["BAREKET"])
         self.assertEqual(len(results), 1)
         self.assertTrue(results[0].store_folder.endswith(DumpFolderNames.BAREKET.value))
 
     async def test_no_filter_returns_all_stores(self) -> None:
+        """Test that the DataLoader returns all stores if no filter is specified."""
         loader = DataLoader(self.root)
         results = await _collect(loader)
         self.assertEqual(len(results), 2)
@@ -151,7 +165,7 @@ class TestDataLoaderFileTypeFilter(unittest.IsolatedAsyncioTestCase):
     """DataLoader respects the ``files_types`` parameter."""
 
     def setUp(self) -> None:
-        self._tmp = tempfile.TemporaryDirectory()
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.root = self._tmp.name
         self.store_dir = _make_store_dir(self.root)
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
@@ -162,17 +176,20 @@ class TestDataLoaderFileTypeFilter(unittest.IsolatedAsyncioTestCase):
         self._tmp.cleanup()
 
     async def test_filter_single_type(self) -> None:
+        """Test that the DataLoader filters by single file type."""
         loader = DataLoader(self.root)
         results = await _collect(loader, files_types=["PROMO_FILE"])
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].detected_filetype, FileTypesFilters.PROMO_FILE)
 
     async def test_filter_multiple_types(self) -> None:
+        """Test that the DataLoader filters by multiple file types."""
         loader = DataLoader(self.root)
         results = await _collect(loader, files_types=["PROMO_FILE", "PRICE_FULL_FILE"])
         self.assertEqual(len(results), 2)
 
     async def test_no_filter_returns_all_types(self) -> None:
+        """Test that the DataLoader returns all files if no filter is specified."""
         loader = DataLoader(self.root)
         results = await _collect(loader)
         self.assertEqual(len(results), 3)

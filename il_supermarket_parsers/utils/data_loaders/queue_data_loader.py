@@ -70,12 +70,18 @@ class QueueDataLoader(BaseDataLoader):
                     ):
                         if file_name in already_rejected:
                             Logger.warning(
-                                f"File {file_name} was already put back once and returned to this consumer — "
-                                f"no other consumer is handling type {dump_file.detected_filetype}. Skipping."
+                                "File %s was already put back once and returned to this "
+                                "consumer — no other consumer is handling type %s. Skipping.",
+                                file_name,
+                                dump_file.detected_filetype,
                             )
                             continue
                         Logger.debug(
-                            f"Skipping file {file_name} (type {dump_file.detected_filetype} not in {files_types}), putting back for another consumer"
+                            "Skipping file %s (type %s not in %s), "
+                            "putting back for another consumer",
+                            file_name,
+                            dump_file.detected_filetype,
+                            files_types,
                         )
                         already_rejected.add(file_name)
                         await queue_handler.queue_handler.send(msg)

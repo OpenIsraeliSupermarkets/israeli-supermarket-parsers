@@ -1,22 +1,29 @@
+"""Unit tests for CSVOutputWriter."""
+
+# pylint: disable=missing-function-docstring,protected-access
+
+from __future__ import annotations
+
 import csv
 import os
 import tempfile
 import unittest
 
-from pandas._libs.lib import infer_dtype
+import pandas as pd
+
 from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
 )
-import pandas as pd
 
 
 class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
     """Integration tests for CSVOutputWriter (real files, no mocks)."""
 
     def setUp(self) -> None:
+        # Closed in tearDown; not using context manager to keep path on self.
         self._tmpdir = (
-            tempfile.TemporaryDirectory()
-        )  # pylint: disable=consider-using-with
+            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        )
         self._output_folder = self._tmpdir.name
 
     def tearDown(self) -> None:
@@ -34,20 +41,23 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         return os.path.join(self._output_folder, "pricefull_shufersal.csv")
 
     def _read_data_rows(self, ffill=False) -> list[dict[str, str | None]]:
+        """Read data rows from the CSV file."""
         df = pd.read_csv(self._csv_path(), dtype=str)
         if ffill:
             df = df.ffill()
         return df.to_dict(orient="records")
 
     async def test_initialize_sets_initialized_flag(self) -> None:
+        """Test that the initialized flag is set correctly."""
         writer = self._new_writer()
-        self.assertFalse(writer._initialized)  # pylint: disable=protected-access
-        self.assertFalse(writer._header_written)  # pylint: disable=protected-access
+        self.assertFalse(writer._initialized)
+        self.assertFalse(writer._header_written)
         await writer.initialize()
-        self.assertTrue(writer._initialized)  # pylint: disable=protected-access
-        self.assertFalse(writer._header_written)  # pylint: disable=protected-access
+        self.assertTrue(writer._initialized)
+        self.assertFalse(writer._header_written)
 
     async def test_initialize_reads_existing_file_columns(self) -> None:
+        """Test that existing file columns are read correctly."""
         with open(self._csv_path(), "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["x", "y", "z"])
@@ -56,15 +66,15 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.initialize()
         self.assertEqual(
             writer._existing_columns,
-            ["x", "y", "z"],  # pylint: disable=protected-access
+            ["x", "y", "z"],
         )
-        self.assertTrue(writer._header_written)  # pylint: disable=protected-access
+        self.assertTrue(writer._header_written)
 
     async def test_initialize_is_idempotent(self) -> None:
         writer = self._new_writer()
         await writer.initialize()
         await writer.initialize()
-        self.assertTrue(writer._initialized)  # pylint: disable=protected-access
+        self.assertTrue(writer._initialized)
 
     async def test_write_row_content(self) -> None:
         writer = self._new_writer()
@@ -74,6 +84,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[0], {"name": "foo", "value": "42"})
 
     async def test_write_multiple_rows_same_schema(self) -> None:
+        """Test that multiple rows with the same schema are written correctly."""
         writer = self._new_writer()
         for i in range(3):
             await writer.write_row({"id": i, "k": f"v{i}"})
@@ -84,6 +95,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[2], {"id": "2", "k": "v2"})
 
     async def test_schema_evolution_adds_new_column(self) -> None:
+        """Test that a new column is added when it is not present in a row."""
         writer = self._new_writer()
         await writer.write_row({"a": 1})
         await writer.write_row({"a": 2, "b": 3})
@@ -93,6 +105,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[1], {"a": "2", "b": "3"})
 
     async def test_schema_evolution_removes_column(self) -> None:
+        """Test that a column is removed when it is not present in a row."""
         writer = self._new_writer()
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1})
@@ -104,6 +117,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[1]["b"], "''")
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
+        """Test that repeated values are nullified when reduce_duplicates is True."""
         writer = self._new_writer(reduce_duplicates=True)
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
@@ -120,6 +134,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[1], {"a": "1", "b": "3"})
 
     async def test_no_reduce_duplicates_preserves_all_values(self) -> None:
+        """Test that deduplication is not performed when reduce_duplicates is False."""
         writer = self._new_writer(reduce_duplicates=False)
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
@@ -129,6 +144,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[1], {"a": "1", "b": "3"})
 
     async def test_no_dedup_across_files(self) -> None:
+        """Test that deduplication is not carried across files."""
         writer = self._new_writer(reduce_duplicates=True)
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
         await writer.write_row({"a": 1, "b": 2})

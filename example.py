@@ -17,11 +17,10 @@ def _consume_parser_queue(scraper, file_type, queue_handler):
         if "total_expected_records" in result:
             if result["total_expected_records"] == count:
                 break
-            else:
-                print(
-                    f"Expected {result['total_expected_records']} records, but got {count}"
-                )
-                break
+            print(
+                f"Expected {result['total_expected_records']} records, but got {count}"
+            )
+            break
         count += 1
     print(f"Finished consuming {count} records from {scraper} / {file_type}")
 

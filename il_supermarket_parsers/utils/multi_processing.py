@@ -26,7 +26,7 @@ def task(static_job, *arg, **kwarg):
 class MultiProcessor:
     """multi processing"""
 
-    def __init__(self, multiprocessing=6):
+    def __init__(self, multiprocessing=6):  # pylint: disable=redefined-outer-name
         self.multiprocessing = multiprocessing
         self.processes = []
         self._pool = None
@@ -70,7 +70,10 @@ class MultiProcessor:
             pool_args = [(job_factory, kwargs) for kwargs in task_args_list]
 
             Logger.info(f"Total Processing... {size} tasks")
-            self._pool = multiprocessing.Pool(processes=self.multiprocessing)
+            # Pool lifecycle is managed in try/finally (close/join) below.
+            self._pool = multiprocessing.Pool(  # pylint: disable=consider-using-with
+                processes=self.multiprocessing
+            )
             try:
                 with tqdm(
                     total=size,

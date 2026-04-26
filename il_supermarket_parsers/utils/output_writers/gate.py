@@ -18,7 +18,6 @@ def get_output_writer(
     if kafka_config:
         return KafkaOutputWriter(
             bootstrap_servers=kafka_config["bootstrap_servers"],
-            key_columns=kafka_config.get("key_columns"),
             enabled_scraper=parser_name,
             enabled_file_type=file_type,
             topic_template=kafka_config.get(

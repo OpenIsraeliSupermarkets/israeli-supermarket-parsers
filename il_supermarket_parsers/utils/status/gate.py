@@ -1,6 +1,5 @@
 from typing import Optional
 from il_supermarket_scarper.utils.databases import JsonDataBase, MongoDataBase
-from il_supermarket_scarper.utils.databases.base import AbstractDataBase
 from .parser_status import ParserStatus
 
 

@@ -13,7 +13,6 @@ import os
 from datetime import datetime
 from typing import List, Optional
 
-from il_supermarket_scarper.utils.databases import JsonDataBase, MongoDataBase
 from il_supermarket_scarper.utils.databases.base import AbstractDataBase
 
 from ..loading_utils import DumpFile
@@ -190,8 +189,12 @@ class ParserStatus:
         )
         self.database.insert_document("global_status", event.dict())
         Logger.info(
-            f"Parser status saved: store={enabled_scraper}, enabled_file_types={enabled_file_types} "
-            f"files={total_files}, errors={had_errors}"
+            "Parser status saved: store=%s, enabled_file_types=%s "
+            "files=%s, errors=%s",
+            enabled_scraper,
+            enabled_file_types,
+            total_files,
+            had_errors,
         )
 
     def get_file_logs(self) -> List[FileExecutionLog]:
