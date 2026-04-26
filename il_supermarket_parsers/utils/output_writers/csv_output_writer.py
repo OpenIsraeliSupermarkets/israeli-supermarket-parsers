@@ -140,7 +140,11 @@ class CSVOutputWriter(BaseOutputWriter):
         if self._reduce_duplicates:
             for col in self._existing_columns:
                 val = aligned_row[col]
-                if val is not None and val != self.EMPTY_STRING and val == self._previous_row.get(col):
+                if (
+                    val is not None
+                    and val != self.EMPTY_STRING
+                    and val == self._previous_row.get(col)
+                ):
                     aligned_row[col] = None
 
             self._previous_row = {

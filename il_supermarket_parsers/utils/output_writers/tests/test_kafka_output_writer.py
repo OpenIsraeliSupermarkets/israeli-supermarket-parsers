@@ -95,7 +95,9 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
     # ------------------------------------------------------------------
 
     def test_get_path_includes_broker_and_topic(self) -> None:
-        self.assertEqual(self._writer.get_path(), "kafka://host:9092/shufersal_pricefull")
+        self.assertEqual(
+            self._writer.get_path(), "kafka://host:9092/shufersal_pricefull"
+        )
 
     def test_exists_false_when_no_columns(self) -> None:
         self.assertFalse(self._writer.exists())
@@ -119,8 +121,9 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
         await self._writer.write_row({"a": 1})
         self._mock_producer.send.assert_called_once()
         call_kwargs = self._mock_producer.send.call_args
-        self.assertEqual(call_kwargs.kwargs.get("value") or call_kwargs[1].get("value"), {"a": 1})
-
+        self.assertEqual(
+            call_kwargs.kwargs.get("value") or call_kwargs[1].get("value"), {"a": 1}
+        )
 
     async def test_write_row_schema_alignment(self) -> None:
         await self._writer.write_row({"a": 1})
@@ -141,7 +144,6 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_value["a"], 2)
         self.assertEqual(second_value["b"], 3)
 
-
     async def test_write_row_schema_alignment_with_missing_columns(self) -> None:
         await self._writer.write_row({"a": 2, "b": 3})
         await self._writer.write_row({"a": 1})
@@ -149,18 +151,19 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
         calls = self._mock_producer.send.call_args_list
         self.assertEqual(len(calls), 2)
 
-        first_value  = calls[0].kwargs.get("value") or calls[0][1].get("value")
+        first_value = calls[0].kwargs.get("value") or calls[0][1].get("value")
         second_value = calls[1].kwargs.get("value") or calls[1][1].get("value")
 
         # After second write, existing columns = ["a", "b"] (sorted union)
         # First row only had "a"; second row adds "b"
-        self.assertEqual(second_value['a'], 1)
-        self.assertEqual(second_value['b'], None)
+        self.assertEqual(second_value["a"], 1)
+        self.assertEqual(second_value["b"], None)
         # Second row is aligned with all known columns
         self.assertIn("a", first_value)
         self.assertIn("b", first_value)
         self.assertEqual(first_value["a"], 2)
         self.assertEqual(first_value["b"], 3)
+
     # ------------------------------------------------------------------
     # close
     # ------------------------------------------------------------------

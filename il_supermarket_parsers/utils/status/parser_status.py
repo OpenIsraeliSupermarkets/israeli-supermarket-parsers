@@ -32,50 +32,6 @@ def _now() -> datetime:
     return datetime.now()
 
 
-def _dumpfile_to_event_fields(dump_file: DumpFile) -> dict:
-    """Minimal fields shared by all per-file contract events."""
-    return {
-        "file_name": dump_file.file_name,
-        "store_folder": dump_file.store_folder,
-        "file_type": (
-            dump_file.detected_filetype.name
-            if hasattr(dump_file.detected_filetype, "name")
-            else str(dump_file.detected_filetype)
-        ),
-    }
-
-
-def _dumpfile_to_execution_log_fields(dump_file: DumpFile) -> dict:
-    """Fields needed to build a FileExecutionLog (in-memory return value)."""
-    file_size = 0
-    if dump_file.is_queue_based:
-        file_size = len(dump_file.file_content) if dump_file.file_content else 0
-    else:
-        file_path = dump_file.get_full_path
-        if os.path.exists(file_path):
-            file_size = os.path.getsize(file_path)
-
-    return {
-        "store_folder": dump_file.store_folder,
-        "file_name": dump_file.file_name,
-        "prefix_file_name": dump_file.prefix_file_name,
-        "extracted_store_number": dump_file.extracted_store_number,
-        "extracted_chain_id": dump_file.extracted_chain_id,
-        "extracted_date": (
-            dump_file.extracted_date.isoformat()
-            if isinstance(dump_file.extracted_date, datetime)
-            else str(dump_file.extracted_date)
-        ),
-        "detected_filetype": (
-            dump_file.detected_filetype.name
-            if hasattr(dump_file.detected_filetype, "name")
-            else str(dump_file.detected_filetype)
-        ),
-        "size": str(file_size),
-        "is_expected_to_have_records": dump_file.is_expected_to_have_records,
-    }
-
-
 class ParserStatus:
     """Abstracts the database interface for parser execution status.
 
@@ -103,6 +59,48 @@ class ParserStatus:
         self.database = status_database
         self._file_logs: List[FileExecutionLog] = []
 
+    def _dumpfile_to_event_fields(self, dump_file: DumpFile) -> dict:
+        """Minimal fields shared by all per-file contract events."""
+        return {
+            "file_name": dump_file.file_name,
+            "store_folder": dump_file.store_folder,
+            "file_type": (
+                dump_file.detected_filetype.name
+                if hasattr(dump_file.detected_filetype, "name")
+                else str(dump_file.detected_filetype)
+            ),
+        }
+
+    def _dumpfile_to_execution_log_fields(self, dump_file: DumpFile) -> dict:
+        """Fields needed to build a FileExecutionLog (in-memory return value)."""
+        file_size = 0
+        if dump_file.is_queue_based:
+            file_size = len(dump_file.file_content) if dump_file.file_content else 0
+        else:
+            file_path = dump_file.get_full_path
+            if os.path.exists(file_path):
+                file_size = os.path.getsize(file_path)
+
+        return {
+            "store_folder": dump_file.store_folder,
+            "file_name": dump_file.file_name,
+            "prefix_file_name": dump_file.prefix_file_name,
+            "extracted_store_number": dump_file.extracted_store_number,
+            "extracted_chain_id": dump_file.extracted_chain_id,
+            "extracted_date": (
+                dump_file.extracted_date.isoformat()
+                if isinstance(dump_file.extracted_date, datetime)
+                else str(dump_file.extracted_date)
+            ),
+            "detected_filetype": (
+                dump_file.detected_filetype.name
+                if hasattr(dump_file.detected_filetype, "name")
+                else str(dump_file.detected_filetype)
+            ),
+            "size": str(file_size),
+            "is_expected_to_have_records": dump_file.is_expected_to_have_records,
+        }
+
     def on_parsing_start(
         self,
         limit: Optional[int],
@@ -120,21 +118,25 @@ class ParserStatus:
 
     def register_skipped_file(self, dump_file: DumpFile) -> None:
         """Record that a file was skipped because it is not readable."""
-        event = SkippedFileStatus(when=_now(), **_dumpfile_to_event_fields(dump_file))
+        event = SkippedFileStatus(
+            when=_now(), **self._dumpfile_to_event_fields(dump_file)
+        )
         self.database.insert_document("events", event.dict())
 
-        fields = _dumpfile_to_execution_log_fields(dump_file)
+        fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update({"loaded": False, "succusfull": None})
         self._file_logs.append(FileExecutionLog(**fields))
 
     def register_processed_file(self, dump_file: DumpFile, row_count: int) -> None:
         """Record that a file was parsed successfully."""
         event = ProcessedFileStatus(
-            when=_now(), row_count=row_count, **_dumpfile_to_event_fields(dump_file)
+            when=_now(),
+            row_count=row_count,
+            **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
 
-        fields = _dumpfile_to_execution_log_fields(dump_file)
+        fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update(
             {"loaded": True, "succusfull": True, "detected_num_rows": row_count}
         )
@@ -153,11 +155,11 @@ class ParserStatus:
             row_count=row_count,
             error=str(error),
             trace=trace,
-            **_dumpfile_to_event_fields(dump_file),
+            **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
 
-        fields = _dumpfile_to_execution_log_fields(dump_file)
+        fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update(
             {
                 "loaded": True,
@@ -195,45 +197,3 @@ class ParserStatus:
     def get_file_logs(self) -> List[FileExecutionLog]:
         """Return in-memory file logs for building an ExecutionLog return value."""
         return list(self._file_logs)
-
-
-def create_parser_status(
-    enabled_scraper: str,
-    enabled_file_type: str,
-    status_configuration: Optional[dict] = None,
-    default_base_path: str = "outputs",
-) -> ParserStatus:
-    """Factory: build a ParserStatus backed by the configured database.
-
-    Keys (same convention as ScarpingTask.status_configuration):
-        database_type  "json" (default) | "mongo"
-        base_path      directory for the JSON file  (json only)
-        db_name        MongoDB database name         (mongo only, default: database_name)
-
-    The JsonDataBase creates one file per database_name:
-        {base_path}/{database_name}.json
-    """
-    database_name = f"{enabled_scraper}_{enabled_file_type}".lower()
-    config = status_configuration or {
-        "database_type": "json",
-        "base_path": default_base_path,
-    }
-    db_type = config.get("database_type", "json")
-
-    if db_type == "json":
-        base_path = config.get("base_path", default_base_path)
-        db = JsonDataBase(database_name, base_path=base_path)
-        return ParserStatus(database_name, status_database=db)
-
-    if db_type == "mongo":
-        connection_url = status_configuration.get("connection_url", "localhost")
-        collection_name = status_configuration.get("collection_name", "scraper_status")
-        db = MongoDataBase(
-            database_name,
-            connection_url=connection_url,
-            collection_name=collection_name,
-        )
-        db.create_connection()
-        return ParserStatus(database_name, status_database=db)
-
-    raise ValueError(f"Unknown database_type: {db_type!r}. Must be 'json' or 'mongo'.")

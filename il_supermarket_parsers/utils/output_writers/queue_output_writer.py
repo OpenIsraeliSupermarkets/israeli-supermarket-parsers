@@ -43,6 +43,28 @@ def create_output_queue():
     return _QueueManagerHolder.manager().Queue()
 
 
+def create_queue_pair() -> tuple:
+    """Return a ``(writer, reader)`` pair backed by a single process-safe queue.
+
+    Both objects are picklable and can safely be passed to subprocesses::
+
+        writer, reader = create_queue_pair()
+
+        def worker(w):
+            import asyncio
+            asyncio.run(w.write_row({"a": 1}))
+            w.close()
+
+        p = multiprocessing.Process(target=worker, args=(writer,))
+        p.start()
+        for row in reader.get_all_messages():
+            print(row)          # {"a": 1}
+        p.join()
+    """
+    q = create_output_queue()
+    return QueueOutputWriter(q), ParsedRowsQueue(q)
+
+
 class QueueOutputWriter(BaseOutputWriter):
     """Output writer that enqueues parsed rows into a process-safe queue."""
 

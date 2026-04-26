@@ -15,7 +15,7 @@ class KafkaOutputWriter(BaseOutputWriter):
         bootstrap_servers: List[str],
         enabled_scraper: str,
         enabled_file_type: str,
-        topic_template: str = "{enabled_scraper}_{enabled_file_type}"
+        topic_template: str = "{enabled_scraper}_{enabled_file_type}",
     ):
         """
         Initialize Kafka output writer

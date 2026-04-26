@@ -33,7 +33,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
     def _csv_path(self) -> str:
         return os.path.join(self._output_folder, "pricefull_shufersal.csv")
 
-    def _read_data_rows(self,ffill=False) -> list[dict[str, str | None]]:
+    def _read_data_rows(self, ffill=False) -> list[dict[str, str | None]]:
         df = pd.read_csv(self._csv_path(), dtype=str)
         if ffill:
             df = df.ffill()
@@ -143,30 +143,52 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
             "second logical file must not inherit dedup from the first",
         )
 
-
     async def test_output_csv_content_snapshot(self) -> None:
         """Full snapshot of the raw CSV bytes produced by a realistic write sequence."""
         writer = self._new_writer(reduce_duplicates=True)
 
         # file 1: two rows, second row adds a new column
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
-        await writer.write_row({"chain_id": "7290027600007", "item_code": "1001", "price": "5.90"})
-        await writer.write_row({"chain_id": "7290027600007", "item_code": "1002", "price": "3.50", "unit": "kg"})
+        await writer.write_row(
+            {"chain_id": "7290027600007", "item_code": "1001", "price": "5.90"}
+        )
+        await writer.write_row(
+            {
+                "chain_id": "7290027600007",
+                "item_code": "1002",
+                "price": "3.50",
+                "unit": "kg",
+            }
+        )
 
         # file 2: dedup boundary resets; repeated chain_id should appear again
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
-        await writer.write_row({"chain_id": "7290027600007", "item_code": "2001", "price": "9.99", "unit": "l"})
-        await writer.write_row({"chain_id": "7290027600007", "item_code": "2001", "price": "9.99", "unit": "l"})
+        await writer.write_row(
+            {
+                "chain_id": "7290027600007",
+                "item_code": "2001",
+                "price": "9.99",
+                "unit": "l",
+            }
+        )
+        await writer.write_row(
+            {
+                "chain_id": "7290027600007",
+                "item_code": "2001",
+                "price": "9.99",
+                "unit": "l",
+            }
+        )
 
         with open(self._csv_path(), "r", encoding="utf-8") as f:
             actual = f.read()
 
         expected = (
             "chain_id,item_code,price,unit\n"
-            "7290027600007,1001,5.90,''\n"    # first row; unit col not yet present → ''
-            ",1002,3.50,kg\n"                 # chain_id deduped (same as previous row)
-            "7290027600007,2001,9.99,l\n"     # new file → dedup reset, chain_id reappears
-            ",,,\n"                            # all four values identical → all deduped to empty
+            "7290027600007,1001,5.90,''\n"  # first row; unit col not yet present → ''
+            ",1002,3.50,kg\n"  # chain_id deduped (same as previous row)
+            "7290027600007,2001,9.99,l\n"  # new file → dedup reset, chain_id reappears
+            ",,,\n"  # all four values identical → all deduped to empty
         )
         self.assertEqual(actual, expected)
 
