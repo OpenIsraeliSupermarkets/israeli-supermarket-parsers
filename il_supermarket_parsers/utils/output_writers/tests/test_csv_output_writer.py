@@ -34,7 +34,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         return os.path.join(self._output_folder, "shufersal_pricefull.csv")
 
     def _read_data_rows(self,ffill=False) -> list[dict[str, str | None]]:
-        df = pd.read_csv(self._csv_path())
+        df = pd.read_csv(self._csv_path(), dtype=str)
         if ffill:
             df = df.ffill()
         return df.to_dict(orient="records")
@@ -71,7 +71,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"name": "foo", "value": 42})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0], {"name": "foo", "value": 42})
+        self.assertEqual(rows[0], {"name": "foo", "value": "42"})
 
     async def test_write_multiple_rows_same_schema(self) -> None:
         writer = self._new_writer()
@@ -79,9 +79,9 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
             await writer.write_row({"id": i, "k": f"v{i}"})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 3)
-        self.assertEqual(rows[0], {"id": 0, "k": "v0"})
-        self.assertEqual(rows[1], {"id": 1, "k": "v1"})
-        self.assertEqual(rows[2], {"id": 2, "k": "v2"})
+        self.assertEqual(rows[0], {"id": "0", "k": "v0"})
+        self.assertEqual(rows[1], {"id": "1", "k": "v1"})
+        self.assertEqual(rows[2], {"id": "2", "k": "v2"})
 
     async def test_schema_evolution_adds_new_column(self) -> None:
         writer = self._new_writer()
@@ -89,8 +89,8 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 2, "b": 3})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": ""})
-        self.assertEqual(rows[1], {"a": 2, "b": 3})
+        self.assertEqual(rows[0], {"a": "1", "b": "''"})
+        self.assertEqual(rows[1], {"a": "2", "b": "3"})
 
     async def test_schema_evolution_removes_column(self) -> None:
         writer = self._new_writer()
@@ -98,10 +98,10 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": 2})
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
 
         self.assertTrue(pd.isna(rows[1]["a"]))
-        self.assertEqual(rows[1]["b"], "")
+        self.assertEqual(rows[1]["b"], "''")
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
         writer = self._new_writer(reduce_duplicates=True)
@@ -109,15 +109,15 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 3})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": 2})
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
         # NaN != NaN in Python; assert the repeated value was elided in CSV (empty → NaN)
         self.assertTrue(pd.isna(rows[1]["a"]))
-        self.assertEqual(rows[1]["b"], 3)
+        self.assertEqual(rows[1]["b"], "3")
 
         rows = self._read_data_rows(ffill=True)
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": 2})
-        self.assertEqual(rows[1], {"a": 1, "b": 3})
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
+        self.assertEqual(rows[1], {"a": "1", "b": "3"})
 
     async def test_no_reduce_duplicates_preserves_all_values(self) -> None:
         writer = self._new_writer(reduce_duplicates=False)
@@ -125,8 +125,8 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 3})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": 2})
-        self.assertEqual(rows[1], {"a": 1, "b": 3})
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
+        self.assertEqual(rows[1], {"a": "1", "b": "3"})
 
     async def test_no_dedup_across_files(self) -> None:
         writer = self._new_writer(reduce_duplicates=True)
@@ -136,10 +136,10 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 2})
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": 1, "b": 2})
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(
             rows[1],
-            {"a": 1, "b": 2},
+            {"a": "1", "b": "2"},
             "second logical file must not inherit dedup from the first",
         )
 

@@ -11,7 +11,7 @@ from ..loading_utils import DumpFile
 class CSVOutputWriter(BaseOutputWriter):
     """CSV file output writer with column alignment"""
 
-    EMPTY_STRING = ""
+    EMPTY_STRING = "''"
 
     def __init__(
         self,
