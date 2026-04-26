@@ -170,3 +170,27 @@ Do not modify — these are shared and correct:
 - `il_supermarket_parsers/parsers/tests/test_case.py` (shared test harness)
 
 If the fix seems to require changes there, re-check the XML — the correct answer is almost always a different `list_key` / `id_field` / `roots` / converter choice in the chain's `parsers/<chain>.py`.
+
+
+## Report
+
+When you fix a supermarket parser, provide a quick report summarizing the structural mapping.
+
+**Structure in XML:**
+```
+<xml section>
+<example or path of XML elements (e.g., Root/Items/Item, or Root/Branches/Branch)>
+```
+
+**How it appeared in the CSV before the fix:**
+```
+<Columns and sample rows as found in failed output, e.g., missing columns, bad casing, wrong row count>
+```
+
+**Corrected structure (after the fix):**
+```
+<Columns and structure as they now appear in CSV>
+```
+
+Describe any changes in the mapping (e.g., list_key from 'Branches' to 'Stores', id_field casing, addition of roots, converter class changed).
+This helps future maintainers quickly see what was wrong and how it was addressed.
