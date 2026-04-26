@@ -34,7 +34,7 @@ class CSVOutputWriter(BaseOutputWriter):
         self._previous_row: dict = {}
         self.output_path = os.path.join(
             output_folder,
-            enabled_scraper.lower() + "_" + enabled_file_type.lower() + ".csv",
+            enabled_file_type.lower() + "_" + enabled_scraper.lower() + ".csv",
         )
 
     async def initialize_new_file(self, file: DumpFile) -> None:
