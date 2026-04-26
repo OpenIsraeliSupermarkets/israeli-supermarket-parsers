@@ -34,10 +34,14 @@ class BareketFileConverter(BigIdBranchesFileConverter):
                 list_key="Promotions",
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             ),
             promofull_parser=XmlDataFrameConverter(
                 list_key="Promotions",
                 id_field="PromotionId",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+                date_columns=["PromotionUpdateDate"],
+                ignore_column=["XmlDocVersion", "DllVerNo"],
             ),
         )

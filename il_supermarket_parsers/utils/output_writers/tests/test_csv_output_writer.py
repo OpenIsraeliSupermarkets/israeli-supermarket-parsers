@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import os
 import tempfile
 import unittest
@@ -82,6 +83,52 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0], {"name": "foo", "value": "42"})
+
+    async def test_nested_dict_round_trips_as_json_in_cell(self) -> None:
+        """Nested row values must be valid JSON in CSV for downstream validation."""
+        writer = self._new_writer(reduce_duplicates=False)
+        nested = {
+            "item": [
+                {"itemcode": "123", "minqty": "1"},
+                {"itemcode": "456", "minqty": "2"},
+            ]
+        }
+        await writer.write_row({"id": 1, "groups": nested})
+        rows = self._read_data_rows()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["id"], "1")
+        parsed = json.loads(rows[0]["groups"])
+        self.assertEqual(parsed, nested)
+
+    async def test_nested_dict_round_trips_as_json_in_cell_duplicate(self) -> None:
+        """Nested row values must be valid JSON in CSV for downstream validation."""
+        writer = self._new_writer(reduce_duplicates=True)
+        nested = {
+            "item": [
+                {"itemcode": "123", "minqty": "1"},
+                {"itemcode": "456", "minqty": "2"},
+            ]
+        }
+        await writer.write_row({"id": 1, "groups": nested})
+        await writer.write_row({"id": 2, "groups": nested})
+        rows = self._read_data_rows()
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["id"], "1")
+        parsed = json.loads(rows[0]["groups"])
+        self.assertEqual(parsed, nested)
+
+        self.assertEqual(rows[1]["id"], "2")
+        self.assertTrue(pd.isna(rows[1]["groups"]))
+
+        rows = self._read_data_rows(ffill=True)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["id"], "1")
+        parsed = json.loads(rows[0]["groups"])
+        self.assertEqual(parsed, nested)
+
+        self.assertEqual(rows[1]["id"], "2")
+        parsed = json.loads(rows[1]["groups"])
+        self.assertEqual(parsed, nested)
 
     async def test_write_multiple_rows_same_schema(self) -> None:
         """Test that multiple rows with the same schema are written correctly."""

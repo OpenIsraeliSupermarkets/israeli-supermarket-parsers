@@ -1,7 +1,8 @@
 import os
 import csv
+import json
 import asyncio
-from typing import List
+from typing import Any, List
 import pandas as pd
 from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
@@ -36,6 +37,16 @@ class CSVOutputWriter(BaseOutputWriter):
             output_folder,
             enabled_file_type.lower() + "_" + enabled_scraper.lower() + ".csv",
         )
+
+    def _serialize_cell_for_csv(self, value: Any) -> Any:
+        """
+        Write nested structures as JSON so tests and downstream code can
+        :func:`json.loads` cells after :func:`pandas.read_csv` and recover all keys
+        (required by XML key validation for promo feeds with nested items/groups).
+        """
+        if isinstance(value, (dict, list)):
+            return json.dumps(value, default=str, ensure_ascii=False)
+        return value
 
     async def initialize_new_file(self, file: DumpFile) -> None:
         """Initialize the output writer for a new file"""
@@ -155,12 +166,15 @@ class CSVOutputWriter(BaseOutputWriter):
         def _write_row():
             file_exists = os.path.exists(self.output_path)
             mode = "a" if file_exists else "w"
+            out_row = {
+                k: self._serialize_cell_for_csv(v) for k, v in aligned_row.items()
+            }
             with open(self.output_path, mode, newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=self._existing_columns)
                 if not self._header_written:
                     writer.writeheader()
                     self._header_written = True
-                writer.writerow(aligned_row)
+                writer.writerow(out_row)
 
         await asyncio.to_thread(_write_row)
 

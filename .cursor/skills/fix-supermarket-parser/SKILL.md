@@ -8,7 +8,9 @@ description: Diagnose and fix failing Israeli supermarket XML parser tests in th
 Fix a failing parser test by changing **only the converter configuration** in the chain's parser class (e.g., `il_supermarket_parsers/parsers/*.py`). Do not touch the shared engines, document converters, or validation code — they are correct; the per-chain configuration is what drifts when a chain changes its XML shape.
 
 
-NOTE: you are not allowd to ignore columns that contains data! the goal is to capture a much data which is not the xml metadata!
+NOTE: 
+- you are not allowd to ignore columns that contains data! the goal is to capture a much data which is not the xml metadata!
+- In a case like this either change fix the validation or change the parsers, you can't ignore 
 
 
 ## Workflow
