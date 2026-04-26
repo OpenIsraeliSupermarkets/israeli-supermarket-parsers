@@ -26,7 +26,7 @@ class QueueDataLoader(BaseDataLoader):
     async def load(
         self,
         limit: Optional[int] = None,
-        store_names: Optional[list] = None,
+        enabled_scraper: Optional[list] = None,
         files_types: Optional[list] = None,
     ) -> AsyncIterator[DumpFile]:
         """
@@ -34,7 +34,7 @@ class QueueDataLoader(BaseDataLoader):
 
         Args:
             limit: Optional limit on number of files to load
-            store_names: Optional list of store names to filter
+            enabled_scraper: Optional list of store names to filter
             files_types: Optional list of file types to filter
 
         Yields:
@@ -43,7 +43,7 @@ class QueueDataLoader(BaseDataLoader):
         count = 0
         for scraper_name, queue_handler in self.queue_handlers.items():
             # Only consume from queues matching the requested store names
-            if store_names and scraper_name not in store_names:
+            if enabled_scraper and scraper_name not in enabled_scraper:
                 continue
 
             Logger.debug(f"Consuming files from {scraper_name} queue")
@@ -103,5 +103,5 @@ class QueueDataLoader(BaseDataLoader):
                 raise
 
         Logger.info(
-            f"Finished consuming {store_names} with {files_types} {count} files from queues"
+            f"Finished consuming {enabled_scraper} with {files_types} {count} files from queues"
         )

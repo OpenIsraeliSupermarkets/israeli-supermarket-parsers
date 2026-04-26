@@ -14,7 +14,7 @@ class BaseDataLoader(ABC):
     async def load(
         self,
         limit: Optional[int] = None,
-        store_names: Optional[list] = None,
+        enabled_scraper: Optional[list] = None,
         files_types: Optional[list] = None,
     ) -> AsyncIterator[DumpFile]:
         """
@@ -22,7 +22,7 @@ class BaseDataLoader(ABC):
 
         Args:
             limit: Optional limit on number of files to load
-            store_names: Optional list of store names to filter
+            enabled_scraper: Optional list of store names to filter
             files_types: Optional list of file types to filter
 
         Yields:

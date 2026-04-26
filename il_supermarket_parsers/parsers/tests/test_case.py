@@ -143,7 +143,7 @@ def make_test_case(scraper_enum, parser_enum):
             async for file in DataLoader(
                 folder=sub_folder,
             ).load(
-                store_names=[self.parser_name],
+                enabled_scraper=[self.parser_name],
                 files_types=[file_type],
             ):
                 files.append(file)

@@ -19,13 +19,13 @@ class DataLoader(BaseDataLoader):
     async def load(
         self,
         limit: Optional[int] = None,
-        store_names: Optional[list] = None,
+        enabled_scraper: Optional[list] = None,
         files_types: Optional[list] = None,
     ) -> AsyncIterator[DumpFile]:
         """load details about the files in the folder as async generator"""
 
         resolved_stores = (
-            store_names if store_names else DumpFolderNames.all_folders_names()
+            enabled_scraper if enabled_scraper else DumpFolderNames.all_folders_names()
         )
         resolved_types = files_types if files_types else FileTypesFilters.all_types()
         files_types_set: Set[str] = (
@@ -44,13 +44,13 @@ class DataLoader(BaseDataLoader):
     async def _gather_matching_files(
         self,
         limit: Optional[int],
-        store_names: Optional[list],
+        enabled_scraper: Optional[list],
         files_types_set: Set[str],
     ) -> List[DumpFile]:
         """Scan ``self.folder`` and return matching dump files up to ``limit``."""
         stores_folders = (
-            [DumpFolderNames[enum].value for enum in store_names]
-            if store_names
+            [DumpFolderNames[enum].value for enum in enabled_scraper]
+            if enabled_scraper
             else None
         )
 
@@ -76,7 +76,7 @@ class DataLoader(BaseDataLoader):
             if stores_folders and store_name not in stores_folders:
                 Logger.debug(
                     f"Skipping folder {store_folder} because it not in "
-                    f"requested chains to scan {store_names}"
+                    f"requested chains to scan {enabled_scraper}"
                 )
                 continue
 
