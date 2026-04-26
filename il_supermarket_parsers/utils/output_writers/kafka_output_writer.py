@@ -15,8 +15,7 @@ class KafkaOutputWriter(BaseOutputWriter):
         bootstrap_servers: List[str],
         enabled_scraper: str,
         enabled_file_type: str,
-        topic_template: str = "{enabled_scraper}_{enabled_file_type}",
-        key_columns: List[str] = None,
+        topic_template: str = "{enabled_scraper}_{enabled_file_type}"
     ):
         """
         Initialize Kafka output writer
@@ -30,7 +29,6 @@ class KafkaOutputWriter(BaseOutputWriter):
         self.topic = topic_template.format(
             enabled_scraper=enabled_scraper, enabled_file_type=enabled_file_type
         )
-        self.key_columns = key_columns or []
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,
             value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8"),
@@ -91,19 +89,9 @@ class KafkaOutputWriter(BaseOutputWriter):
         for col in self._existing_columns:
             aligned_row[col] = row.get(col, None)
 
-        # Create message value
-        value = aligned_row
-
-        # Create message key if key_columns specified
-        key = None
-        if self.key_columns:
-            key = {
-                col: aligned_row[col] for col in self.key_columns if col in aligned_row
-            }
-
         # Send message (run in thread pool to avoid blocking)
         def _send_message():
-            future = self.producer.send(self.topic, value=value, key=key)
+            future = self.producer.send(self.topic, value=aligned_row)
             try:
                 future.get(timeout=10)  # Wait for message to be sent
             except Exception as e:
