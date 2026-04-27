@@ -54,7 +54,7 @@ async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
                     output_folder=file_tmp_dir,
                     enabled_scraper=file.extracted_chain_id,
                     enabled_file_type=file.detected_filetype.name,
-                    reduce_duplicates=False,  
+                    reduce_duplicates=False,
                     # Since 'run_validation' counts tags,
                     # we don't want to reduce duplicates
                 )
