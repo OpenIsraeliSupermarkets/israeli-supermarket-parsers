@@ -26,6 +26,11 @@ class VictoryNewFileConverter(BigIdBranchesFileConverter):
 
     def __init__(self):
         super().__init__(
+            stores_parser=XmlDataFrameConverter(
+                list_key="Store",
+                id_field="StoreID",
+                roots=[],
+            ),
             price_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field="ItemCode",

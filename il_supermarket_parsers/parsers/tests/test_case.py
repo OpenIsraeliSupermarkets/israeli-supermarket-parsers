@@ -3,6 +3,8 @@ import os
 import tempfile
 import gc
 import asyncio
+import csv
+import sys
 from typing import List
 
 import pandas as pd
@@ -15,6 +17,8 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 
+
+csv.field_size_limit(sys.maxsize)
 
 def _validate_file_loading(files: List[DumpFile], sub_folder: str):
     """Validate that all files were loaded correctly."""
@@ -121,7 +125,7 @@ def make_test_case(scraper_enum, parser_enum):
                 SampleDataOptions(
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
-                    limit=5,
+                    #limit=5,
                 ),
             )
 
