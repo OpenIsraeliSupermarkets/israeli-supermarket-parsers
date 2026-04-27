@@ -20,6 +20,7 @@ from il_supermarket_parsers.engines.base import BaseFileConverter
 
 csv.field_size_limit(sys.maxsize)
 
+
 def _validate_file_loading(files: List[DumpFile], sub_folder: str):
     """Validate that all files were loaded correctly."""
     complete_file_loaded = list(map(lambda x: x.get_full_path, files))
@@ -125,7 +126,7 @@ def make_test_case(scraper_enum, parser_enum):
                 SampleDataOptions(
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
-                    #limit=5,
+                    # limit=5,
                 ),
             )
 

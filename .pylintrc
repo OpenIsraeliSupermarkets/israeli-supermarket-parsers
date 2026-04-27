@@ -13,7 +13,7 @@ generated-members=asyncio.to_thread
 [DESIGN]
 max-args=8
 # Default 5; Kafka writer __init__ and file converters use more positional parameters
-max-positional-arguments=8
+# max-positional-arguments=8
 max-attributes=12
 min-public-methods=1
 max-public-methods=40
