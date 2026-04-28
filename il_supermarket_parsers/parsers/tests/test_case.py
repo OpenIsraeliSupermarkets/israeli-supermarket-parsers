@@ -125,7 +125,7 @@ def make_test_case(scraper_enum, parser_enum):
                 SampleDataOptions(
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
-                    # limit=10,
+                    limit=10,
                 ),
             )
 
