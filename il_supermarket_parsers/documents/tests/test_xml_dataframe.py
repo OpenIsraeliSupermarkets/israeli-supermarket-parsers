@@ -12,7 +12,7 @@ from il_supermarket_parsers.parsers.other import (
 from il_supermarket_parsers.parsers.salach_dabach import SalachDabachFileConverter
 from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
 
-TEST_DIR = "il_supermarket_parsers/documents/tests"
+TEST_DIR = "resources/xml"
 
 
 def convert_to_dataframe(self, found_store, file_name, **kwarg):
@@ -33,12 +33,12 @@ def test_read_bad_encoding_1():
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "PriceFull7290172900007-083-202409270311.xml",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PriceFull7290172900007-083-202409270311.xml",
+        f"{TEST_DIR}/PriceFull7290172900007-083-202409270311.xml",
         ignore_missing_columns=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
     )
 
@@ -51,12 +51,12 @@ def test_read_bad_encoding_2():
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "PromoFull7290172900007-667-202409290706.xml",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PromoFull7290172900007-667-202409290706.xml",
+        f"{TEST_DIR}/PromoFull7290172900007-667-202409290706.xml",
         ignore_missing_columns=["SubChainId", "ChainId", "BikoretNo", "StoreId"],
     )
     assert df.shape[0] > 0
@@ -68,12 +68,12 @@ def test_bad_element():
     converter = XmlDataFrameConverter(list_key="STORES", id_field="STOREID")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "Stores7290027600007-000-202410020201",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/Stores7290027600007-000-202410020201",
+        f"{TEST_DIR}/Stores7290027600007-000-202410020201",
         ignore_missing_columns=["CHAINID", "LASTUPDATEDATE"],
     )
     assert df.shape[0] > 0
@@ -85,12 +85,12 @@ def test_empty_file():
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "Price7290725900003-9032-202410021600",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/Price7290725900003-9032-202410021600",
+        f"{TEST_DIR}/Price7290725900003-9032-202410021600",
         ignore_missing_columns=[
             "SubChainId",
             "DllVerNo",
@@ -106,12 +106,12 @@ def test_empty_size():
     """test reading files that are the encoding in the file is not correct"""
 
     empty1 = os.path.getsize(
-        "il_supermarket_parsers/documents/tests/PromoFull7290172900007-350-202410030634.xml",
+        f"{TEST_DIR}/PromoFull7290172900007-350-202410030634.xml",
     )
 
     assert empty1 <= EMPTY_FILE_TOEHOLD
     empty2 = os.path.getsize(
-        "il_supermarket_parsers/documents/tests/Price7290725900003-9032-202410021600",
+        f"{TEST_DIR}/Price7290725900003-9032-202410021600",
     )
     assert empty2 <= EMPTY_FILE_TOEHOLD
 
@@ -122,12 +122,12 @@ def test_file_1():
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "PriceFull7290172900007-083-202409270311.xml",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PriceFull7290172900007-083-202409270311.xml",
+        f"{TEST_DIR}/PriceFull7290172900007-083-202409270311.xml",
         ignore_missing_columns=[
             "SubChainId",
             "DllVerNo",
@@ -145,12 +145,12 @@ def test_file_2():
     converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "PromoFull7290172900007-667-202409290706.xml",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PromoFull7290172900007-667-202409290706.xml",
+        f"{TEST_DIR}/PromoFull7290172900007-667-202409290706.xml",
         ignore_missing_columns=[
             "SubChainId",
             "DllVerNo",
@@ -174,12 +174,12 @@ def test_nested_xml_dataframe():
     )
     df = convert_to_dataframe(
         converter,
-        "il_supermarket_parsers/documents/tests",
+        TEST_DIR,
         "PromoFull7290058140886-013-202512120010",
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PromoFull7290058140886-013-202512120010",
+        f"{TEST_DIR}/PromoFull7290058140886-013-202512120010",
     )
 
 
@@ -240,6 +240,6 @@ def test_nested_xml_dataframe_with_ignore_column():
     )
     converter.validate_succussful_extraction(
         df,
-        "il_supermarket_parsers/documents/tests/PromoFull7290785400000-002-202604250011",
+        f"{TEST_DIR}/PromoFull7290785400000-002-202604250011",
         ignore_missing_columns=["XmlDocVersion", "DllVerNo"],
     )
