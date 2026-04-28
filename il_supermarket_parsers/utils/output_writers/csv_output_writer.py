@@ -147,7 +147,7 @@ class CSVOutputWriter(BaseOutputWriter):
         aligned_row = {}
         for col in self._existing_columns:
             aligned_row[col] = row.get(col, self.EMPTY_STRING)
-            if aligned_row[col] == "":
+            if str(aligned_row[col]).strip() == "":
                 aligned_row[col] = self.EMPTY_STRING
 
         if self._reduce_duplicates:
