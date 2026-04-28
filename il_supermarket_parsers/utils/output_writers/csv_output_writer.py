@@ -15,12 +15,12 @@ from ..types import FileCompleteMessage
 class CSVOutputWriter(BaseOutputWriter):
     """
     CSV file output writer with column alignment and deduplication.
-    
+
     If reduce_duplicates is True, repeated values are masked with CELL_TO_BE_SMOTED such that ffill() can restore the value.
     If reduce_duplicates is False, repeated values are preserved.
-    
+
     The EMPTY_STRING is used to indicate a missing value in the original CSV.
-    
+
     """
 
     EMPTY_STRING = "''"
