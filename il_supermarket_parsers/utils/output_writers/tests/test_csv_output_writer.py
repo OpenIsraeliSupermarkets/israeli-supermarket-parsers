@@ -256,5 +256,43 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(actual, expected)
 
 
+
+    async def test_source_empty_value_written_as_empty_cell(self) -> None:
+        """A genuinely empty tag value from source XML (e.g. <City></City>) is written
+        as an empty CSV cell and reads back as NaN, distinct from the EMPTY_STRING
+        sentinel used for schema-evolution gaps."""
+        writer = self._new_writer(reduce_duplicates=True)
+        await writer.write_row({"chain_id": "1", "city": "TLV"})
+        await writer.write_row({"chain_id": "2", "city": ""})   # source XML: <City></City>
+        await writer.write_row({"chain_id": "3", "city": "HFA"})
+        rows = self._read_data_rows(ffill=True)
+        self.assertEqual(rows[0]["city"], "TLV")
+        # Empty-string source value lands as an empty cell → NaN after read_csv.
+
+        self.assertEqual(rows[1]['city'], "")
+        self.assertTrue(pd.isna(rows[1]["city"]))
+        self.assertEqual(rows[2]["city"], "HFA")
+
+    async def test_source_empty_value_is_indistinguishable_from_rle_masked_value(
+        self,
+    ) -> None:
+        """Documents the RLE-vs-source-empty ambiguity.
+
+        Row 2 is RLE-masked (same city as row 1) and row 3 has a genuinely
+        empty city from the source XML.  Both land as NaN in the CSV, so a
+        naive ffill over the file recovers the RLE loss in row 2 correctly but
+        incorrectly propagates "8300" into row 3, which should stay empty.
+        """
+        writer = self._new_writer(reduce_duplicates=True)
+        await writer.write_row({"chain_id": "1", "city": "8300"})
+        await writer.write_row({"chain_id": "2", "city": "8300"})   # RLE-masked
+        await writer.write_row({"chain_id": "3", "city": ""})        # source-empty
+
+        rows = self._read_data_rows(ffill=True)
+        self.assertEqual(rows[0], {"chain_id": "1", "city": "8300"})
+        self.assertEqual(rows[1], {"chain_id": "2", "city": "8300"})
+        self.assertEqual(rows[2], {"chain_id": "3", "city": ""})
+
+
 if __name__ == "__main__":
     unittest.main()
