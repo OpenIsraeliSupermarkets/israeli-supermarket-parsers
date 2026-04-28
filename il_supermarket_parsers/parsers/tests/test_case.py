@@ -1,13 +1,11 @@
 import unittest
 import os
 import tempfile
-import gc
 import asyncio
 import csv
 import sys
 from typing import List
 
-import pandas as pd
 from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
@@ -156,13 +154,7 @@ def make_test_case(scraper_enum, parser_enum):
 
             # assert len(files) > 0, f"No files found in {sub_folder}"
             _validate_file_loading(files, sub_folder)
-            dfs = await _process_files(files, parser)
-
-            if dfs:
-                concatenated = pd.concat(dfs)
-                del concatenated
-            del dfs
-            gc.collect()
+            await _process_files(files, parser)
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""

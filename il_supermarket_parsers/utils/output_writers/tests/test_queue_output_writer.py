@@ -19,7 +19,7 @@ def _worker(writer: QueueOutputWriter, rows: list) -> None:
     async def _run():
         for row in rows:
             await writer.write_row(row)
-        writer.close()
+        await writer.close()
 
     asyncio.run(_run())
 
@@ -83,7 +83,7 @@ class TestQueueOutputWriter(unittest.IsolatedAsyncioTestCase):
         """Test that the close method puts a None sentinel into the queue."""
         await self._writer.write_row({"a": 1})
         await self._writer.write_row({"b": 2})
-        self._writer.close()
+        await self._writer.close()
 
         parsed_queue = ParsedRowsQueue(self._q)
         messages = list(parsed_queue.get_all_messages())

@@ -112,7 +112,7 @@ class RawProcessing(ProcessJob):
                 )
             )
         finally:
-            output_writer.close()
+            asyncio.run(output_writer.close())
 
 
 class ParallelParser(MultiProcessor):

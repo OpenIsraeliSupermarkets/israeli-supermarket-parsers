@@ -53,7 +53,7 @@ def create_queue_pair() -> tuple:
         def worker(w):
             import asyncio
             asyncio.run(w.write_row({"a": 1}))
-            w.close()
+            await w.close()
 
         p = multiprocessing.Process(target=worker, args=(writer,))
         p.start()
