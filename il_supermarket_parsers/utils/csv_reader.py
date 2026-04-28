@@ -1,5 +1,6 @@
+from typing import Union, List, Dict
+
 import pandas as pd
-from typing import Union
 
 
 def read_data_rows(
