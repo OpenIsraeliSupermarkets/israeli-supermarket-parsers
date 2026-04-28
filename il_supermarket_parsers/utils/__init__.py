@@ -27,6 +27,7 @@ from .loading_utils import (
     file_name_to_components,
     DumpFile,
 )
+from .csv_reader import read_data_rows
 
 __all__ = [
     "Logger",

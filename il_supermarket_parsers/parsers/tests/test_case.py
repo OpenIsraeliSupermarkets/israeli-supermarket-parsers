@@ -16,7 +16,7 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
 )
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
-
+from il_supermarket_parsers import read_data_rows
 
 csv.field_size_limit(sys.maxsize)
 
@@ -41,49 +41,46 @@ def _list_xml_files_recursive(directory):
     return file_list
 
 
-async def _process_files(files: List[DumpFile], parser: BaseFileConverter):
+async def _process_files(
+    files: List[DumpFile], parser: BaseFileConverter, test_fill_forward: bool = True
+):
     """Process all files and return sampled dataframes."""
     dfs = []
     for file in files:
-        try:
-            if not file.is_expected_to_be_readable:
-                continue
+        if not file.is_expected_to_be_readable:
+            continue
 
-            with tempfile.TemporaryDirectory() as file_tmp_dir:
-                writer = CSVOutputWriter(
-                    output_folder=file_tmp_dir,
-                    enabled_scraper=file.extracted_chain_id,
-                    enabled_file_type=file.detected_filetype.name,
-                    reduce_duplicates=False,
-                    # Since 'run_validation' counts tags,
-                    # we don't want to reduce duplicates
-                )
-                await writer.initialize()
+        with tempfile.TemporaryDirectory() as file_tmp_dir:
+            writer = CSVOutputWriter(
+                output_folder=file_tmp_dir,
+                enabled_scraper=file.extracted_chain_id,
+                enabled_file_type=file.detected_filetype.name,
+                reduce_duplicates=test_fill_forward,
+            )
+            await writer.initialize()
 
-                async for row in parser.read(file):
-                    await writer.write_row(row)
+            async for row in parser.read(file):
+                await writer.write_row(row)
 
-                writer.close()
+            writer.close()
 
-                # load the data from the writer
-                if writer.exists():
-                    df = pd.read_csv(writer.get_path(), dtype=str)
-                else:
-                    df = pd.DataFrame()
-
-            # Run validation against the created DataFrame
-            parser.run_validation(df, file)
-
-            if file.is_expected_to_have_records:
-                assert df.shape[0] > 0, f"File {file.file_name} is empty"
-                sampled_df = df.sample(n=min(10, df.shape[0]))
-                del df
-                dfs.append(sampled_df)
+            # load the data from the writer
+            if writer.exists():
+                df = read_data_rows(writer.get_path(), ffill=test_fill_forward, as_records=False)
             else:
-                assert df.shape[0] == 0, f"File {file.file_name} should be empty"
-                del df
-        except Exception as e:
-            raise ValueError(f"File {file.file_name}, Failed with {e}") from e
+                df = pd.DataFrame()
+
+        # Run validation against the created DataFrame
+        parser.run_validation(df, file)
+
+        if file.is_expected_to_have_records:
+            assert df.shape[0] > 0, f"File {file.file_name} is empty"
+            sampled_df = df.sample(n=min(10, df.shape[0]))
+            del df
+            dfs.append(sampled_df)
+        else:
+            assert df.shape[0] == 0, f"File {file.file_name} should be empty"
+            del df
     return dfs
 
 
@@ -155,6 +152,7 @@ def make_test_case(scraper_enum, parser_enum):
             ):
                 files.append(file)
 
+            assert len(files) > 0, f"No files found in {sub_folder}"
             _validate_file_loading(files, sub_folder)
             dfs = await _process_files(files, parser)
 

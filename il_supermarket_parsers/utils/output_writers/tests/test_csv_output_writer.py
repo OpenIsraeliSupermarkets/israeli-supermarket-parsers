@@ -15,6 +15,7 @@ import pandas as pd
 from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
 )
+from il_supermarket_parsers.utils.csv_reader import read_data_rows
 
 
 class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
@@ -40,13 +41,6 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
 
     def _csv_path(self) -> str:
         return os.path.join(self._output_folder, "pricefull_shufersal.csv")
-
-    def _read_data_rows(self, ffill=False) -> list[dict[str, str | None]]:
-        """Read data rows from the CSV file."""
-        df = pd.read_csv(self._csv_path(), dtype=str)
-        if ffill:
-            df = df.ffill()
-        return df.to_dict(orient="records")
 
     async def test_initialize_sets_initialized_flag(self) -> None:
         """Test that the initialized flag is set correctly."""
@@ -81,7 +75,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer()
         await writer.write_row({"name": "foo", "value": 42})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0], {"name": "foo", "value": "42"})
 
@@ -96,7 +90,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         }
         await writer.write_row({"id": 1, "groups": nested})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["id"], "1")
         parsed = json.loads(rows[0]["groups"])
@@ -114,7 +108,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"id": 1, "groups": nested})
         await writer.write_row({"id": 2, "groups": nested})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]["id"], "1")
         parsed = json.loads(rows[0]["groups"])
@@ -123,7 +117,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[1]["id"], "2")
         self.assertTrue(pd.isna(rows[1]["groups"]))
 
-        rows = self._read_data_rows(ffill=True)
+        rows = read_data_rows(self._csv_path(), ffill=True)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]["id"], "1")
         parsed = json.loads(rows[0]["groups"])
@@ -139,7 +133,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         for i in range(3):
             await writer.write_row({"id": i, "k": f"v{i}"})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[0], {"id": "0", "k": "v0"})
         self.assertEqual(rows[1], {"id": "1", "k": "v1"})
@@ -151,7 +145,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1})
         await writer.write_row({"a": 2, "b": 3})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": CSVOutputWriter.EMPTY_STRING})
         self.assertEqual(rows[1], {"a": "2", "b": "3"})
@@ -162,7 +156,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
 
@@ -175,14 +169,14 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         # Dedup-masked cells are written as empty CSV cells, which read back as NaN.
         self.assertTrue(pd.isna(rows[1]["a"]))
         self.assertEqual(rows[1]["b"], "3")
 
-        rows = self._read_data_rows(ffill=True)
+        rows = read_data_rows(self._csv_path(), ffill=True)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(rows[1], {"a": "1", "b": "3"})
@@ -193,7 +187,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows(ffill=False)
+        rows = read_data_rows(self._csv_path(), ffill=False)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(rows[1], {"a": "1", "b": "3"})
@@ -207,7 +201,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(
@@ -225,7 +219,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
         await writer.write_row({"b": 2, "a": 1})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows()
+        rows = read_data_rows(self._csv_path())
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(
@@ -296,7 +290,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         )  # source XML: <City></City>
         await writer.write_row({"chain_id": "3", "city": "HFA"})
         await writer.write_file_complete(None)  # type: ignore[arg-type]
-        rows = self._read_data_rows(ffill=True)
+        rows = read_data_rows(self._csv_path(), ffill=True)
         self.assertEqual(rows[0]["city"], "TLV")
         # Empty-string source value lands as an empty cell → NaN after read_csv.
 
@@ -319,7 +313,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"chain_id": "3", "city": ""})  # source-empty
         await writer.write_file_complete(None)  # type: ignore[arg-type]
 
-        rows = self._read_data_rows(ffill=True)
+        rows = read_data_rows(self._csv_path(), ffill=True)
         self.assertEqual(rows[0], {"chain_id": "1", "city": "8300"})
         self.assertEqual(rows[1], {"chain_id": "2", "city": "8300"})
         self.assertEqual(

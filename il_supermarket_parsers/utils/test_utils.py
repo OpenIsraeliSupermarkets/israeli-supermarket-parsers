@@ -1,4 +1,6 @@
 import datetime
+import shutil
+import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -34,6 +36,11 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
             Result from ConvertingTask.
         For file mode: dump_folder_name
     """
+
+    # Remove the status_logs directory recursively if it exists before running sample data generation
+    if os.path.isdir("status_logs"):
+        shutil.rmtree("status_logs")
+
     o = options or SampleDataOptions()
 
     # Streaming mode: use queue-based scraping and processing

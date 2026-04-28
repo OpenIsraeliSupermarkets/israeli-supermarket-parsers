@@ -185,4 +185,6 @@ class CSVOutputWriter(BaseOutputWriter):
 
     def close(self) -> None:
         """Close the CSV file"""
-        return
+        self._flush_buffer()
+        if not os.path.exists(self.output_path):
+            raise ValueError(f"CSV file {self.output_path} was not created")
