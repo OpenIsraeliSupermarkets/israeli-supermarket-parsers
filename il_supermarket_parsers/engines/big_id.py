@@ -7,7 +7,7 @@ from .base import BaseFileConverter
 class BigIDFileConverter(BaseFileConverter):
     """a converter to all documents with ID instead of Id"""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         pricefull_parser=None,
         price_parser=None,

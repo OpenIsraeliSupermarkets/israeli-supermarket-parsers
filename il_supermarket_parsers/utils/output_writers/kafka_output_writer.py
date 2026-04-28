@@ -100,6 +100,6 @@ class KafkaOutputWriter(BaseOutputWriter):
 
         await asyncio.to_thread(_send_message)
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Close the Kafka producer"""
-        self.producer.close()
+        await asyncio.to_thread(self.producer.close)

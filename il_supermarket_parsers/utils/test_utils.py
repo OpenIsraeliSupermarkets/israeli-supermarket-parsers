@@ -37,9 +37,10 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
         For file mode: dump_folder_name
     """
 
-    # Remove the status_logs directory recursively if it exists before running sample data generation
-    if os.path.isdir("status_logs"):
-        shutil.rmtree("status_logs")
+    status_folder = os.path.join(dump_folder_name, "status_logs")
+
+    if os.path.isdir(status_folder):
+        shutil.rmtree(status_folder)
 
     o = options or SampleDataOptions()
 
@@ -55,7 +56,7 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
                 },
                 status_configuration={
                     "database_type": "json",
-                    "base_path": "status_logs",
+                    "base_path": status_folder,
                 },
                 multiprocessing=1,
                 enabled_scrapers=o.enabled_scrapers if o.enabled_scrapers else None,

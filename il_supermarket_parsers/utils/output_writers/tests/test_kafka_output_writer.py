@@ -179,9 +179,9 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
     # close
     # ------------------------------------------------------------------
 
-    def test_close_calls_producer_close(self) -> None:
+    async def test_close_calls_producer_close(self) -> None:
         """Test that the close method calls the producer close method."""
-        self._writer.close()
+        await self._writer.close()
         self._mock_producer.close.assert_called_once()
 
 

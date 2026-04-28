@@ -16,7 +16,8 @@ class CSVOutputWriter(BaseOutputWriter):
     """
     CSV file output writer with column alignment and deduplication.
 
-    If reduce_duplicates is True, repeated values are masked with CELL_TO_BE_SMOTED such that ffill() can restore the value.
+    If reduce_duplicates is True, repeated values are masked with
+        CELL_TO_BE_SMOTED such that ffill() can restore the value.
     If reduce_duplicates is False, repeated values are preserved.
 
     The EMPTY_STRING is used to indicate a missing value in the original CSV.
@@ -183,8 +184,6 @@ class CSVOutputWriter(BaseOutputWriter):
         os.remove(self.output_path)
         os.rename(output_file, self.output_path)
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Close the CSV file"""
-        self._flush_buffer()
-        if not os.path.exists(self.output_path):
-            raise ValueError(f"CSV file {self.output_path} was not created")
+        await self.write_file_complete(None)  # type: ignore[arg-type]

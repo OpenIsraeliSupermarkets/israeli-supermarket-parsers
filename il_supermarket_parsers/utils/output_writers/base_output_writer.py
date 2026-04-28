@@ -74,6 +74,6 @@ class BaseOutputWriter(ABC):
         return
 
     @abstractmethod
-    def close(self) -> None:
+    async def close(self) -> None:
         """Close the output writer"""
         raise NotImplementedError
