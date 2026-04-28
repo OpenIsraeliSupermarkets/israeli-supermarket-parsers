@@ -80,6 +80,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
     async def test_write_row_content(self) -> None:
         writer = self._new_writer()
         await writer.write_row({"name": "foo", "value": 42})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0], {"name": "foo", "value": "42"})
@@ -94,6 +95,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
             ]
         }
         await writer.write_row({"id": 1, "groups": nested})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["id"], "1")
@@ -111,6 +113,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         }
         await writer.write_row({"id": 1, "groups": nested})
         await writer.write_row({"id": 2, "groups": nested})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]["id"], "1")
@@ -135,6 +138,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer()
         for i in range(3):
             await writer.write_row({"id": i, "k": f"v{i}"})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[0], {"id": "0", "k": "v0"})
@@ -146,9 +150,10 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer()
         await writer.write_row({"a": 1})
         await writer.write_row({"a": 2, "b": 3})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"a": "1", "b": "''"})
+        self.assertEqual(rows[0], {"a": "1", "b": CSVOutputWriter.EMPTY_STRING})
         self.assertEqual(rows[1], {"a": "2", "b": "3"})
 
     async def test_schema_evolution_removes_column(self) -> None:
@@ -156,22 +161,24 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer()
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
 
         self.assertTrue(pd.isna(rows[1]["a"]))
-        self.assertEqual(rows[1]["b"], "''")
+        self.assertEqual(rows[1]["b"], CSVOutputWriter.EMPTY_STRING)
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
         """Test that repeated values are nullified when reduce_duplicates is True."""
         writer = self._new_writer(reduce_duplicates=True)
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
-        # NaN != NaN in Python; assert the repeated value was elided in CSV (empty → NaN)
+        # Dedup-masked cells are written as empty CSV cells, which read back as NaN.
         self.assertTrue(pd.isna(rows[1]["a"]))
         self.assertEqual(rows[1]["b"], "3")
 
@@ -185,7 +192,8 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer(reduce_duplicates=False)
         await writer.write_row({"a": 1, "b": 2})
         await writer.write_row({"a": 1, "b": 3})
-        rows = self._read_data_rows()
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+        rows = self._read_data_rows(ffill=False)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
         self.assertEqual(rows[1], {"a": "1", "b": "3"})
@@ -195,8 +203,28 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer(reduce_duplicates=True)
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
         await writer.write_row({"a": 1, "b": 2})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
         await writer.write_row({"a": 1, "b": 2})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+        rows = self._read_data_rows()
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"a": "1", "b": "2"})
+        self.assertEqual(
+            rows[1],
+            {"a": "1", "b": "2"},
+            "second logical file must not inherit dedup from the first",
+        )
+
+    async def test_no_dedup_across_files_different_order(self) -> None:
+        """Test that deduplication is not carried across files."""
+        writer = self._new_writer(reduce_duplicates=True)
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"a": 1, "b": 2})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"b": 2, "a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows()
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"a": "1", "b": "2"})
@@ -223,6 +251,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
                 "unit": "kg",
             }
         )
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
 
         # file 2: dedup boundary resets; repeated chain_id should appear again
         await writer.initialize_new_file(None)  # type: ignore[arg-type]
@@ -242,6 +271,7 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
                 "unit": "l",
             }
         )
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
 
         with open(self._csv_path(), "r", encoding="utf-8") as f:
             actual = f.read()
@@ -262,14 +292,15 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         writer = self._new_writer(reduce_duplicates=True)
         await writer.write_row({"chain_id": "1", "city": "TLV"})
         await writer.write_row(
-            {"chain_id": "2", "city": "''"}
+            {"chain_id": "2", "city": ""}
         )  # source XML: <City></City>
         await writer.write_row({"chain_id": "3", "city": "HFA"})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
         rows = self._read_data_rows(ffill=True)
         self.assertEqual(rows[0]["city"], "TLV")
         # Empty-string source value lands as an empty cell → NaN after read_csv.
 
-        self.assertEqual(rows[1]["city"], "''")
+        self.assertEqual(rows[1]["city"], CSVOutputWriter.EMPTY_STRING)
         self.assertEqual(rows[2]["city"], "HFA")
 
     async def test_source_empty_value_is_indistinguishable_from_rle_masked_value(
@@ -286,11 +317,14 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         await writer.write_row({"chain_id": "1", "city": "8300"})
         await writer.write_row({"chain_id": "2", "city": "8300"})  # RLE-masked
         await writer.write_row({"chain_id": "3", "city": ""})  # source-empty
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
 
         rows = self._read_data_rows(ffill=True)
         self.assertEqual(rows[0], {"chain_id": "1", "city": "8300"})
         self.assertEqual(rows[1], {"chain_id": "2", "city": "8300"})
-        self.assertEqual(rows[2], {"chain_id": "3", "city": "''"})
+        self.assertEqual(
+            rows[2], {"chain_id": "3", "city": CSVOutputWriter.EMPTY_STRING}
+        )
 
 
 if __name__ == "__main__":
