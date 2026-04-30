@@ -69,12 +69,16 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
                 name: output.queue_handler for name, output in scraper.consume().items()
             }
 
+        output_cfg = {}
+        if o.kafka_config:
+            output_cfg["kafka_config"] = o.kafka_config
+
         converter = ConvertingTask(
             enabled_parsers=o.enabled_scrapers if o.enabled_scrapers else None,
             files_types=[o.filter_type] if o.filter_type else None,
             limit=o.limit,
-            queue_handlers=queue_handlers,
-            kafka_config=o.kafka_config,
+            source_configuration={"queue_handlers": queue_handlers},
+            output_configuration=output_cfg or None,
         )
 
         result = converter.start()

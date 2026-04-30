@@ -20,16 +20,13 @@ def _default_when_date() -> datetime.datetime:
 class ConvertingTaskConfig:
     """Configuration for :class:`ConvertingTask` (supports ``ConvertingTask(**kwargs)``)."""
 
-    data_folder: str = "dumps"
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
     multiprocessing: int = 6
     when_date: datetime.datetime = field(default_factory=_default_when_date)
-    output_folder: str = "outputs"
-    queue_handlers: Optional[Dict[str, Any]] = None
-    kafka_config: Optional[Dict[str, Any]] = None
-    status_configuration: Optional[Dict[str, Any]] = None
+    source_configuration: Optional[Dict[str, Any]] = None
     output_configuration: Optional[Dict[str, Any]] = None
+    status_configuration: Optional[Dict[str, Any]] = None
 
 
 class ConvertingTask:
@@ -37,14 +34,17 @@ class ConvertingTask:
 
     Example::
 
-        task = ConvertingTask(data_folder="dumps", output_folder="outputs")
+        task = ConvertingTask(
+            source_configuration={"folder": "dumps"},
+            output_configuration={"output_folder": "outputs"},
+        )
         task.start()
         task.join()
 
     With queue output::
 
         task = ConvertingTask(
-            data_folder="dumps",
+            source_configuration={"queue_handlers": scraper.consume()},
             output_configuration={"output_mode": "queue"},
         )
         queues = task.consume()
@@ -62,16 +62,14 @@ class ConvertingTask:
     ) -> None:
         cfg = config or ConvertingTaskConfig(**kwargs)
         Logger.info(
-            f"Starting Parser, data_folder={cfg.data_folder},"
-            f"number_of_processes={cfg.multiprocessing}"
-            f"parsers = {cfg.enabled_parsers}"
-            f"files_types = {cfg.files_types}"
-            f"output_folder={cfg.output_folder}"
-            f"when_date={cfg.when_date}"
-            f"queue_handlers={'provided' if cfg.queue_handlers else 'None'}"
-            f"kafka_config={'provided' if cfg.kafka_config else 'None'}"
+            f"Starting Parser, "
+            f"number_of_processes={cfg.multiprocessing} "
+            f"parsers={cfg.enabled_parsers} "
+            f"files_types={cfg.files_types} "
+            f"when_date={cfg.when_date} "
+            f"source_configuration={cfg.source_configuration} "
+            f"output_configuration={cfg.output_configuration} "
             f"status_configuration={cfg.status_configuration}"
-            f"output_configuration={cfg.output_configuration}"
         )
 
         self._config = cfg
@@ -79,10 +77,8 @@ class ConvertingTask:
 
         # Build per-parser output queues when queue output mode is requested
         self._output_queues = {}
-        if (
-            cfg.output_configuration
-            and cfg.output_configuration.get("output_mode") == "queue"
-        ):
+        output_cfg = cfg.output_configuration or {}
+        if output_cfg.get("output_mode") == "queue":
             parsers = cfg.enabled_parsers or ParserFactory.all_parsers_name()
             file_types = cfg.files_types or FileTypesFilters.all_types()
             for parser_name in parsers:
@@ -91,17 +87,19 @@ class ConvertingTask:
                         create_output_queue()
                     )
 
+        # Merge runtime output_queues into a copy of output_configuration
+        merged_output_cfg = {**output_cfg}
+        if self._output_queues:
+            merged_output_cfg["output_queues"] = self._output_queues
+
         self.runner = ParallelParser(
             ParallelParserParams(
-                data_folder=cfg.data_folder,
                 enabled_parsers=cfg.enabled_parsers,
                 enabled_file_types=cfg.files_types,
-                output_folder=cfg.output_folder,
                 when_date=cfg.when_date,
-                queue_handlers=cfg.queue_handlers,
-                kafka_config=cfg.kafka_config,
+                source_configuration=cfg.source_configuration or {},
+                output_configuration=merged_output_cfg,
                 status_configuration=cfg.status_configuration,
-                output_queues=self._output_queues if self._output_queues else None,
             ),
             multiprocessing=cfg.multiprocessing,
         )

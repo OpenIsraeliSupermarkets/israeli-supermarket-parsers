@@ -7,23 +7,21 @@ def create_parser_status(
     enabled_scraper: str,
     enabled_file_type: str,
     status_configuration: Optional[dict] = None,
-    default_base_path: str = "outputs",
 ) -> ParserStatus:
     """Factory: build a ParserStatus backed by the configured database.
 
     Keys (same convention as ScarpingTask.status_configuration):
-        database_type  "json" (default) | "mongo"
-        base_path      directory for the JSON file  (json only)
-        db_name        MongoDB database name         (mongo only, default: database_name)
+        database_type    "json" (default) | "mongo"
+        base_path        directory for the JSON file  (json only)
+        default_base_path fallback base_path when base_path is not set (default: "outputs")
+        db_name          MongoDB database name         (mongo only, default: database_name)
 
     The JsonDataBase creates one file per database_name:
         {base_path}/{database_name}.json
     """
     database_name = f"{enabled_scraper}_{enabled_file_type}".lower()
-    config = status_configuration or {
-        "database_type": "json",
-        "base_path": default_base_path,
-    }
+    config = status_configuration or {}
+    default_base_path = config.get("default_base_path", "outputs")
     db_type = config.get("database_type", "json")
 
     if db_type == "json":

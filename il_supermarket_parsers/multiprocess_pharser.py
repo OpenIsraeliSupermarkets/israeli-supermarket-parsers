@@ -27,15 +27,12 @@ def _default_parallel_when() -> datetime.datetime:
 class ParallelParserParams:
     """Runtime parameters for :class:`ParallelParser`."""
 
-    data_folder: str
     enabled_parsers: Optional[List[str]] = None
     enabled_file_types: Optional[List[str]] = None
-    output_folder: str = "output"
     when_date: datetime.datetime = field(default_factory=_default_parallel_when)
-    queue_handlers: Any = None
-    kafka_config: Any = None
+    source_configuration: Any = None
+    output_configuration: Any = None
     status_configuration: Any = None
-    output_queues: Any = None
 
     def get_enabled_parsers(self) -> List[str]:
         """Return configured parser names, or all parsers if none are set."""
@@ -47,7 +44,8 @@ class ParallelParserParams:
 
     def get_output_folder(self) -> str:
         """Return the base output directory path."""
-        return self.output_folder
+        cfg = self.output_configuration or {}
+        return cfg.get("output_folder", "outputs")
 
     def get_when_date(self) -> datetime.datetime:
         """Return the run timestamp (Jerusalem) used for filtering."""
@@ -55,10 +53,11 @@ class ParallelParserParams:
 
     def to_string(self) -> str:
         """Summarize these params for logging."""
+        src = self.source_configuration or {}
         return (
             f"parsers={self.get_enabled_parsers()},"
             f"file_types={self.get_enabled_file_types()},"
-            f"data_folder={self.data_folder},"
+            f"data_folder={src.get('folder', 'dumps')},"
             f"output_folder={self.get_output_folder()},"
             f"when_date={self.get_when_date().strftime('%Y-%m-%d %H:%M:%S %z')}"
         )
@@ -71,30 +70,21 @@ class RawProcessing(ProcessJob):
         """read the dump folder and filter according to the requested filters
         start processing file according to thier "update_date"
         """
-        queue_handlers = kwargs.pop("queue_handlers", None)
-        kafka_config = kwargs.pop("kafka_config", None)
-        drop_folder = kwargs.pop("data_folder", None)
+        source_config = kwargs.pop("source_configuration", {})
+        output_config = kwargs.pop("output_configuration", {})
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
-        output_folder = kwargs.pop("output_folder", "outputs")
         limit = kwargs.pop("limit")
         status_config = kwargs.pop("status_config", None)
-        output_queues = kwargs.pop("output_queues", None)
 
-        # get the data loader based on the queue handlers or the folder
-        data_loader = get_data_loader(queue_handlers, drop_folder)
+        data_loader = get_data_loader(source_config)
 
-        # get the output writer based on the queue handlers or the kafka config or the output folder
-        output_writer = get_output_writer(
-            parser_name, file_type, output_queues, kafka_config, output_folder
-        )
+        output_writer = get_output_writer(parser_name, file_type, output_config)
 
-        # create the parser status
         parser_status = create_parser_status(
             enabled_scraper=parser_name,
             enabled_file_type=file_type,
             status_configuration=status_config,
-            default_base_path=output_folder,
         )
 
         pipeline = RawParsingPipeline(
@@ -133,19 +123,16 @@ class ParallelParser(MultiProcessor):
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
 
-        os.makedirs(self.params.output_folder, exist_ok=True)
+        os.makedirs(self.params.get_output_folder(), exist_ok=True)
 
         params_order = [
             "limit",
             "store_enum",
             "file_type",
-            "data_folder",
-            "output_folder",
             "when_date",
-            "queue_handlers",
-            "kafka_config",
+            "source_configuration",
+            "output_configuration",
             "status_config",
-            "output_queues",
         ]
 
         Logger.info(f"Creating combinations for {self.params.to_string()},")
@@ -154,13 +141,10 @@ class ParallelParser(MultiProcessor):
                 [limit],
                 self.params.get_enabled_parsers(),
                 self.params.get_enabled_file_types(),
-                [self.params.data_folder],
-                [self.params.output_folder],
                 [self.params.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
-                [self.params.queue_handlers],
-                [self.params.kafka_config],
+                [self.params.source_configuration],
+                [self.params.output_configuration],
                 [self.params.status_configuration],
-                [self.params.output_queues],
             )
         )
         task_can_executed_independently = [

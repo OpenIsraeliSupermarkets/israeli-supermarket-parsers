@@ -10,15 +10,23 @@ from .multi_output_writer import MultiOutputWriter
 def get_output_writer(
     parser_name: str,
     file_type: str,
-    output_queues: dict,
-    kafka_config: dict,
-    output_folder: str,
-    always_write_csv: bool = False,
+    output_configuration: dict,
 ) -> BaseOutputWriter:
     """Return a writer (or fan-out MultiOutputWriter) for the given configuration.
 
+    Keys in output_configuration:
+        output_queues     dict mapping (parser_name, file_type) to queue objects
+        kafka_config      dict with bootstrap_servers and optional topic_template
+        output_folder     directory for CSV output (default: "outputs")
+        always_write_csv  also write CSV even when another writer is active (default: False)
+
     CSV is added when no other writer is active, or when always_write_csv=True.
     """
+    output_queues = output_configuration.get("output_queues")
+    kafka_config = output_configuration.get("kafka_config")
+    output_folder = output_configuration.get("output_folder", "outputs")
+    always_write_csv = output_configuration.get("always_write_csv", False)
+
     queue_key = (parser_name, file_type)
     writers: List[BaseOutputWriter] = []
 
