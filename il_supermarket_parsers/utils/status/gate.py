@@ -29,11 +29,10 @@ def create_parser_status(
                 database_name, base_path=status_configuration.base_path
             ),
         )
-    else:
-        db = MongoDataBase(
-            status_configuration.db_name,
-            connection_url=status_configuration.connection_url,
-            collection_name=status_configuration.collection_name,
-        )
-        db.create_connection()
-        return ParserStatus(status_database=db)
+    db = MongoDataBase(
+        status_configuration.db_name,
+        connection_url=status_configuration.connection_url,
+        collection_name=status_configuration.collection_name,
+    )
+    db.create_connection()
+    return ParserStatus(status_database=db)

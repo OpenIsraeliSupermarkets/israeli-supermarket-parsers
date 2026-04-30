@@ -54,8 +54,10 @@ async def _process_files(
         with tempfile.TemporaryDirectory() as file_tmp_dir:
             writer = CSVOutputWriter(
                 output_folder=file_tmp_dir,
-                enabled_scraper=file.extracted_chain_id,
-                enabled_file_type=file.detected_filetype.name,
+                csv_file_name=(
+                    f"{file.detected_filetype.name.lower()}_"
+                    f"{file.extracted_chain_id.lower()}"
+                ),
                 reduce_duplicates=test_fill_forward,
             )
             await writer.initialize()

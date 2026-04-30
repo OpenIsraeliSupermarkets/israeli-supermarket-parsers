@@ -1,25 +1,22 @@
-import itertools
-import os
 import asyncio
-from dataclasses import dataclass
-from typing import Any, List, Optional
+import itertools
+from typing import List
+
+from pydantic import BaseModel
 
 from .raw_parsing_pipeline import RawParsingPipeline
-from .utils.multi_processing import MultiProcessor, ProcessJob
-from .parser_factory import ParserFactory
 from .utils import (
-    FileTypesFilters,
     Logger,
     create_parser_status,
     get_data_loader,
     get_output_writer,
 )
+from .utils.multi_processing import MultiProcessor, ProcessJob
 from .utils.types import (
-    SourceConfiguration,
     OutputConfiguration,
+    SourceConfiguration,
     StatusConfiguration,
 )
-from pydantic import BaseModel
 
 
 class ParallelParserParams(BaseModel):

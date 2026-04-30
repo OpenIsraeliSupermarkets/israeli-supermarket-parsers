@@ -1,11 +1,11 @@
-import threading
 import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+import threading
+from typing import Any, Dict, List, Optional, Tuple
+
+from pydantic import BaseModel
 
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
-from .utils.logger import Logger
 from .utils import FileTypesFilters
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
 from .utils.types import (
@@ -15,9 +15,6 @@ from .utils.types import (
     QueueOutputConfiguration,
     CsvOutputConfiguration,
 )
-
-
-from pydantic import BaseModel
 
 
 class ConvertingTaskConfig(BaseModel):
