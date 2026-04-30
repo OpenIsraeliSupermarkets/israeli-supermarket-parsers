@@ -2,6 +2,7 @@ from typing import List
 
 from .queue_output_writer import QueueOutputWriter
 from .kafka_output_writer import KafkaOutputWriter
+from .mongo_output_writer import MongoOutputWriter
 from .csv_output_writer import CSVOutputWriter
 from .base_output_writer import BaseOutputWriter
 from .multi_output_writer import MultiOutputWriter
@@ -9,6 +10,7 @@ from ..types import (
     OutputConfiguration,
     QueueOutputConfiguration,
     KafkaOutputConfiguration,
+    MongoOutputConfiguration,
     CsvOutputConfiguration,
 )
 
@@ -23,6 +25,7 @@ def get_output_writer(
     Keys in configurations:
         output_queues     dict mapping (parser_name, file_type) to queue objects
         kafka_config      dict with bootstrap_servers and optional topic_template
+        mongo_config      dict with connection_url, db_name, optional collection_template
         output_folder     directory for CSV output (default: "outputs")
         always_write_csv  also write CSV even when another writer is active (default: False)
 
@@ -38,6 +41,17 @@ def get_output_writer(
                     bootstrap_servers=cfg.kafka_config.bootstrap_servers,
                     topic_template=cfg.kafka_config.topic_template.format(
                         enabled_scraper=parser_name, enabled_file_type=file_type
+                    ),
+                )
+            )
+        elif isinstance(cfg, MongoOutputConfiguration):
+            writers.append(
+                MongoOutputWriter(
+                    connection_url=cfg.mongo_config.connection_url,
+                    db_name=cfg.mongo_config.db_name,
+                    collection_name=cfg.mongo_config.collection_template.format(
+                        enabled_scraper=parser_name,
+                        enabled_file_type=file_type,
                     ),
                 )
             )

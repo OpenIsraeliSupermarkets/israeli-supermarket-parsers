@@ -57,10 +57,28 @@ class KafkaOutputConfiguration(BaseModel):
     kafka_config: KafkaConfig
 
 
+class MongoConfig(BaseModel):
+    """Connection details for the MongoDB output writer."""
+
+    connection_url: str
+    db_name: str
+    collection_template: str = Field(
+        default="{enabled_scraper}_{enabled_file_type}",
+    )
+
+
+class MongoOutputConfiguration(BaseModel):
+    """Insert parsed rows into a MongoDB collection."""
+
+    output_mode: Literal["mongo"]
+    mongo_config: MongoConfig
+
+
 OutputConfiguration = Union[
     QueueOutputConfiguration,
     CsvOutputConfiguration,
     KafkaOutputConfiguration,
+    MongoOutputConfiguration,
 ]
 """A single output destination.  Pass a list to fan-out to multiple destinations."""
 
