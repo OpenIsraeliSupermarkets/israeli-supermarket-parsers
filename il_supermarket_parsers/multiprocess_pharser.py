@@ -1,11 +1,8 @@
 import itertools
-import datetime
 import os
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, List, Optional
-
-import pytz
 
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils.multi_processing import MultiProcessor, ProcessJob
@@ -19,17 +16,12 @@ from .utils import (
 )
 
 
-def _default_parallel_when() -> datetime.datetime:
-    return datetime.datetime.now(pytz.timezone("Asia/Jerusalem"))
-
-
 @dataclass
 class ParallelParserParams:
     """Runtime parameters for :class:`ParallelParser`."""
 
     enabled_parsers: Optional[List[str]] = None
     enabled_file_types: Optional[List[str]] = None
-    when_date: datetime.datetime = field(default_factory=_default_parallel_when)
     source_configuration: Any = None
     output_configuration: Any = None
     status_configuration: Any = None
@@ -47,10 +39,6 @@ class ParallelParserParams:
         cfg = self.output_configuration or {}
         return cfg.get("output_folder", "outputs")
 
-    def get_when_date(self) -> datetime.datetime:
-        """Return the run timestamp (Jerusalem) used for filtering."""
-        return self.when_date
-
     def to_string(self) -> str:
         """Summarize these params for logging."""
         src = self.source_configuration or {}
@@ -59,7 +47,6 @@ class ParallelParserParams:
             f"file_types={self.get_enabled_file_types()},"
             f"data_folder={src.get('folder', 'dumps')},"
             f"output_folder={self.get_output_folder()},"
-            f"when_date={self.get_when_date().strftime('%Y-%m-%d %H:%M:%S %z')}"
         )
 
 
@@ -74,8 +61,8 @@ class RawProcessing(ProcessJob):
         output_config = kwargs.pop("output_configuration", {})
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
-        limit = kwargs.pop("limit")
-        status_config = kwargs.pop("status_config", None)
+        limit = kwargs.pop("limit", None)
+        status_config = kwargs.pop("status_config", {})
 
         data_loader = get_data_loader(source_config)
 
@@ -141,7 +128,6 @@ class ParallelParser(MultiProcessor):
                 [limit],
                 self.params.get_enabled_parsers(),
                 self.params.get_enabled_file_types(),
-                [self.params.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
                 [self.params.source_configuration],
                 [self.params.output_configuration],
                 [self.params.status_configuration],

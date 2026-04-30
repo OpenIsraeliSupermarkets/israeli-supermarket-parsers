@@ -1,19 +1,12 @@
-import datetime
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
-
-import pytz
 
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
 from .utils.logger import Logger
 from .utils import FileTypesFilters
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
-
-
-def _default_when_date() -> datetime.datetime:
-    return datetime.datetime.now(pytz.timezone("Asia/Jerusalem"))
 
 
 @dataclass
@@ -23,7 +16,6 @@ class ConvertingTaskConfig:
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
     multiprocessing: int = 6
-    when_date: datetime.datetime = field(default_factory=_default_when_date)
     source_configuration: Optional[Dict[str, Any]] = None
     output_configuration: Optional[Dict[str, Any]] = None
     status_configuration: Optional[Dict[str, Any]] = None
@@ -66,7 +58,6 @@ class ConvertingTask:
             f"number_of_processes={cfg.multiprocessing} "
             f"parsers={cfg.enabled_parsers} "
             f"files_types={cfg.files_types} "
-            f"when_date={cfg.when_date} "
             f"source_configuration={cfg.source_configuration} "
             f"output_configuration={cfg.output_configuration} "
             f"status_configuration={cfg.status_configuration}"
@@ -96,7 +87,6 @@ class ConvertingTask:
             ParallelParserParams(
                 enabled_parsers=cfg.enabled_parsers,
                 enabled_file_types=cfg.files_types,
-                when_date=cfg.when_date,
                 source_configuration=cfg.source_configuration or {},
                 output_configuration=merged_output_cfg,
                 status_configuration=cfg.status_configuration,
@@ -112,7 +102,10 @@ class ConvertingTask:
         """
         return {name: ParsedRowsQueue(q) for name, q in self._output_queues.items()}
 
-    def start(self, limit: Optional[int] = None) -> threading.Thread:
+    def start(
+        self,
+        limit: Optional[int] = None,
+    ) -> threading.Thread:
         """Start the parsing task in a new background thread.
 
         Args:

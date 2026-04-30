@@ -2,6 +2,7 @@ import traceback
 import xml.etree.ElementTree as ET
 from typing import List, Optional
 
+
 from .parser_factory import ParserFactory
 from .utils import Logger
 from .utils.data_loaders import BaseDataLoader
