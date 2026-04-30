@@ -23,6 +23,9 @@ setup(
         "il_supermarket_parsers.engines",
         "il_supermarket_parsers.parsers",
         "il_supermarket_parsers.utils",
+        "il_supermarket_parsers.utils.data_loaders",
+        "il_supermarket_parsers.utils.output_writers",
+        "il_supermarket_parsers.utils.status",
     ],
     # Needed for dependencies
     install_requires=required,
