@@ -29,9 +29,9 @@ setup(
     tests_require=dev_required,
     extras_require={"test": ["pytest", "pytest-xdist", "pytest-asyncio"]},
     # *strongly* suggested for sharing
-    version="0.2.2",
+    version="1.0.0",
     # The license can be anything you like
-    license="MIT",
+    license="CUSTOM",
     description="python package that process the data dumped by the israeli supermarket",
     # We will also need a readme eventually (there will be a warning)
     long_description=long_description,

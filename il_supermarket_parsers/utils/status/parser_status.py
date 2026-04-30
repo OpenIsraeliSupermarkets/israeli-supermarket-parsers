@@ -170,7 +170,7 @@ class ParserStatus:
         )
         self._file_logs.append(FileExecutionLog(**fields))
 
-    def on_parsing_completed(  # pylint: disable=too-many-positional-arguments
+    def on_parsing_completed(
         self,
         enabled_scraper: str,
         enabled_file_types: List[str],

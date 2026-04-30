@@ -15,7 +15,7 @@ from il_supermarket_parsers.utils import DumpFile
 class BaseFileConverter(ABC):
     """abstract parser"""
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         pricefull_parser: XmlBaseConverter = None,
         promofull_parser: XmlBaseConverter = None,

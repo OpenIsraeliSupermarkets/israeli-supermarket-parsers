@@ -7,7 +7,7 @@ from .base_output_writer import BaseOutputWriter
 from .multi_output_writer import MultiOutputWriter
 
 
-def get_output_writer(  # pylint: disable=too-many-positional-arguments
+def get_output_writer(
     parser_name: str,
     file_type: str,
     output_queues: dict,
