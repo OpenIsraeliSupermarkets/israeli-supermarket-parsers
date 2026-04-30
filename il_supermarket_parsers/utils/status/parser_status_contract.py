@@ -22,6 +22,7 @@ class StartedParsingStatus(BaseModel):
     limit: Optional[int] = None
     scraper: Optional[str] = None
     files_types: Optional[List[str]] = None
+    task_id: Optional[str] = None
 
 
 class CompletedParsingStatus(BaseModel):
@@ -34,6 +35,7 @@ class CompletedParsingStatus(BaseModel):
     had_errors: bool = False
     output_path: Optional[str] = None
     total_files: int = 0
+    task_id: Optional[str] = None
 
 
 # -- Per-file events --
@@ -48,6 +50,7 @@ class ProcessedFileStatus(BaseModel):
     store_folder: str
     file_type: str
     row_count: int
+    task_id: Optional[str] = None
 
 
 class SkippedFileStatus(BaseModel):
@@ -58,6 +61,7 @@ class SkippedFileStatus(BaseModel):
     file_name: str
     store_folder: str
     file_type: str
+    task_id: Optional[str] = None
 
 
 class FailedFileStatus(BaseModel):
@@ -71,6 +75,7 @@ class FailedFileStatus(BaseModel):
     error: str
     trace: str
     row_count: int = 0
+    task_id: Optional[str] = None
 
 
 # -- Aggregate output --

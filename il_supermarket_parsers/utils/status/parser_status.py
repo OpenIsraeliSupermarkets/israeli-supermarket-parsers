@@ -10,6 +10,7 @@ the same on-disk format.
 """
 
 import os
+import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -56,6 +57,7 @@ class ParserStatus:
     def __init__(self, status_database: AbstractDataBase) -> None:
         self.database = status_database
         self._file_logs: List[FileExecutionLog] = []
+        self.task_id: uuid.UUID = str(uuid.uuid4())
 
     def _dumpfile_to_event_fields(self, dump_file: DumpFile) -> dict:
         """Minimal fields shared by all per-file contract events."""
@@ -111,13 +113,16 @@ class ParserStatus:
             limit=limit,
             scraper=enabled_scraper,
             files_types=enabled_file_types,
+            task_id=self.task_id,
         )
         self.database.insert_document("global_status", event.dict())
 
     def register_skipped_file(self, dump_file: DumpFile) -> None:
         """Record that a file was skipped because it is not readable."""
         event = SkippedFileStatus(
-            when=_now(), **self._dumpfile_to_event_fields(dump_file)
+            when=_now(),
+            task_id=self.task_id,
+            **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
 
@@ -130,6 +135,7 @@ class ParserStatus:
         event = ProcessedFileStatus(
             when=_now(),
             row_count=row_count,
+            task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
@@ -153,6 +159,7 @@ class ParserStatus:
             row_count=row_count,
             error=str(error),
             trace=trace,
+            task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
@@ -185,6 +192,7 @@ class ParserStatus:
             had_errors=had_errors,
             output_path=output_path,
             total_files=total_files,
+            task_id=self.task_id,
         )
         self.database.insert_document("global_status", event.dict())
         Logger.info(
