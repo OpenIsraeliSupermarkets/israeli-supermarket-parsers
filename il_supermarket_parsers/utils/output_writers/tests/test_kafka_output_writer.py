@@ -13,10 +13,15 @@ _PATCH_TARGET = (
 
 
 def _make_writer(mock_producer_cls, **kwargs):
-    """Construct a KafkaOutputWriter with sensible defaults."""
+    """Construct a KafkaOutputWriter with sensible defaults.
+
+    Topic is a resolved name (as :func:`get_output_writer` passes after formatting
+    the Kafka topic template).
+    """
     mock_producer_cls.return_value = MagicMock()
     defaults = {
         "bootstrap_servers": ["host:9092"],
+        "topic_template": "shufersal_pricefull",
     }
     defaults.update(kwargs)
     writer = KafkaOutputWriter(**defaults)
@@ -73,20 +78,15 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
     # ------------------------------------------------------------------
 
     def test_topic_default_template(self) -> None:
-        """Test that the topic method returns the default template."""
+        """Default fixture uses a resolved topic name (matches gate formatting)."""
         self.assertEqual(self._writer.topic, "shufersal_pricefull")
 
     def test_topic_custom_template(self) -> None:
-        """Test that the topic method returns the custom template."""
-        _, _ = _make_writer(
-            self._mock_producer_cls,
-            topic_template="raw_{enabled_file_type}",
-        )
-
+        """Resolved topic string is exposed as writer.topic."""
         self._mock_producer_cls.return_value = MagicMock()
         writer = KafkaOutputWriter(
             bootstrap_servers=["host:9092"],
-            topic_template="raw_{enabled_file_type}",
+            topic_template="raw_pricefull",
         )
         self.assertEqual(writer.topic, "raw_pricefull")
 

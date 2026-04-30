@@ -84,17 +84,16 @@ def _write_xml(folder: str, filename: str, content: str) -> str:
 def _build_pipeline(root: str, output_dir: str, status_dir: str, file_type: str):
     """Construct a fully wired RawParsingPipeline for SHUFERSAL."""
     data_loader = DataLoader(root)
+    csv_file_name = f"{file_type.lower()}_{SCRAPER.lower()}"
     output_writer = CSVOutputWriter(
         output_folder=output_dir,
-        enabled_scraper=SCRAPER,
-        enabled_file_type=file_type,
+        csv_file_name=csv_file_name,
     )
     db = JsonDataBase(f"{SCRAPER}_{file_type}".lower(), base_path=status_dir)
-    parser_status = ParserStatus(f"{SCRAPER}_{file_type}".lower(), status_database=db)
     return RawParsingPipeline(
         data_loader=data_loader,
         output_writer=output_writer,
-        parser_status=parser_status,
+        parser_status=ParserStatus(db),
     )
 
 

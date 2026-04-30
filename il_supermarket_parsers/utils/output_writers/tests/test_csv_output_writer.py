@@ -33,9 +33,8 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
 
     def _new_writer(self, reduce_duplicates: bool = True) -> CSVOutputWriter:
         return CSVOutputWriter(
-            self._output_folder,
-            "shufersal",
-            "pricefull",
+            output_folder=self._output_folder,
+            csv_file_name="pricefull_shufersal",
             reduce_duplicates=reduce_duplicates,
         )
 
