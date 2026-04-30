@@ -35,6 +35,7 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
     """MongoOutputWriter tests (MongoClient fully mocked)."""
 
     def setUp(self) -> None:
+        """Set up the test environment."""
         self._patcher = patch(_PATCH_TARGET)
         self._mock_client_cls = self._patcher.start()
         self._writer, self._mock_client, self._mock_collection = _make_writer(
@@ -42,14 +43,17 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
         )
 
     def tearDown(self) -> None:
+        """Tear down the test environment."""
         self._patcher.stop()
 
     async def test_initialize_sets_initialized_flag(self) -> None:
+        """Test that the initialize method sets the initialized flag."""
         self.assertFalse(self._writer._initialized)  # pylint: disable=protected-access
         await self._writer.initialize()
         self.assertTrue(self._writer._initialized)  # pylint: disable=protected-access
 
     async def test_initialize_new_file_resets_columns(self) -> None:
+        """Test that the initialize_new_file method resets the existing columns."""
         await self._writer.write_row({"a": 1, "b": 2})
         self.assertGreater(
             len(self._writer._existing_columns), 0  # pylint: disable=protected-access
@@ -60,19 +64,23 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
         )
 
     def test_get_path_includes_db_and_collection(self) -> None:
+        """Test that the get_path method includes the database and collection."""
         self.assertEqual(
             self._writer.get_path(),
             "mongodb:///supermarket/shufersal_pricefull",
         )
 
     def test_exists_false_when_no_columns(self) -> None:
+        """Test that the exists method returns False when no columns are present."""
         self.assertFalse(self._writer.exists())
 
     async def test_exists_true_after_write(self) -> None:
+        """Test that the exists method returns True after writing a row."""
         await self._writer.write_row({"x": 1})
         self.assertTrue(self._writer.exists())
 
     def test_get_existing_columns_returns_copy(self) -> None:
+        """Test that the get_existing_columns method returns a copy of the existing columns."""
         cols = self._writer.get_existing_columns()
         cols.append("injected")
         self.assertEqual(
@@ -80,10 +88,12 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_write_row_inserts_document(self) -> None:
+        """Test that the write_row method inserts a document into the collection."""
         await self._writer.write_row({"a": 1})
         self._mock_collection.insert_one.assert_called_once_with({"a": 1})
 
     async def test_write_row_schema_alignment(self) -> None:
+        """Test that the write_row method aligns the schema of the messages."""
         await self._writer.write_row({"a": 1})
         await self._writer.write_row({"a": 2, "b": 3})
 
@@ -98,6 +108,7 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_doc["b"], 3)
 
     async def test_write_row_schema_alignment_with_missing_columns(self) -> None:
+        """Test that the write_row method aligns the schema of the messages with missing columns."""
         await self._writer.write_row({"a": 2, "b": 3})
         await self._writer.write_row({"a": 1})
 
@@ -108,6 +119,7 @@ class TestMongoOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(second_doc["b"])
 
     async def test_close_calls_client_close(self) -> None:
+        """Test that the close method calls the client close method."""
         await self._writer.close()
         self._mock_client.close.assert_called_once()
 
