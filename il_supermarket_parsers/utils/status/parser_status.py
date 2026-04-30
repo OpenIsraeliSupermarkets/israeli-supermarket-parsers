@@ -53,8 +53,7 @@ class ParserStatus:
     FAILED = "failed"
     COMPLETED = "completed"
 
-    def __init__(self, database_name: str, status_database: AbstractDataBase) -> None:
-        self.database_name = database_name
+    def __init__(self, status_database: AbstractDataBase) -> None:
         self.database = status_database
         self._file_logs: List[FileExecutionLog] = []
 

@@ -30,8 +30,7 @@ class CSVOutputWriter(BaseOutputWriter):
     def __init__(
         self,
         output_folder: str,
-        enabled_scraper: str,
-        enabled_file_type: str,
+        csv_file_name: str,
         reduce_duplicates: bool = True,
     ):
         self._initialized = False
@@ -41,7 +40,7 @@ class CSVOutputWriter(BaseOutputWriter):
         self._buffer: list[dict] = []
         self.output_path = os.path.join(
             output_folder,
-            enabled_file_type.lower() + "_" + enabled_scraper.lower() + ".csv",
+            csv_file_name + ".csv",
         )
 
     def _serialize_cell_for_csv(self, value: Any) -> Any:

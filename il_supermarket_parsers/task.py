@@ -1,24 +1,42 @@
 import threading
+import os
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
 from .utils.logger import Logger
 from .utils import FileTypesFilters
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
+from .utils.types import (
+    OutputConfiguration,
+    SourceConfiguration,
+    StatusConfiguration,
+    QueueOutputConfiguration,
+    CsvOutputConfiguration,
+)
 
 
-@dataclass
-class ConvertingTaskConfig:
+from pydantic import BaseModel
+
+
+class ConvertingTaskConfig(BaseModel):
     """Configuration for :class:`ConvertingTask` (supports ``ConvertingTask(**kwargs)``)."""
 
+    source_configuration: SourceConfiguration
+    output_configuration: List[OutputConfiguration]
+    status_configuration: StatusConfiguration
+    multiprocessing: int = 6
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
-    multiprocessing: int = 6
-    source_configuration: Optional[Dict[str, Any]] = None
-    output_configuration: Optional[Dict[str, Any]] = None
-    status_configuration: Optional[Dict[str, Any]] = None
+
+    def get_enabled_parsers(self) -> List[str]:
+        """Return configured parser names, or all parsers if none are set."""
+        return self.enabled_parsers or ParserFactory.all_parsers_name()
+
+    def get_enabled_file_types(self) -> List[str]:
+        """Return configured file types, or all types if none are set."""
+        return self.files_types or FileTypesFilters.all_types()
 
 
 class ConvertingTask:
@@ -45,53 +63,50 @@ class ConvertingTask:
             for row in iter(result.get_queue().get, None):
                 print(row)
         task.join()
+
+    With multiple outputs (queue + CSV)::
+
+        task = ConvertingTask(
+            source_configuration={"queue_handlers": scraper.consume()},
+            output_configuration=[
+                {"output_mode": "queue"},
+                {"output_mode": "csv", "output_folder": "outputs"},
+            ],
+        )
     """
 
     def __init__(
         self,
-        config: Optional[ConvertingTaskConfig] = None,
         **kwargs: Any,
     ) -> None:
-        cfg = config or ConvertingTaskConfig(**kwargs)
-        Logger.info(
-            f"Starting Parser, "
-            f"number_of_processes={cfg.multiprocessing} "
-            f"parsers={cfg.enabled_parsers} "
-            f"files_types={cfg.files_types} "
-            f"source_configuration={cfg.source_configuration} "
-            f"output_configuration={cfg.output_configuration} "
-            f"status_configuration={cfg.status_configuration}"
-        )
-
-        self._config = cfg
+        self._config = ConvertingTaskConfig(**kwargs)
         self._thread = None
 
-        # Build per-parser output queues when queue output mode is requested
+        # Build per-parser output queues when any config requests queue output
         self._output_queues = {}
-        output_cfg = cfg.output_configuration or {}
-        if output_cfg.get("output_mode") == "queue":
-            parsers = cfg.enabled_parsers or ParserFactory.all_parsers_name()
-            file_types = cfg.files_types or FileTypesFilters.all_types()
-            for parser_name in parsers:
-                for file_type in file_types:
-                    self._output_queues[(parser_name, file_type)] = (
-                        create_output_queue()
-                    )
+        for output_configuration in self._config.output_configuration:
+            if isinstance(output_configuration, QueueOutputConfiguration):
+                parsers = self._config.get_enabled_parsers()
+                file_types = self._config.get_enabled_file_types()
+                for parser_name in parsers:
+                    for file_type in file_types:
+                        self._output_queues[(parser_name, file_type)] = (
+                            create_output_queue()
+                        )
+                output_configuration.queues = self._output_queues
 
-        # Merge runtime output_queues into a copy of output_configuration
-        merged_output_cfg = {**output_cfg}
-        if self._output_queues:
-            merged_output_cfg["output_queues"] = self._output_queues
+            elif isinstance(output_configuration, CsvOutputConfiguration):
+                os.makedirs(output_configuration.output_folder, exist_ok=True)
 
         self.runner = ParallelParser(
             ParallelParserParams(
-                enabled_parsers=cfg.enabled_parsers,
-                enabled_file_types=cfg.files_types,
-                source_configuration=cfg.source_configuration or {},
-                output_configuration=merged_output_cfg,
-                status_configuration=cfg.status_configuration,
+                enabled_parsers=self._config.get_enabled_parsers(),
+                enabled_file_types=self._config.get_enabled_file_types(),
+                source_configuration=self._config.source_configuration,
+                output_configuration=self._config.output_configuration,
+                status_configuration=self._config.status_configuration,
             ),
-            multiprocessing=cfg.multiprocessing,
+            multiprocessing=self._config.multiprocessing,
         )
 
     def consume(self) -> Dict[Tuple[str, str], ParsedRowsQueue]:

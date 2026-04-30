@@ -17,8 +17,6 @@ def _make_writer(mock_producer_cls, **kwargs):
     mock_producer_cls.return_value = MagicMock()
     defaults = {
         "bootstrap_servers": ["host:9092"],
-        "enabled_scraper": "shufersal",
-        "enabled_file_type": "pricefull",
     }
     defaults.update(kwargs)
     writer = KafkaOutputWriter(**defaults)
@@ -88,8 +86,6 @@ class TestKafkaOutputWriter(unittest.IsolatedAsyncioTestCase):
         self._mock_producer_cls.return_value = MagicMock()
         writer = KafkaOutputWriter(
             bootstrap_servers=["host:9092"],
-            enabled_scraper="shufersal",
-            enabled_file_type="pricefull",
             topic_template="raw_{enabled_file_type}",
         )
         self.assertEqual(writer.topic, "raw_pricefull")

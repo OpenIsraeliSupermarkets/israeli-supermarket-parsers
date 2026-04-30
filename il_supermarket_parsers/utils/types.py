@@ -1,6 +1,92 @@
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
+
+
+# ---------------------------------------------------------------------------
+# Source configuration
+# ---------------------------------------------------------------------------
+
+
+class FolderSourceConfiguration(BaseModel):
+    """Read files from a local directory (default scraper output layout)."""
+
+    folder: str  # default: "dumps"
+
+
+class QueueSourceConfiguration(BaseModel):
+    """Consume files from an in-memory queue produced by a ScarpingTask."""
+
+    queue_handlers: Dict[Any, Any]  # mapping returned by scraper.consume()
+
+
+SourceConfiguration = Union[FolderSourceConfiguration, QueueSourceConfiguration]
+
+
+# ---------------------------------------------------------------------------
+# Output configurations
+# ---------------------------------------------------------------------------
+
+
+class QueueOutputConfiguration(BaseModel):
+    """Write parsed rows into an in-memory queue (consume via converter.consume())."""
+
+    output_mode: Literal["queue"]
+    queue_type: Literal["memory"]  # only "memory" is supported; default: "memory"
+    queues: Any = None
+
+
+class CsvOutputConfiguration(BaseModel):
+    """Write parsed rows to CSV files on disk."""
+
+    output_mode: Literal["csv"]
+    output_folder: str  # directory for output files; default: "outputs"
+
+
+class KafkaConfig(BaseModel):
+    """Connection details for the Kafka output writer."""
+
+    bootstrap_servers: str  # e.g. "localhost:9092"  (required)
+    topic_template: str = Field(default="{enabled_scraper}_{enabled_file_type}")
+
+
+class KafkaOutputConfiguration(BaseModel):
+    """Publish parsed rows to a Kafka topic."""
+
+    output_mode: Literal["kafka"]
+    kafka_config: KafkaConfig
+
+
+OutputConfiguration = Union[
+    QueueOutputConfiguration,
+    CsvOutputConfiguration,
+    KafkaOutputConfiguration,
+]
+"""A single output destination.  Pass a list to fan-out to multiple destinations."""
+
+
+# ---------------------------------------------------------------------------
+# Status / tracking configuration
+# ---------------------------------------------------------------------------
+
+
+class JsonStatusConfiguration(BaseModel):
+    """Persist parser status as JSON files on disk."""
+
+    database_type: Literal["json"]  # default when omitted
+    base_path: str  # directory for status JSON files; default: "outputs"
+
+
+class MongoStatusConfiguration(BaseModel):
+    """Persist parser status in MongoDB."""
+
+    database_type: Literal["mongo"]
+    connection_url: str  # default: "localhost"
+    collection_name: str  # default: "scraper_status"
+    db_name: str  # MongoDB database name
+
+
+StatusConfiguration = Union[JsonStatusConfiguration, MongoStatusConfiguration]
 
 
 class FileCompleteMessage(BaseModel):

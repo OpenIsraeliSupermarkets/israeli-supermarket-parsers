@@ -4,6 +4,7 @@ import tempfile
 import asyncio
 import csv
 import sys
+import json
 from typing import List
 
 from il_supermarket_scarper import ScraperFactory
@@ -15,6 +16,8 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers import read_data_rows
+from il_supermarket_parsers.utils.status import ParserStatusOutput
+from il_supermarket_parsers.utils.logger import Logger
 
 csv.field_size_limit(sys.maxsize)
 
@@ -134,6 +137,36 @@ def make_test_case(scraper_enum, parser_enum):
             with tempfile.TemporaryDirectory() as tmpdirname:
                 asyncio.run(self.__parser_validate(file_type, tmpdirname))
 
+        def _make_sure_status_file_is_valid(self, dump_path):
+            """
+            Validate that the status JSON file matches the expected format contract.
+            Will fail if format has drifted from the ParserStatusOutput specification.
+            """
+            # Find the status folder (should be sibling to download_path)
+            parent_path = os.path.dirname(dump_path)
+            status_folder = os.path.join(parent_path, "status")
+
+            # Status folder might not exist if collection is disabled
+            assert os.path.exists(
+                status_folder
+            ), f"Status folder {status_folder} not found"
+
+            # Find JSON files in status folder
+            status_files = [f for f in os.listdir(status_folder) if f.endswith(".json")]
+
+            assert len(status_files) == 1, "should be only one status file"
+
+            # Validate each status file - will raise ValidationError if format shifted
+            for status_file in status_files:
+                status_file_path = os.path.join(status_folder, status_file)
+                with open(status_file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                parsed_status = ParserStatusOutput(**data).validate_parsing_run()
+                assert parsed_status[
+                    0
+                ], f"Status file {status_file} is not valid: {parsed_status[1]}"
+                Logger.info(f"Status file {status_file} validated successfully")
+
         async def __parser_validate(self, file_type, dump_path="temp"):
             """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
@@ -155,6 +188,8 @@ def make_test_case(scraper_enum, parser_enum):
             # assert len(files) > 0, f"No files found in {sub_folder}"
             _validate_file_loading(files, sub_folder)
             await _process_files(files, parser)
+
+            # self._make_sure_status_file_is_valid(sub_folder)
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""

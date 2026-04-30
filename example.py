@@ -68,10 +68,16 @@ async def main():
     converter = ConvertingTask(
         enabled_parsers=enabled_scrapers,
         source_configuration={"queue_handlers": scraper.consume()},
-        output_configuration={
-            "output_mode": "queue",
-            "queue_type": "memory",
-        },
+        output_configuration=[
+            {
+                "output_mode": "queue",
+                "queue_type": "memory",
+            },
+            {
+                "output_mode": "csv",
+                "output_folder": "outputs",
+            },
+        ],
         status_configuration=status_configuration,
     )
 

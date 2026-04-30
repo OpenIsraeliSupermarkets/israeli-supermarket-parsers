@@ -1,12 +1,15 @@
-from typing import Optional
 from il_supermarket_scarper.utils.databases import JsonDataBase, MongoDataBase
 from .parser_status import ParserStatus
+from ..types import (
+    StatusConfiguration,
+    JsonStatusConfiguration,
+)
 
 
 def create_parser_status(
     enabled_scraper: str,
     enabled_file_type: str,
-    status_configuration: Optional[dict] = None,
+    status_configuration: StatusConfiguration,
 ) -> ParserStatus:
     """Factory: build a ParserStatus backed by the configured database.
 
@@ -20,24 +23,17 @@ def create_parser_status(
         {base_path}/{database_name}.json
     """
     database_name = f"{enabled_scraper}_{enabled_file_type}".lower()
-    config = status_configuration or {}
-    default_base_path = config.get("default_base_path", "outputs")
-    db_type = config.get("database_type", "json")
-
-    if db_type == "json":
-        base_path = config.get("base_path", default_base_path)
-        db = JsonDataBase(database_name, base_path=base_path)
-        return ParserStatus(database_name, status_database=db)
-
-    if db_type == "mongo":
-        connection_url = status_configuration.get("connection_url", "localhost")
-        collection_name = status_configuration.get("collection_name", "scraper_status")
+    if isinstance(status_configuration, JsonStatusConfiguration):
+        return ParserStatus(
+            status_database=JsonDataBase(
+                database_name, base_path=status_configuration.base_path
+            ),
+        )
+    else:
         db = MongoDataBase(
-            database_name,
-            connection_url=connection_url,
-            collection_name=collection_name,
+            status_configuration.db_name,
+            connection_url=status_configuration.connection_url,
+            collection_name=status_configuration.collection_name,
         )
         db.create_connection()
-        return ParserStatus(database_name, status_database=db)
-
-    raise ValueError(f"Unknown database_type: {db_type!r}. Must be 'json' or 'mongo'.")
+        return ParserStatus(status_database=db)

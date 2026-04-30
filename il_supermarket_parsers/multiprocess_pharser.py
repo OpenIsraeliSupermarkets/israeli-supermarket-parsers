@@ -14,39 +14,31 @@ from .utils import (
     get_data_loader,
     get_output_writer,
 )
+from .utils.types import (
+    SourceConfiguration,
+    OutputConfiguration,
+    StatusConfiguration,
+)
+from pydantic import BaseModel
 
 
-@dataclass
-class ParallelParserParams:
+class ParallelParserParams(BaseModel):
     """Runtime parameters for :class:`ParallelParser`."""
 
-    enabled_parsers: Optional[List[str]] = None
-    enabled_file_types: Optional[List[str]] = None
-    source_configuration: Any = None
-    output_configuration: Any = None
-    status_configuration: Any = None
-
-    def get_enabled_parsers(self) -> List[str]:
-        """Return configured parser names, or all parsers if none are set."""
-        return self.enabled_parsers or ParserFactory.all_parsers_name()
-
-    def get_enabled_file_types(self) -> List[str]:
-        """Return configured file types, or all types if none are set."""
-        return self.enabled_file_types or FileTypesFilters.all_types()
-
-    def get_output_folder(self) -> str:
-        """Return the base output directory path."""
-        cfg = self.output_configuration or {}
-        return cfg.get("output_folder", "outputs")
+    enabled_parsers: List[str]
+    enabled_file_types: List[str]
+    source_configuration: SourceConfiguration
+    output_configuration: List[OutputConfiguration]
+    status_configuration: StatusConfiguration
 
     def to_string(self) -> str:
         """Summarize these params for logging."""
-        src = self.source_configuration or {}
         return (
-            f"parsers={self.get_enabled_parsers()},"
-            f"file_types={self.get_enabled_file_types()},"
-            f"data_folder={src.get('folder', 'dumps')},"
-            f"output_folder={self.get_output_folder()},"
+            f"parsers={self.enabled_parsers},"
+            f"file_types={self.enabled_file_types},"
+            f"output_configuration={self.output_configuration},"
+            f"status_configuration={self.status_configuration},"
+            f"source_configuration={self.source_configuration},"
         )
 
 
@@ -109,9 +101,6 @@ class ParallelParser(MultiProcessor):
 
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
-
-        os.makedirs(self.params.get_output_folder(), exist_ok=True)
-
         params_order = [
             "limit",
             "store_enum",
@@ -125,8 +114,8 @@ class ParallelParser(MultiProcessor):
         combinations = list(
             itertools.product(
                 [limit],
-                self.params.get_enabled_parsers(),
-                self.params.get_enabled_file_types(),
+                self.params.enabled_parsers,
+                self.params.enabled_file_types,
                 [self.params.source_configuration],
                 [self.params.output_configuration],
                 [self.params.status_configuration],

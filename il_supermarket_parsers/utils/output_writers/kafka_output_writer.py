@@ -10,13 +10,7 @@ from ..loading_utils import DumpFile
 class KafkaOutputWriter(BaseOutputWriter):
     """Kafka output writer with column alignment"""
 
-    def __init__(
-        self,
-        bootstrap_servers: List[str],
-        enabled_scraper: str,
-        enabled_file_type: str,
-        topic_template: str = "{enabled_scraper}_{enabled_file_type}",
-    ):
+    def __init__(self, bootstrap_servers: List[str], topic_template: str):
         """
         Initialize Kafka output writer
 
@@ -26,9 +20,7 @@ class KafkaOutputWriter(BaseOutputWriter):
             key_columns: Optional list of column names to use as message key
         """
         self.bootstrap_servers = bootstrap_servers
-        self.topic = topic_template.format(
-            enabled_scraper=enabled_scraper, enabled_file_type=enabled_file_type
-        )
+        self.topic = topic_template
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,
             value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8"),
