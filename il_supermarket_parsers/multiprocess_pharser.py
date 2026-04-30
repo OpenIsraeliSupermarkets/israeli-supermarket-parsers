@@ -116,7 +116,6 @@ class ParallelParser(MultiProcessor):
             "limit",
             "store_enum",
             "file_type",
-            "when_date",
             "source_configuration",
             "output_configuration",
             "status_config",

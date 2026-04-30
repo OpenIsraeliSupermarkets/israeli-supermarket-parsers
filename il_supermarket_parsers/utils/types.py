@@ -43,7 +43,6 @@ class ExecutionLog(BaseModel):
     status: bool
     store_name: str
     files_types: str
-    when_date: Any
     processed_files: bool
     execution_errors: bool
     output_exists: bool
