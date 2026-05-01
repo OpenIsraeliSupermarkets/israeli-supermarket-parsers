@@ -1,15 +1,17 @@
 import re
 import os
 import datetime
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 from il_supermarket_scarper import FileTypesFilters
+
 from .logger import Logger
 
 EMPTY_FILE_TOEHOLD = 300
 
 
-@dataclass
-class DumpFile:  # pylint: disable=too-many-instance-attributes
+class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
     """information about file found from the scraper"""
 
     store_folder: str
@@ -23,35 +25,42 @@ class DumpFile:  # pylint: disable=too-many-instance-attributes
     #
     should_be_processed: bool = True
     ingore_reason: str = None
+    # Queue-based file support
+    file_content: Optional[bytes] = None
+    file_link: Optional[str] = None
 
-    def get_full_path(self):
+    @property
+    def get_full_path(self) -> str:
         """get full file path"""
         return os.path.join(self.store_folder, self.file_name)
 
-    def is_expected_to_be_readable(self):
-        """get the file category"""
-        return os.path.getsize(self.get_full_path()) == 0
+    @property
+    def is_expected_to_be_readable(self) -> bool:
+        """Returns True if the file has content and can be parsed."""
+        if self.file_content is not None:
+            return len(self.file_content) > 0
+        if os.path.exists(self.get_full_path):
+            return os.path.getsize(self.get_full_path) > 0
+        return False
 
-    def is_expected_to_have_records(self):
+    @property
+    def is_expected_to_have_records(self) -> bool:
         """check if the file is expected to have data"""
-        return os.path.getsize(self.get_full_path()) > EMPTY_FILE_TOEHOLD
+        # If file_content is provided (queue-based), check content length
+        if self.file_content is not None:
+            return len(self.file_content) > EMPTY_FILE_TOEHOLD
+        # Otherwise check file system
+        if os.path.exists(self.get_full_path):
+            return os.path.getsize(self.get_full_path) > EMPTY_FILE_TOEHOLD
+        return False
 
-    def to_log_dict(self):
-        """return the object as dict"""
-        return {
-            "store_folder": self.store_folder,
-            "file_name": self.file_name,
-            "prefix_file_name": self.prefix_file_name,
-            "extracted_store_number": self.extracted_store_number,
-            "extracted_chain_id": self.extracted_chain_id,
-            "extracted_date": self.extracted_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "detected_filetype": self.detected_filetype.name,
-            "size": os.path.join(self.store_folder, self.file_name),
-            "is_expected_to_have_records": self.is_expected_to_have_records(),
-        }
+    @property
+    def is_queue_based(self) -> bool:
+        """check if file is from queue (in-memory)"""
+        return self.file_content is not None
 
 
-def filename_string_to_datetime(date):
+def filename_string_to_datetime(date) -> datetime.datetime:
     """format the datetime"""
     if len(date) == 8:
         # if doesn't include seconds
@@ -106,4 +115,46 @@ def filename_to_file_type_and_chain_id(file_name):
             lower_file_name[:index].replace("null", "")
         ),
         lower_file_name[index:],
+    )
+
+
+def create_dumpfile_from_queue_message(
+    file_name: str,
+    file_content: bytes,
+    file_link: str,
+    metadata: dict,
+    empty_store_id: str = "0000",
+) -> DumpFile:
+    """Create DumpFile from queue message"""
+    # Extract components from file name
+    _file_name_split = file_name.split(".")[0].split("-")
+    try:
+        # Promo7290700100008-000-207-20250224-103225
+        if len(_file_name_split) == 5:
+            prefix_file_name, _, store_number, date, time, *_ = _file_name_split
+            extracted_datetime = date + time
+        else:
+            prefix_file_name, store_number, extracted_datetime, *_ = _file_name_split
+    except ValueError:
+        Logger.warning(f"Error parsing file name {file_name}")
+        # global files
+        prefix_file_name, extracted_datetime, *_ = _file_name_split
+        store_number = empty_store_id
+
+    file_type, chain_id = filename_to_file_type_and_chain_id(prefix_file_name)
+
+    # Use metadata or file_name to determine store_folder
+    # For queue-based files, store_folder might be a virtual path
+    store_folder = metadata.get("store_folder", f"queue/{chain_id}")
+
+    return DumpFile(
+        file_name=file_name,
+        store_folder=store_folder,
+        prefix_file_name=prefix_file_name,
+        extracted_store_number=store_number,
+        extracted_chain_id=chain_id,
+        extracted_date=filename_string_to_datetime(extracted_datetime),
+        detected_filetype=file_type,
+        file_content=file_content,
+        file_link=file_link,
     )

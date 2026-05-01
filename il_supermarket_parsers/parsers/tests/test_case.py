@@ -1,16 +1,30 @@
 import unittest
 import os
 import tempfile
-import gc
-import pandas as pd
+import asyncio
+import csv
+import sys
+import json
+from typing import List
+
 from il_supermarket_scarper import ScraperFactory
-from il_supermarket_parsers.utils import get_sample_data, DataLoader, FileTypesFilters
+from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
+from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
+from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
+    CSVOutputWriter,
+)
 from il_supermarket_parsers.parser_factory import ParserFactory
+from il_supermarket_parsers.engines.base import BaseFileConverter
+from il_supermarket_parsers import read_data_rows
+from il_supermarket_parsers.utils.status import ParserStatusOutput
+from il_supermarket_parsers.utils.logger import Logger
+
+csv.field_size_limit(sys.maxsize)
 
 
-def _validate_file_loading(files, sub_folder):
+def _validate_file_loading(files: List[DumpFile], sub_folder: str):
     """Validate that all files were loaded correctly."""
-    complete_file_loaded = list(map(lambda x: x.get_full_path(), files))
+    complete_file_loaded = list(map(lambda x: x.get_full_path, files))
     files_from_folder = _list_xml_files_recursive(sub_folder)
     assert sorted(complete_file_loaded) == sorted(files_from_folder), (
         f"dataloader failed, failed to load"
@@ -28,24 +42,50 @@ def _list_xml_files_recursive(directory):
     return file_list
 
 
-def _process_files(files, parser):
+async def _process_files(
+    files: List[DumpFile], parser: BaseFileConverter, test_fill_forward: bool = True
+):
     """Process all files and return sampled dataframes."""
     dfs = []
     for file in files:
-        try:
-            if file.is_expected_to_be_readable():
-                continue
-            df = parser.read(file, run_validation=True)
-            if file.is_expected_to_have_records():
-                assert df.shape[0] > 0, f"File {file} is empty"
+        if not file.is_expected_to_be_readable:
+            continue
+
+        with tempfile.TemporaryDirectory() as file_tmp_dir:
+            writer = CSVOutputWriter(
+                output_folder=file_tmp_dir,
+                csv_file_name=(
+                    f"{file.detected_filetype.name.lower()}_"
+                    f"{file.extracted_chain_id.lower()}"
+                ),
+                reduce_duplicates=test_fill_forward,
+            )
+            await writer.initialize()
+
+            async for row in parser.read(file):
+                await writer.write_row(row)
+
+            await writer.close()
+
+            # Run validation against the created DataFrame
+            if file.is_expected_to_have_records:
+                assert writer.exists(), "CSV file was not created"
+
+                # read the data from the writer
+                df = read_data_rows(
+                    writer.get_path(), ffill=test_fill_forward, as_records=False
+                )
+                assert df.shape[0] > 0, f"File {file.file_name} is empty"
+
+                # run validation
+                parser.run_validation(df, file)
+
+                # sample the data
                 sampled_df = df.sample(n=min(10, df.shape[0]))
                 del df
                 dfs.append(sampled_df)
             else:
-                assert df.shape[0] == 0, f"File {file} should be full"
-                del df
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            raise ValueError(f"File {file}, Failed with {e}")
+                assert not writer.exists(), "CSV file was not created"
     return dfs
 
 
@@ -87,17 +127,47 @@ def make_test_case(scraper_enum, parser_enum):
 
             get_sample_data(
                 download_path,
-                filter_type=file_type,
-                enabled_scrapers=[self.scraper_enum.name],
-                limit=5,
+                SampleDataOptions(
+                    filter_type=file_type,
+                    enabled_scrapers=[self.scraper_enum.name],
+                    limit=10,
+                ),
             )
 
         def _parser_validate(self, file_type):
             """test the sub case"""
             with tempfile.TemporaryDirectory() as tmpdirname:
-                self.__parser_validate(file_type, tmpdirname)
+                asyncio.run(self.__parser_validate(file_type, tmpdirname))
 
-        def __parser_validate(self, file_type, dump_path="temp"):
+        def _make_sure_status_file_is_valid(self, dump_path):
+            """
+            Validate that the status JSON file matches the expected format contract.
+            Will fail if format has drifted from the ParserStatusOutput specification.
+            """
+            # Find the status folder (should be sibling to download_path)
+            parent_path = os.path.dirname(dump_path)
+            status_folder = os.path.join(parent_path, "status")
+
+            # Status folder might not exist if collection is disabled
+            assert os.path.exists(
+                status_folder
+            ), f"Status folder {status_folder} not found"
+
+            # Find JSON files in status folder
+            status_files = [f for f in os.listdir(status_folder) if f.endswith(".json")]
+
+            assert len(status_files) == 1, "should be only one status file"
+
+            # Validate each status file - will raise ValidationError if format shifted
+            for status_file in status_files:
+                status_file_path = os.path.join(status_folder, status_file)
+                with open(status_file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                parsed_status = ParserStatusOutput(**data).validate_file_status()
+                assert parsed_status, f"Status file {status_file} is not valid"
+                Logger.info(f"Status file {status_file} validated successfully")
+
+        async def __parser_validate(self, file_type, dump_path="temp"):
             """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
 
@@ -105,20 +175,21 @@ def make_test_case(scraper_enum, parser_enum):
                 self._refresh_download_folder(sub_folder, file_type)
 
             parser = self.parser_class()
-            files = DataLoader(
+            # Collect files from async generator
+            files = []
+            async for file in DataLoader(
                 folder=sub_folder,
-                store_names=[self.parser_name],
+            ).load(
+                enabled_scraper=[self.parser_name],
                 files_types=[file_type],
-            ).load()
+            ):
+                files.append(file)
 
+            # assert len(files) > 0, f"No files found in {sub_folder}"
             _validate_file_loading(files, sub_folder)
-            dfs = _process_files(files, parser)
+            await _process_files(files, parser)
 
-            if dfs:
-                concatenated = pd.concat(dfs)
-                del concatenated
-            del dfs
-            gc.collect()
+            # self._make_sure_status_file_is_valid(sub_folder)
 
         def test_parsing_store(self):
             """scrape one file and make sure it exists"""

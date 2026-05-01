@@ -1,5 +1,5 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# For more information see: https://help.github.com/actions/language-and-guides/using-python-with-github-actions
 
 name: Unit & Integration Tests
 
@@ -15,15 +15,16 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-  
+
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: self-hosted
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11.0"]
+    outputs:
+      pytest_failed: ${{ steps.test_result.outputs.failed }}
 
     steps:
 
@@ -37,10 +38,78 @@ jobs:
         df --human-readable
     - name: Build with Docker
       run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
-    - name: Remove all build
-      run: (docker stop parsers-test-runner 2>/dev/null || true) && (docker rm parsers-test-runner 2>/dev/null || true)
+    - name: Remove legacy test container name
+      run: docker rm -f parsers-test-runner 2>/dev/null || true
     - name: Test with pytest
+      id: pytest
       run: |
-           mkdir -p temp &&
-           docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test &&
-           docker builder prune -f
+        mkdir -p temp
+        set -o pipefail
+        docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test 2>&1 | tee pytest-log.txt
+    - name: Docker builder prune
+      if: always()
+      run: docker builder prune -f
+    - name: Record pytest result
+      id: test_result
+      if: always()
+      env:
+        PYTEST_CONCLUSION: ${{ steps.pytest.conclusion }}
+      run: |
+        if [ "$PYTEST_CONCLUSION" = "failure" ]; then
+          echo "failed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "failed=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Upload pytest log
+      if: steps.test_result.outputs.failed == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-log
+        path: pytest-log.txt
+        if-no-files-found: warn
+
+  create-issue:
+    needs: build
+    if: needs.build.outputs.pytest_failed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Download pytest log
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-log
+      - name: Open issue using GitHub CLI
+        run: |
+          set -euo pipefail
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          MAX_LEN=60000
+          LOG_FILE="pytest-log.txt"
+          if [ -f "$LOG_FILE" ]; then
+            LOG_CONTENT=$(cat "$LOG_FILE")
+            LEN=${#LOG_CONTENT}
+            if [ "$LEN" -gt "$MAX_LEN" ]; then
+              LOG_CONTENT="…(truncated)"$'\n\n'"${LOG_CONTENT: -$MAX_LEN}"
+            fi
+          else
+            LOG_CONTENT="(pytest log not found)"
+          fi
+          BODY_FILE=$(mktemp)
+          {
+            echo "Workflow **${GITHUB_WORKFLOW}** failed on **${GITHUB_REF}** (${GITHUB_SHA:0:7})."
+            echo ""
+            echo "[View run](${RUN_URL})"
+            echo ""
+            echo "### Pytest output"
+            echo ""
+            echo '```'
+            printf '%s\n' "$LOG_CONTENT"
+            echo '```'
+          } > "$BODY_FILE"
+          gh issue create \
+            --title "[CI] Test failure: ${GITHUB_WORKFLOW} @ ${GITHUB_SHA:0:7}" \
+            --body-file "$BODY_FILE" \
+            --label "bug" \
+            --label "automation"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

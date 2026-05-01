@@ -1,150 +1,131 @@
-import os
-import csv
 import traceback
+import xml.etree.ElementTree as ET
+from typing import List, Optional
 
-from typing import List
-import pandas as pd
-from tqdm import tqdm
+
 from .parser_factory import ParserFactory
-from .utils import DataLoader, DumpFile, Logger
+from .utils import Logger
+from .utils.data_loaders import BaseDataLoader
+from .utils.output_writers import BaseOutputWriter
+from .utils.status import ParserStatus
+from .utils.types import ExecutionLog, FileCompleteMessage
+from .engines.base import BaseFileConverter
 
 
 class RawParsingPipeline:
     """
-    processing files to dataframe
+    processing files with streaming async generators
     """
 
-    def __init__(self, folder, store_name, file_type, output_folder, when_date) -> None:
-        self.store_name = store_name
-        self.file_type = file_type
-        self.folder = folder
-        self.output_folder = output_folder
-        self.when_date = when_date
+    def __init__(
+        self,
+        data_loader: BaseDataLoader,
+        output_writer: BaseOutputWriter,
+        parser_status: ParserStatus,
+    ) -> None:
+        """
+        Initialize RawParsingPipeline
 
-    def append_columns_to_csv(self, existing_file, new_columns):
-        """Append new columns to an existing CSV file"""
-        output_file = existing_file.replace(".csv", "_temp.csv")
-        with open(existing_file, "r", encoding="utf-8") as infile, open(
-            output_file, "w+", newline="", encoding="utf-8"
-        ) as outfile:
-            reader = csv.reader(infile)
-            writer = csv.writer(outfile)
+        Args:
+            data_loader: DataLoader instance to load files
+            output_writer: OutputWriter instance to write results
+            parser_status: Tracks and persists per-file outcomes. Defaults to a
+                           JsonDataBase-backed ParserStatus writing to "outputs/".
+        """
+        self.data_loader = data_loader
+        self.output_writer = output_writer
+        self.parser_status = parser_status
 
-            # Add header
-            header = next(reader)
-            writer.writerow(header + list(new_columns))
+    async def process(
+        self,
+        enabled_scraper: str,
+        enabled_file_types: str,
+        limit: Optional[int] = None,
+    ) -> ExecutionLog:
+        """start processing the files selected in the pipeline input with streaming"""
+        parser_class: BaseFileConverter = ParserFactory.get(enabled_scraper)
 
-            # Add data row-by-row
-            for row in reader:
-                writer.writerow(row + [""] * len(new_columns))
-        os.remove(existing_file)
-        os.rename(output_file, existing_file)
+        await self.output_writer.initialize()
 
-    def process(self, limit=None):
-        """start processing the files selected in the pipeline input"""
-        parser_class = ParserFactory.get(self.store_name)
-        create_csv = os.path.join(
-            self.output_folder,
-            self.file_type.lower() + "_" + self.store_name.lower() + ".csv",
-        )
+        Logger.info("Starting streaming file processing")
 
-        files_to_process: List[DumpFile] = DataLoader(
-            self.folder,
-            store_names=[self.store_name],
-            files_types=[self.file_type],
-        ).load(limit=limit)
-
-        Logger.info(
-            f"Processing {len(files_to_process)} files"
-            f"of type {self.file_type} for store {self.store_name}"
-        )
-        execution_log = []
+        files_to_process: List[str] = []
         execution_errors = 0
-        for file in tqdm(
-            files_to_process,
-            total=len(files_to_process),
-            desc=f"Processing {self.file_type}@{self.store_name}",
-        ):
+        self.parser_status.on_parsing_start(
+            limit=limit,
+            enabled_file_types=enabled_file_types,
+            enabled_scraper=enabled_scraper,
+        )
 
+        async for file in self.data_loader.load(
+            limit=limit,
+            enabled_scraper=[enabled_scraper],
+            files_types=[enabled_file_types],
+        ):
             Logger.debug(f"Processing file {file.file_name}")
-            # ignore but log empty files
-            if file.is_expected_to_be_readable():
-                execution_log.append(
-                    {
-                        "loaded": False,
-                        **file.to_log_dict(),
-                    }
-                )
+            files_to_process.append(file)
+
+            if not file.is_expected_to_be_readable:
+                self.parser_status.register_skipped_file(file)
                 Logger.debug(f"File {file.file_name} is empty, skipping")
                 continue
 
-            # if the file is not empty, process it
+            self.parser_status.registered_file_to_process(file)
+
+            row_count = 0
+            write_error_count = 0
             try:
-                parser = parser_class()
-                df = parser.read(file)
+                parser: BaseFileConverter = parser_class()
 
-                if not os.path.exists(create_csv):
-                    Logger.debug(f"Creating new file {create_csv}")
-                    df.to_csv(create_csv, index=False, mode="w", header=True)
-                else:
-                    Logger.debug(f"File {file.file_name} is not empty, processing")
-                    # align columns
-                    existing_df = pd.read_csv(create_csv, nrows=0)
+                await self.output_writer.initialize_new_file(file)
 
-                    # if there is missing columns in the existing file, append them
-                    missing_columns = set(df.columns) - set(existing_df.columns)
-                    if missing_columns:
-                        Logger.debug(
-                            f"Appending missing columns {missing_columns} to {create_csv}"
-                        )
-                        self.append_columns_to_csv(create_csv, missing_columns)
+                async for row in parser.read(file):
+                    try:
+                        await self.output_writer.write_row(row)
+                    except (
+                        OSError,
+                        TypeError,
+                        ValueError,
+                        RuntimeError,
+                        KeyError,
+                    ) as error:
+                        Logger.error(f"Error writing row {row} to output: {error}")
+                        write_error_count += 1
+                    row_count += 1
 
-                    existing_df = pd.read_csv(create_csv, nrows=0)
-                    # if there is missing columns in the new file, append them
-                    all_columns = list(set(existing_df.columns) - set(df.columns))
-                    for column in all_columns:
-                        if column not in df.columns:
-                            df[column] = None  # Add missing columns with None values
-
-                    existing_df = pd.read_csv(create_csv, nrows=0)
-                    df[existing_df.columns].to_csv(
-                        create_csv, index=False, mode="a", header=False
+                self.parser_status.register_processed_file(file, row_count)
+                await self.output_writer.write_file_complete(
+                    FileCompleteMessage(
+                        file_name=file.file_name,
+                        total_expected_records=row_count,
                     )
-                    Logger.debug(f"Appending data to {create_csv}")
-
-                execution_log.append(
-                    {
-                        "loaded": True,
-                        "succusfull": True,
-                        "detected_num_rows": df.shape[0],
-                        **file.to_log_dict(),
-                    }
+                )
+                Logger.debug(
+                    f"Successfully processed file {file.file_name} with {row_count} rows"
                 )
 
-                del df
-
-            except Exception as error:  # pylint: disable=broad-exception-caught
+            except (
+                OSError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                ET.ParseError,
+            ) as error:
                 Logger.error(f"Error processing file {file.file_name}: {error}")
                 execution_errors += 1
-                execution_log.append(
-                    {
-                        "loaded": True,
-                        "succusfull": False,
-                        "error": str(error),
-                        "trace": traceback.format_exc(),
-                        **file.to_log_dict(),
-                    }
+                self.parser_status.register_failed_file(
+                    file, row_count, error, traceback.format_exc()
                 )
 
-        return {
-            "status": True,
-            "store_name": self.store_name,
-            "files_types": self.file_type,
-            "when_date": self.when_date,
-            "processed_files": len(files_to_process) > 0,
-            "execution_errors": execution_errors > 0,
-            "file_was_created": os.path.exists(create_csv),
-            "file_created_path": create_csv,
-            "files_to_process": [dumpfile.file_name for dumpfile in files_to_process],
-            "execution_log": execution_log,
-        }
+        self.parser_status.on_parsing_completed(
+            enabled_scraper=enabled_scraper,
+            enabled_file_types=enabled_file_types,
+            had_errors=execution_errors > 0,
+            output_path=self.output_writer.get_path(),
+            total_files=len(files_to_process),
+        )
+
+    def get_parser_status(self) -> ParserStatus:
+        """Return the status tracker used by this pipeline."""
+        return self.parser_status

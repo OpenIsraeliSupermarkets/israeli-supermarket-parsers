@@ -259,11 +259,14 @@ class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTO
     """
 
 
-class VictoryNewSourceTestCase(
+class VictoryNewTestCase(
     make_test_case(ScraperFactory.VICTORY_NEW_SOURCE, ParserFactory.VICTORY_NEW_SOURCE)
 ):
     """
-    Test case for Victory New Source supermarket.
+    Test case for Victory New supermarket.
+
+    Uses the Victory scraper (no separate ScraperFactory entry); parser handles
+    the new-source file layout.
     """
 
 

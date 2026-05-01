@@ -39,7 +39,7 @@ class ParserFactory(Enum):
     QUIK = all_parsers.QuikFileConverter
     TIV_TAAM = all_parsers.TivTaamFileConverter
     VICTORY = all_parsers.VictoryFileConverter
-    VICTORY_NEW_SOURCE = all_parsers.VictoryNewSourceFileConverter
+    VICTORY_NEW_SOURCE = all_parsers.VictoryNewFileConverter
     YELLOW = all_parsers.YellowFileConverter
     YOHANANOF = all_parsers.YohananofFileConverter
     ZOL_VEBEGADOL = all_parsers.ZolVebegadolFileConverter

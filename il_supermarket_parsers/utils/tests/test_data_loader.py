@@ -1,7 +1,12 @@
-from il_supermarket_parsers.utils.data_loader import DataLoader
+import pytest
+
+from il_supermarket_parsers.utils.data_loaders import DataLoader
 
 
-def test_load_null_data():
+@pytest.mark.asyncio
+async def test_load_null_data():
     """Test loading null data"""
-    data = DataLoader("il_supermarket_parsers/utils/tests").load()
+    data = [
+        item async for item in DataLoader("il_supermarket_parsers/utils/tests").load()
+    ]
     assert len(data) == 3

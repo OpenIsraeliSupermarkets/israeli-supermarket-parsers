@@ -19,21 +19,22 @@ setup(
     # Needed to actually package something
     packages=[
         "il_supermarket_parsers",
-        "il_supermarket_parsers.conf",
         "il_supermarket_parsers.documents",
         "il_supermarket_parsers.engines",
-        "il_supermarket_parsers.normlizers",
         "il_supermarket_parsers.parsers",
         "il_supermarket_parsers.utils",
+        "il_supermarket_parsers.utils.data_loaders",
+        "il_supermarket_parsers.utils.output_writers",
+        "il_supermarket_parsers.utils.status",
     ],
     # Needed for dependencies
     install_requires=required,
     tests_require=dev_required,
-    extras_require={"test": ["pytest", "pytest-xdist"]},
+    extras_require={"test": ["pytest", "pytest-xdist", "pytest-asyncio"]},
     # *strongly* suggested for sharing
-    version="0.2.2",
+    version="1.0.0",
     # The license can be anything you like
-    license="MIT",
+    license="CUSTOM",
     description="python package that process the data dumped by the israeli supermarket",
     # We will also need a readme eventually (there will be a warning)
     long_description=long_description,

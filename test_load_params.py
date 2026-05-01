@@ -5,8 +5,12 @@ from unittest.mock import patch
 from main import load_params
 
 
-class TestLoadParams(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestLoadParams(unittest.TestCase):
     """Test cases for the load_params function"""
+
+    def runner_module(self) -> str:
+        """Module under test (helps test tooling introspection)."""
+        return "main"
 
     @staticmethod
     def _clear_env_vars():

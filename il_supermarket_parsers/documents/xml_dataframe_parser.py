@@ -1,4 +1,3 @@
-import pandas as pd
 from il_supermarket_parsers.utils import (
     count_tag_in_xml,
     collect_unique_keys_from_xml,
@@ -14,22 +13,17 @@ from .base import BaseXMLParser
 class XmlDataFrameConverter(BaseXMLParser):
     """parser the xml docuement"""
 
-    def reduce_size(self, data):
-        """reduce the size"""
-        if len(data) == 0:
-            return data
-        # Use inplace operations to avoid creating copies
-        data = data.fillna("", inplace=False)
-        # remove duplicate columns - optimize by only processing non-empty columns
-        for col in data.columns:
-            # Only process if column has data
-            if data[col].notna().any():
-                data[col] = data[col].mask(data[col] == data[col].shift())
-        return data
-
     def _validate_columns_and_counts(self, data, source_file, tag_count):
         """Validate required columns and row count match."""
-        if self.roots and tag_count > 0:
+        if tag_count == 0:
+            # Empty file: only check row count
+            if data.shape[0] != 0:
+                raise ValueError(
+                    f"for file {source_file}, expected empty data, got {data.shape[0]} rows"
+                )
+            return
+
+        if self.roots:
             for root in self.roots:
                 if root.lower() not in data.columns:
                     raise ValueError(
@@ -117,6 +111,10 @@ class XmlDataFrameConverter(BaseXMLParser):
         )
         self._validate_columns_and_counts(data, source_file, tag_count)
 
+        if tag_count == 0:
+            # Empty file: column/count checks done, skip rest
+            return
+
         # Use cached data if available, otherwise collect it
         xml_keys = cached_xml_data.get("xml_keys")
         if xml_keys is None:
@@ -138,16 +136,19 @@ class XmlDataFrameConverter(BaseXMLParser):
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""
+        ignore = {normalize_tag(x) for x in self.ignore_column}
         return {
             "found_folder": found_folder,
             "file_name": file_name,
             **sub_root_store,
             **{
-                name.tag.lower(): self.build_value(name, no_content="") for name in elem
+                name.tag.lower(): self.build_value(name, no_content="")
+                for name in elem
+                if normalize_tag(name.tag) not in ignore
             },
         }
 
-    def _parse(
+    async def _parse(
         self,
         root,
         found_folder,
@@ -155,31 +156,17 @@ class XmlDataFrameConverter(BaseXMLParser):
         root_store,
         **kwarg,
     ):
-
-        columns = [self.id_field.lower(), "found_folder", "file_name"]
-        if self.roots:
-            columns.extend(root.lower() for root in self.roots)
-
+        """parse file to async generator of row dicts"""
         if root is None:
             # If root is None, it means the list_key element was not found in the XML
             # This could happen if the XML structure is different than expected
-            # Return empty DataFrame with proper columns
-            return pd.DataFrame(columns=columns)
+            return
 
-        # Use generator instead of list comprehension to reduce memory
-        rows = (
-            self.list_single_entry(
-                elem, found_folder=found_folder, file_name=file_name, **root_store
-            )
-            for elem in root
-            if normalize_tag(elem.tag) not in self.ignore_column
-        )
-
-        # Convert generator to DataFrame directly
-        df = pd.DataFrame(rows)
-        if len(df) == 0:
-            # Root was found but has no children
-            # This could happen if the XML structure is different than expected
-            return pd.DataFrame(columns=columns)
-
-        return df
+        # Yield rows one by one as they're parsed
+        ignore = {normalize_tag(x) for x in self.ignore_column}
+        for elem in root:
+            if normalize_tag(elem.tag) not in ignore:
+                row = self.list_single_entry(
+                    elem, found_folder=found_folder, file_name=file_name, **root_store
+                )
+                yield row

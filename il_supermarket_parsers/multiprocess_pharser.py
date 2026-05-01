@@ -1,12 +1,42 @@
+import asyncio
 import itertools
-import json
-import datetime
-import os
-import pytz
+from typing import List
+
+from pydantic import BaseModel
+
 from .raw_parsing_pipeline import RawParsingPipeline
+from .utils import (
+    Logger,
+    create_parser_status,
+    get_data_loader,
+    get_output_writer,
+)
 from .utils.multi_processing import MultiProcessor, ProcessJob
-from .parser_factory import ParserFactory
-from .utils import FileTypesFilters, Logger
+from .utils.types import (
+    OutputConfiguration,
+    SourceConfiguration,
+    StatusConfiguration,
+)
+
+
+class ParallelParserParams(BaseModel):
+    """Runtime parameters for :class:`ParallelParser`."""
+
+    enabled_parsers: List[str]
+    enabled_file_types: List[str]
+    source_configuration: SourceConfiguration
+    output_configuration: List[OutputConfiguration]
+    status_configuration: StatusConfiguration
+
+    def to_string(self) -> str:
+        """Summarize these params for logging."""
+        return (
+            f"parsers={self.enabled_parsers},"
+            f"file_types={self.enabled_file_types},"
+            f"output_configuration={self.output_configuration},"
+            f"status_configuration={self.status_configuration},"
+            f"source_configuration={self.source_configuration},"
+        )
 
 
 class RawProcessing(ProcessJob):
@@ -16,17 +46,39 @@ class RawProcessing(ProcessJob):
         """read the dump folder and filter according to the requested filters
         start processing file according to thier "update_date"
         """
-        # take args
-        drop_folder = kwargs.pop("data_folder")
+        source_config = kwargs.pop("source_configuration", {})
+        output_config = kwargs.pop("output_configuration", {})
         file_type = kwargs.pop("file_type")
         parser_name = kwargs.pop("store_enum")
-        output_folder = kwargs.pop("output_folder")
-        limit = kwargs.pop("limit")
-        when_date = kwargs.pop("when_date")
+        limit = kwargs.pop("limit", None)
+        status_config = kwargs.pop("status_config", {})
 
-        return RawParsingPipeline(
-            drop_folder, parser_name, file_type, output_folder, when_date
-        ).process(limit=limit)
+        data_loader = get_data_loader(source_config)
+
+        output_writer = get_output_writer(parser_name, file_type, output_config)
+
+        parser_status = create_parser_status(
+            enabled_scraper=parser_name,
+            enabled_file_type=file_type,
+            status_configuration=status_config,
+        )
+
+        pipeline = RawParsingPipeline(
+            data_loader=data_loader,
+            output_writer=output_writer,
+            parser_status=parser_status,
+        )
+
+        try:
+            asyncio.run(
+                pipeline.process(
+                    limit=limit,
+                    enabled_scraper=parser_name,
+                    enabled_file_types=file_type,
+                )
+            )
+        finally:
+            asyncio.run(output_writer.close())
 
 
 class ParallelParser(MultiProcessor):
@@ -34,19 +86,11 @@ class ParallelParser(MultiProcessor):
 
     def __init__(
         self,
-        data_folder,
-        enabled_parsers=None,
-        enabled_file_types=None,
-        multiprocessing=6,
-        output_folder="output",
-        when_date=datetime.datetime.now(pytz.timezone("Asia/Jerusalem")),
+        params: ParallelParserParams,
+        multiprocessing: int = 6,
     ):
         super().__init__(multiprocessing=multiprocessing)
-        self.data_folder = data_folder
-        self.enabled_parsers = enabled_parsers
-        self.enabled_file_types = enabled_file_types
-        self.output_folder = output_folder
-        self.when_date = when_date
+        self.params = params
 
     def task_to_execute(self):
         """the task to execute"""
@@ -54,61 +98,27 @@ class ParallelParser(MultiProcessor):
 
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
-
-        os.makedirs(self.output_folder, exist_ok=True)
-        all_parsers = (
-            self.enabled_parsers
-            if self.enabled_parsers
-            else ParserFactory.all_parsers_name()
-        )
-        all_file_types = (
-            self.enabled_file_types
-            if self.enabled_file_types
-            else FileTypesFilters.all_types()
-        )
         params_order = [
             "limit",
             "store_enum",
             "file_type",
-            "data_folder",
-            "output_folder",
-            "when_date",
+            "source_configuration",
+            "output_configuration",
+            "status_config",
         ]
 
-        Logger.info(
-            f"Creating combinations for limit={limit},"
-            f"parsers={all_parsers},"
-            f"file_types={all_file_types},"
-            f"data_folder={self.data_folder},"
-            f"output_folder={self.output_folder},"
-            f"when_date={self.when_date.strftime('%Y-%m-%d %H:%M:%S %z')}"
-        )
+        Logger.info(f"Creating combinations for {self.params.to_string()},")
         combinations = list(
             itertools.product(
                 [limit],
-                all_parsers,
-                all_file_types,
-                [self.data_folder],
-                [self.output_folder],
-                [self.when_date.strftime("%Y-%m-%d %H:%M:%S %z")],
+                self.params.enabled_parsers,
+                self.params.enabled_file_types,
+                [self.params.source_configuration],
+                [self.params.output_configuration],
+                [self.params.status_configuration],
             )
         )
         task_can_executed_independently = [
             dict(zip(params_order, combo)) for combo in combinations
         ]
         return task_can_executed_independently
-
-    def post(self, results):
-        """post process the results"""
-        status_file = os.path.join(self.output_folder, "parser-status.json")
-        if os.path.exists(status_file):
-            with open(status_file, "r", encoding="utf-8") as file:
-                existing_results = json.load(file)
-        else:
-            existing_results = []
-
-        existing_results.extend(results)
-
-        with open(status_file, "w", encoding="utf-8") as file:
-            json.dump(existing_results, file)
-        return super().post(results)

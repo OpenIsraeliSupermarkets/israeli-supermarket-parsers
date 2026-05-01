@@ -43,5 +43,5 @@ RUN pip install -r requirements-dev.txt
 
 FROM base as test
 
-RUN python -m pip install . ".[test]"
-CMD python -m pytest .
+RUN python -m pip install ".[test]"
+CMD python -m pytest -vv -n 2

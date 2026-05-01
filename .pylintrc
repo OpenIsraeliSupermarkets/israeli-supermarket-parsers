@@ -1,4 +1,23 @@
 [MASTER]
-disable=
-    C0114, # missing-module-docstring
+# C0114 missing-module-docstring, E0401 import-error (needs installed deps in env),
+# R0801 duplicate-code, R0903 too-few-public-methods (e.g. Pydantic models)
+disable=C0114,E0401,R0801,R0903
+# Helps inference for asyncio.to_thread and other 3.9+ APIs
+py-version=3.9
 extension-pkg-allow-list=lxml.etree
+
+[TYPECHECK]
+# Astroid can miss 3.9+ asyncio members even with py-version
+generated-members=asyncio.to_thread
+
+[DESIGN]
+max-args=8
+# Default 5; Kafka writer __init__ and file converters use more positional parameters
+max-positional-arguments=8
+max-attributes=12
+min-public-methods=1
+max-public-methods=40
+max-locals=20
+
+[SIMILARITIES]
+min-similarity-lines=60

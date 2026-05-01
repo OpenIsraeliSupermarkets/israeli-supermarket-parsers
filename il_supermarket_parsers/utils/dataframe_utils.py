@@ -47,7 +47,7 @@ def count_elements_in_nested_json(df):
     Returns dict {key: count}"""
     element_counts = Counter()
     # Use forward fill in-place to avoid creating a copy
-    df_filled = df.ffill()
+    # df_filled = df.ffill()
 
     def count_recursive(data, in_nested_dict=False):
         if isinstance(data, dict):
@@ -69,7 +69,7 @@ def count_elements_in_nested_json(df):
                 count_recursive(item, in_nested_dict=in_nested_dict)
 
     # Use itertuples for memory efficiency - only iterate once
-    for row in df_filled.itertuples(index=False):
+    for row in df.itertuples(index=False):
         for cell in row:
             if isinstance(cell, str):
                 # Only try to parse if it looks like JSON (starts with { or [)

@@ -1,5 +1,8 @@
+import io
 from collections import Counter
+from typing import Optional, Union
 import xml.etree.ElementTree as ET
+
 from lxml import etree
 
 
@@ -246,3 +249,87 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
             if possible_root is not None:
                 found_root = possible_root
     return found_root
+
+
+def get_root_from_content(
+    file_content: Union[str, bytes], file_path: Optional[str] = None
+):
+    """get ET root from file content (bytes or string) or file path"""
+    if isinstance(file_content, bytes):
+        # Try to decode as UTF-8, fallback to ISO-8859-8
+        try:
+            content_str = file_content.decode("utf-8")
+        except UnicodeDecodeError:
+            content_str = file_content.decode("ISO-8859-8", errors="replace")
+    else:
+        content_str = file_content
+
+    try:
+        root = ET.fromstring(content_str)
+    except ET.ParseError:
+        # Try to recover XML
+        try:
+            parser = etree.XMLParser(recover=True, encoding="utf-8")
+            root = etree.fromstring(content_str.encode("utf-8"), parser)
+            root = ET.fromstring(etree.tostring(root, encoding="unicode"))
+        except ET.ParseError:
+            # Try with different encoding
+            try:
+                content_str = (
+                    file_content.decode("ISO-8859-8", errors="replace")
+                    if isinstance(file_content, bytes)
+                    else file_content
+                )
+                root = ET.fromstring(content_str)
+            except ET.ParseError:
+                if file_path:
+                    # Fallback to file-based parsing
+                    return get_root(file_path)
+                raise
+
+    return root
+
+
+def get_root_and_search_from_content(
+    file_content: Union[str, bytes],
+    key_to_find: str,
+    attributes_to_collect: Optional[list] = None,
+    file_path: Optional[str] = None,
+):
+    """get the root and search for the key from file content or path"""
+    root = get_root_from_content(file_content, file_path)
+    root_store = {}
+    root = _get_root(root, key_to_find, attributes_to_collect, root_store)
+    return root, root_store
+
+
+def iterparse_streaming(
+    file_content: Union[str, bytes, io.BytesIO], file_path: Optional[str] = None
+):
+    """
+    Create streaming XML parser that can handle both file paths and in-memory content
+
+    Args:
+        file_content: XML content as bytes, string, or BytesIO, or None if using file_path
+        file_path: Optional file path (used if file_content is None)
+
+    Yields:
+        (event, element) tuples from iterparse
+    """
+    if file_path:
+        # Use file-based iterparse
+        context = ET.iterparse(file_path, events=("start", "end"))
+    elif isinstance(file_content, io.BytesIO):
+        # Already a file-like object
+        context = ET.iterparse(file_content, events=("start", "end"))
+    else:
+        # Convert content to BytesIO
+        if isinstance(file_content, str):
+            file_content = file_content.encode("utf-8")
+        elif not isinstance(file_content, bytes):
+            raise ValueError(f"Unsupported file_content type: {type(file_content)}")
+
+        file_like = io.BytesIO(file_content)
+        context = ET.iterparse(file_like, events=("start", "end"))
+
+    return context

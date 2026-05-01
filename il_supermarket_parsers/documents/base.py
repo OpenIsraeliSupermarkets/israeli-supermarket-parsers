@@ -1,15 +1,25 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, AsyncIterator, Union, Optional
 import os
-from il_supermarket_parsers.utils import build_value, get_root_and_search
+from il_supermarket_parsers.utils import (
+    build_value,
+    get_root_and_search,
+    get_root_and_search_from_content,
+)
 
 
 class XmlBaseConverter(ABC):
     """parser the xml docuement"""
 
     @abstractmethod
-    def convert(self, found_store, file_name, **kwarg):
-        """parse file to data frame"""
+    async def convert(
+        self,
+        found_store: Union[str, bytes],
+        file_name: str,
+        file_content: Optional[bytes] = None,
+        **kwarg,
+    ) -> AsyncIterator[dict]:
+        """parse file to async generator of row dicts"""
 
     @abstractmethod
     def validate_succussful_extraction(
@@ -39,38 +49,52 @@ class BaseXMLParser(XmlBaseConverter, ABC):
         """get the value"""
         return build_value(name, self.additional_constant, no_content=no_content)
 
-    def convert(self, found_store, file_name, **kwarg):
-        """parse file to data frame
+    async def convert(
+        self,
+        found_store: Union[str, bytes],
+        file_name: str,
+        file_content: Optional[bytes] = None,
+        **kwarg,
+    ) -> AsyncIterator[dict]:
+        """parse file to async generator of row dicts
 
         Args:
-            found_store: Directory containing the file
+            found_store: Directory containing the file, or file content if file_content is provided
             file_name: Name of the file to parse
+            file_content: Optional file content as bytes (for queue-based files)
             **kwarg: Additional keyword arguments
         """
-        source_file = os.path.join(found_store, file_name)
-        root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
+        # Determine if we're using file system or in-memory content
+        if file_content is not None:
+            # Queue-based file (in-memory)
+            root, root_store = get_root_and_search_from_content(
+                file_content, self.list_key if self.list_key else None, self.roots
+            )
+            found_folder = found_store if isinstance(found_store, str) else "queue"
+        else:
+            # File system based
+            source_file = os.path.join(found_store, file_name)
+            root, root_store = get_root_and_search(
+                source_file, self.list_key, self.roots
+            )
+            found_folder = found_store
 
-        data = self._parse(
+        async for row in self._parse(
             root,
-            found_store,
+            found_folder,
             file_name,
             root_store,
             **kwarg,
-        )
-
-        return self.reduce_size(data)
-
-    def reduce_size(self, data):
-        """reduce the size"""
-        return data
+        ):
+            yield row
 
     @abstractmethod
-    def _parse(
+    async def _parse(
         self,
         root,
         found_folder,
         file_name,
         root_store,
         **kwarg,
-    ):
-        """parse file to response"""
+    ) -> AsyncIterator[dict]:
+        """parse file to async generator of row dicts"""
