@@ -60,7 +60,7 @@ class RawParsingPipeline:
         async for file in self.data_loader.load(
             limit=limit,
             enabled_scraper=[enabled_scraper],
-            files_types=enabled_file_types,
+            files_types=[enabled_file_types],
         ):
             Logger.debug(f"Processing file {file.file_name}")
 
