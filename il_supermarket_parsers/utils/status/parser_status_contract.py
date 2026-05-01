@@ -103,7 +103,7 @@ class ParserStatusOutput(BaseModel):
     global_status: List[Union[StartedParsingStatus, CompletedParsingStatus]] = Field(
         default_factory=list
     )
-    events: List[Union[ProcessedFileStatus, SkippedFileStatus, FailedFileStatus]] = (
+    events: List[Union[RegisteredFileToProcessStatus, SkippedFileStatus, ProcessedFileStatus, FailedFileStatus]] = (
         Field(default_factory=list)
     )
 
