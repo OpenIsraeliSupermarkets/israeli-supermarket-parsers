@@ -8,7 +8,7 @@ Mirrors il_supermarket_scarper.utils.scraper_status_contract.
 
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
