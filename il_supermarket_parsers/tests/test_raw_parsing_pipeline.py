@@ -7,7 +7,7 @@ and asserts on the written CSV output and parser status.
 import os
 import tempfile
 import unittest
-
+import json
 import pandas as pd
 from il_supermarket_scarper.utils import DumpFolderNames
 from il_supermarket_scarper.utils.databases import JsonDataBase
@@ -19,6 +19,9 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
 )
 from il_supermarket_parsers.utils.status.parser_status import ParserStatus
 from il_supermarket_parsers.utils.csv_reader import read_data_rows
+from il_supermarket_parsers.utils.status.parser_status_contract import (
+    ParserStatusOutput,
+)
 
 SCRAPER = "SHUFERSAL"
 STORE_FOLDER = DumpFolderNames.SHUFERSAL.value  # "Shufersal"
@@ -97,6 +100,18 @@ def _build_pipeline(root: str, output_dir: str, status_dir: str, file_type: str)
     )
 
 
+def _validate_status_file(status_dir: str):
+    """Validate the status files."""
+    for status_file in os.listdir(status_dir):
+        if status_file.endswith(".json"):
+            with open(
+                os.path.join(status_dir, status_file), "r", encoding="utf-8"
+            ) as f:
+                data = json.load(f)
+                parsed_status = ParserStatusOutput(**data).validate_file_status()
+                assert parsed_status, f"Status file {status_file} is not valid"
+
+
 class TestRawParsingPipelinePriceFull(unittest.IsolatedAsyncioTestCase):
     """End-to-end: pipeline reads a PriceFull XML and writes a CSV."""
 
@@ -131,6 +146,8 @@ class TestRawParsingPipelinePriceFull(unittest.IsolatedAsyncioTestCase):
         self.assertIn("itemcode", df.columns)
         self.assertIn("chainid", df.columns)
 
+        _validate_status_file(self.status_dir)
+
     async def test_parser_status_registers_processed_file(self) -> None:
         """Test that the parser status is registered correctly."""
         pipeline = _build_pipeline(
@@ -145,6 +162,8 @@ class TestRawParsingPipelinePriceFull(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(logs), 1)
         self.assertTrue(logs[0].succusfull)
         self.assertEqual(logs[0].detected_num_rows, 2)
+
+        _validate_status_file(self.status_dir)
 
 
 class TestRawParsingPipelineStores(unittest.IsolatedAsyncioTestCase):
@@ -179,6 +198,7 @@ class TestRawParsingPipelineStores(unittest.IsolatedAsyncioTestCase):
             enabled_scraper=SCRAPER,
             enabled_file_types="STORE_FILE",
         )
+        _validate_status_file(self.status_dir)
 
         csv_path = os.path.join(self.output_dir, "store_file_shufersal.csv")
         self.assertTrue(os.path.exists(csv_path), "CSV output file was not created")
@@ -294,6 +314,8 @@ class TestRawParsingPipelineEmptyFolder(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(pipeline.get_parser_status().get_file_logs(), [])
 
+        _validate_status_file(self.status_dir)
+
 
 class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
     """Pipeline respects the ``limit`` parameter."""
@@ -332,6 +354,8 @@ class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
         logs = pipeline.get_parser_status().get_file_logs()
         self.assertEqual(len(logs), 1)
 
+        _validate_status_file(self.status_dir)
+
     async def test_no_limit_processes_all_files(self) -> None:
         """Test that the pipeline processes all files when the limit is not set."""
         pipeline = _build_pipeline(
@@ -344,6 +368,8 @@ class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
 
         logs = pipeline.get_parser_status().get_file_logs()
         self.assertEqual(len(logs), 3)
+
+        _validate_status_file(self.status_dir)
 
 
 if __name__ == "__main__":
