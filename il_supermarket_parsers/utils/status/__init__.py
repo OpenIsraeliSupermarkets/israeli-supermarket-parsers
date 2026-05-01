@@ -7,6 +7,7 @@ from .parser_status_contract import (
     SkippedFileStatus,
     FailedFileStatus,
     ParserStatusOutput,
+    RegisteredFileToProcessStatus,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "SkippedFileStatus",
     "FailedFileStatus",
     "ParserStatusOutput",
+    "RegisteredFileToProcessStatus",
 ]

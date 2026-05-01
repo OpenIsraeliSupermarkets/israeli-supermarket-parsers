@@ -25,6 +25,7 @@ from .parser_status_contract import (
     ProcessedFileStatus,
     SkippedFileStatus,
     StartedParsingStatus,
+    RegisteredFileToProcessStatus,
 )
 
 
@@ -129,6 +130,15 @@ class ParserStatus:
         fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update({"loaded": False, "succusfull": None})
         self._file_logs.append(FileExecutionLog(**fields))
+
+    def registered_file_to_process(self, dump_file: DumpFile) -> None:
+        """Record that a file was registered to be processed."""
+        event = RegisteredFileToProcessStatus(
+            when=_now(),
+            task_id=self.task_id,
+            **self._dumpfile_to_event_fields(dump_file),
+        )
+        self.database.insert_document("events", event.dict())
 
     def register_processed_file(self, dump_file: DumpFile, row_count: int) -> None:
         """Record that a file was parsed successfully."""

@@ -53,6 +53,16 @@ class ProcessedFileStatus(BaseModel):
     task_id: str 
 
 
+class RegisteredFileToProcessStatus(BaseModel):
+    """Event recorded when a file is registered to be processed."""
+
+    status: str = "registered"
+    when: Optional[datetime] = None
+    file_name: str
+    store_folder: str
+    file_type: str
+    task_id: str 
+
 class SkippedFileStatus(BaseModel):
     """Event recorded when a file is skipped (not readable / empty)."""
 
