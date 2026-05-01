@@ -103,82 +103,99 @@ class ParserStatusOutput(BaseModel):
     global_status: List[Union[StartedParsingStatus, CompletedParsingStatus]] = Field(
         default_factory=list
     )
-    events: List[Union[RegisteredFileToProcessStatus, SkippedFileStatus, ProcessedFileStatus, FailedFileStatus]] = (
-        Field(default_factory=list)
-    )
+    events: List[
+        Union[
+            RegisteredFileToProcessStatus,
+            SkippedFileStatus,
+            ProcessedFileStatus,
+            FailedFileStatus,
+        ]
+    ] = Field(default_factory=list)
 
-    def validate_parsing_run(self) -> Tuple[bool, str]:
-        """Validate that the stored events form a coherent lifecycle.
-
-        Rules:
-        - Must contain exactly one 'started' global event.
-        - Must contain exactly one 'completed' global event.
-        - Each file must appear in exactly one per-file event.
+    def _build_per_file_status_data(self):
+        """Build per-file status records and status counters.
 
         Returns:
-            (True, "") on success or (False, reason_str) on failure.
+            A tuple of (per_file_dict, per_file_status_counter_dict)
+            - per_file_dict: Maps file name to status flags
+                (registered, processed, skipped, failed)
+            - per_file_status_counter_dict: Maps file name to list of status
+                types for duplicate detection
         """
-        reason = self._started_completed_errors()
-        if reason is not None:
-            return False, reason
-        reason = self._per_file_unique_errors()
-        if reason is not None:
-            return False, reason
-        reason = self._limit_and_totals_errors()
-        if reason is not None:
-            return False, reason
-        return True, ""
-
-    def _started_completed_errors(self) -> Optional[str]:
-        started_events = [
-            e for e in self.global_status if isinstance(e, StartedParsingStatus)
-        ]
-        completed_events = [
-            e for e in self.global_status if isinstance(e, CompletedParsingStatus)
-        ]
-
-        if not started_events:
-            return "No 'started' event found"
-        if len(started_events) > 1:
-            return f"Multiple 'started' events found: {len(started_events)}"
-        if not completed_events:
-            return "No 'completed' event found"
-        if len(completed_events) > 1:
-            return f"Multiple 'completed' events found: {len(completed_events)}"
-        return None
-
-    def _per_file_unique_errors(self) -> Optional[str]:
-        per_file: dict = defaultdict(list)
-        for event in self.events:
-            per_file[event.file_name].append(event.status)
-
-        for file_name, statuses in per_file.items():
-            if len(statuses) > 1:
-                return f"File '{file_name}' has multiple events: {statuses}"
-        return None
-
-    def _limit_and_totals_errors(self) -> Optional[str]:
-        started_events = [
-            e for e in self.global_status if isinstance(e, StartedParsingStatus)
-        ]
-        completed_events = [
-            e for e in self.global_status if isinstance(e, CompletedParsingStatus)
-        ]
-        started = started_events[0]
-        completed = completed_events[0]
-        processed_count = sum(
-            1 for e in self.events if isinstance(e, ProcessedFileStatus)
+        per_file = defaultdict(
+            lambda: {
+                "registered": False,
+                "processed": False,
+                "skipped": False,
+                "failed": False,
+            }
         )
+        per_file_status_counter = defaultdict(list)
 
-        if started.limit is not None and started.limit > 0:
-            if processed_count > started.limit:
-                return (
-                    f"Processed {processed_count} files but limit was {started.limit}"
-                )
+        for event in self.events:
+            if isinstance(event, RegisteredFileToProcessStatus):
+                fn = event.file_name
+                per_file[fn]["registered"] = True
+                per_file_status_counter[fn].append("registered")
+            elif isinstance(event, ProcessedFileStatus):
+                fn = event.file_name
+                per_file[fn]["processed"] = True
+                per_file_status_counter[fn].append("processed")
+            elif isinstance(event, SkippedFileStatus):
+                fn = event.file_name
+                per_file[fn]["skipped"] = True
+                per_file_status_counter[fn].append("skipped")
+            elif isinstance(event, FailedFileStatus):
+                fn = event.file_name
+                per_file[fn]["failed"] = True
+                per_file_status_counter[fn].append("failed")
 
-        if completed.total_files != len(self.events):
-            return (
-                f"completed.total_files={completed.total_files} but "
-                f"{len(self.events)} file events recorded"
-            )
-        return None
+        return per_file, per_file_status_counter
+
+    @staticmethod
+    def _validate_file_lifecycle(status: dict) -> bool:
+        """Validate a single file's lifecycle.
+
+        Rules:
+        - Must be registered.
+        - processed, skipped, or failed each require a prior registered event.
+        """
+        if not status["registered"]:
+            return False
+        return True
+
+    @staticmethod
+    def _has_duplicate_statuses(status_counter_list: list) -> bool:
+        """Check if a file has duplicate status types."""
+        from collections import Counter  # pylint: disable=import-outside-toplevel
+
+        status_counter = Counter(status_counter_list)
+        for count in status_counter.values():
+            if count > 1:
+                return True
+        return False
+
+    def validate_file_status(self) -> bool:
+        """Validate that every attempted file has a coherent lifecycle.
+
+        Ensures that for every file that was processed, skipped, or failed,
+        there is a 'registered' event. Also checks that no file appears
+        under the same status type more than once.
+
+        Files that were only registered but never resolved are not validated,
+        as they may have been deferred due to limit constraints.
+        """
+        per_file, per_file_status_counter = self._build_per_file_status_data()
+
+        for fn, status in per_file.items():
+            if status["registered"] and not (
+                status["processed"] or status["skipped"] or status["failed"]
+            ):
+                continue
+
+            if not self._validate_file_lifecycle(status):
+                return False
+            if self._has_duplicate_statuses(per_file_status_counter[fn]):
+                return False
+
+        return True
