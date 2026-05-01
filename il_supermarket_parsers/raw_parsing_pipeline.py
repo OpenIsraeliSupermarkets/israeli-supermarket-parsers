@@ -39,7 +39,7 @@ class RawParsingPipeline:
     async def process(
         self,
         enabled_scraper: str,
-        enabled_file_types: List[str],
+        enabled_file_types: str,
         limit: Optional[int] = None,
     ) -> ExecutionLog:
         """start processing the files selected in the pipeline input with streaming"""
@@ -68,6 +68,8 @@ class RawParsingPipeline:
                 self.parser_status.register_skipped_file(file)
                 Logger.debug(f"File {file.file_name} is empty, skipping")
                 continue
+
+            self.parser_status.registered_file_to_process(file)
 
             row_count = 0
             write_error_count = 0

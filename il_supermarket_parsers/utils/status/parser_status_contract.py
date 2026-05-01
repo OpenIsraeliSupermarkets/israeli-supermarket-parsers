@@ -18,24 +18,24 @@ class StartedParsingStatus(BaseModel):
     """Status event recorded when a parsing run begins."""
 
     status: str = "started"
-    when: Optional[datetime] = None
+    system_timestamp: datetime
     limit: Optional[int] = None
-    scraper: Optional[str] = None
-    files_types: Optional[List[str]] = None
-    task_id: str 
+    scraper: str
+    files_types: str
+    task_id: str
 
 
 class CompletedParsingStatus(BaseModel):
     """Status event recorded when a parsing run finishes."""
 
     status: str = "completed"
-    when: Optional[datetime] = None
-    store_name: Optional[str] = None
-    files_types: Optional[List[str]] = None
+    system_timestamp: datetime
+    store_name: str
+    files_types: str
     had_errors: bool = False
-    output_path: Optional[str] = None
+    output_path: str
     total_files: int = 0
-    task_id: str 
+    task_id: str
 
 
 # -- Per-file events --
@@ -45,47 +45,48 @@ class ProcessedFileStatus(BaseModel):
     """Event recorded when a file is parsed successfully."""
 
     status: str = "processed"
-    when: Optional[datetime] = None
+    system_timestamp: datetime
     file_name: str
     store_folder: str
     file_type: str
     row_count: int
-    task_id: str 
+    task_id: str
 
 
 class RegisteredFileToProcessStatus(BaseModel):
     """Event recorded when a file is registered to be processed."""
 
     status: str = "registered"
-    when: Optional[datetime] = None
+    system_timestamp: datetime
     file_name: str
     store_folder: str
     file_type: str
-    task_id: str 
+    task_id: str
+
 
 class SkippedFileStatus(BaseModel):
     """Event recorded when a file is skipped (not readable / empty)."""
 
     status: str = "skipped"
-    when: Optional[datetime] = None
+    system_timestamp: datetime
     file_name: str
     store_folder: str
     file_type: str
-    task_id: str 
+    task_id: str
 
 
 class FailedFileStatus(BaseModel):
     """Event recorded when a file fails during processing."""
 
     status: str = "failed"
-    when: Optional[datetime] = None
+    system_timestamp: datetime
     file_name: str
     store_folder: str
     file_type: str
     error: str
     trace: str
     row_count: int = 0
-    task_id: str 
+    task_id: str
 
 
 # -- Aggregate output --

@@ -121,7 +121,7 @@ class TestRawParsingPipelinePriceFull(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["PRICE_FULL_FILE"],
+            enabled_file_types="PRICE_FULL_FILE",
         )
 
         csv_path = os.path.join(self.output_dir, "price_full_file_shufersal.csv")
@@ -138,7 +138,7 @@ class TestRawParsingPipelinePriceFull(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["PRICE_FULL_FILE"],
+            enabled_file_types="PRICE_FULL_FILE",
         )
 
         logs = pipeline.get_parser_status().get_file_logs()
@@ -177,7 +177,7 @@ class TestRawParsingPipelineStores(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["STORE_FILE"],
+            enabled_file_types="STORE_FILE",
         )
 
         csv_path = os.path.join(self.output_dir, "store_file_shufersal.csv")
@@ -285,7 +285,7 @@ class TestRawParsingPipelineEmptyFolder(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["PRICE_FULL_FILE"],
+            enabled_file_types="PRICE_FULL_FILE",
         )
 
         csv_path = os.path.join(self.output_dir, "price_full_file_shufersal.csv")
@@ -325,7 +325,7 @@ class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["PRICE_FULL_FILE"],
+            enabled_file_types="PRICE_FULL_FILE",
             limit=1,
         )
 
@@ -339,7 +339,7 @@ class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
         )
         await pipeline.process(
             enabled_scraper=SCRAPER,
-            enabled_file_types=["PRICE_FULL_FILE"],
+            enabled_file_types="PRICE_FULL_FILE",
         )
 
         logs = pipeline.get_parser_status().get_file_logs()

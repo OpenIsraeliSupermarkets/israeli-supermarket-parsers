@@ -74,7 +74,7 @@ class RawProcessing(ProcessJob):
                 pipeline.process(
                     limit=limit,
                     enabled_scraper=parser_name,
-                    enabled_file_types=[file_type],
+                    enabled_file_types=file_type,
                 )
             )
         finally:

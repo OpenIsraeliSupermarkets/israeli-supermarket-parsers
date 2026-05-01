@@ -110,7 +110,7 @@ class ParserStatus:
     ) -> None:
         """Record that a parsing run has started."""
         event = StartedParsingStatus(
-            when=_now(),
+            system_timestamp=_now(),
             limit=limit,
             scraper=enabled_scraper,
             files_types=enabled_file_types,
@@ -121,7 +121,7 @@ class ParserStatus:
     def register_skipped_file(self, dump_file: DumpFile) -> None:
         """Record that a file was skipped because it is not readable."""
         event = SkippedFileStatus(
-            when=_now(),
+            system_timestamp=_now(),
             task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
         )
@@ -134,7 +134,7 @@ class ParserStatus:
     def registered_file_to_process(self, dump_file: DumpFile) -> None:
         """Record that a file was registered to be processed."""
         event = RegisteredFileToProcessStatus(
-            when=_now(),
+            system_timestamp=_now(),
             task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
         )
@@ -143,7 +143,7 @@ class ParserStatus:
     def register_processed_file(self, dump_file: DumpFile, row_count: int) -> None:
         """Record that a file was parsed successfully."""
         event = ProcessedFileStatus(
-            when=_now(),
+            system_timestamp=_now(),
             row_count=row_count,
             task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
@@ -165,7 +165,7 @@ class ParserStatus:
     ) -> None:
         """Record that a file failed during processing."""
         event = FailedFileStatus(
-            when=_now(),
+            system_timestamp=_now(),
             row_count=row_count,
             error=str(error),
             trace=trace,
@@ -189,14 +189,14 @@ class ParserStatus:
     def on_parsing_completed(
         self,
         enabled_scraper: str,
-        enabled_file_types: List[str],
+        enabled_file_types: str,
         had_errors: bool,
-        output_path: Optional[str],
+        output_path: str,
         total_files: int,
     ) -> None:
         """Record that the parsing run has finished."""
         event = CompletedParsingStatus(
-            when=_now(),
+            system_timestamp=_now(),
             store_name=enabled_scraper,
             files_types=enabled_file_types,
             had_errors=had_errors,
