@@ -163,10 +163,8 @@ def make_test_case(scraper_enum, parser_enum):
                 status_file_path = os.path.join(status_folder, status_file)
                 with open(status_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                parsed_status = ParserStatusOutput(**data).validate_parsing_run()
-                assert parsed_status[
-                    0
-                ], f"Status file {status_file} is not valid: {parsed_status[1]}"
+                parsed_status = ParserStatusOutput(**data).validate_file_status()
+                assert parsed_status, f"Status file {status_file} is not valid"
                 Logger.info(f"Status file {status_file} validated successfully")
 
         async def __parser_validate(self, file_type, dump_path="temp"):

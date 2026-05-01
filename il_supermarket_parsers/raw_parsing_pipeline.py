@@ -63,6 +63,7 @@ class RawParsingPipeline:
             files_types=[enabled_file_types],
         ):
             Logger.debug(f"Processing file {file.file_name}")
+            files_to_process.append(file)
 
             if not file.is_expected_to_be_readable:
                 self.parser_status.register_skipped_file(file)
