@@ -48,9 +48,16 @@ You only need to run the following code to parse all the data currently shared b
 ```python
 from il_supermarket_parsers import ConvertingTask
 
-scraper = ConvertingTask(data_folder="dumps")
-scraper.run()
+task = ConvertingTask(
+    source_configuration={"folder": "dumps"},
+    output_configuration=[{"output_mode": "csv", "output_folder": "outputs"}],
+    status_configuration={"database_type": "json", "base_path": "outputs"},
+)
+task.start()
+task.join()
 ```
+
+Optional filters (same names as Docker): `enabled_parsers`, `files_types`, and `multiprocessing`. Pass a maximum number of files with `task.start(limit=10)`.
 
 
 Quick start
@@ -85,12 +92,13 @@ Then running it using:
 
     docker run  -v "./dumps:/usr/src/app/dumps" \
                 -v "./outputs:/usr/src/app/outputs" \
-                -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN" \
+                -e ENABLED_PARSERS="BAREKET,YAYNO_BITAN_AND_CARREFOUR" \
                 -e ENABLED_FILE_TYPES="STORE_FILE" \
+                -e NUMBER_OF_PROCESSES=4 \
                 -e LIMIT=1 \
                 erlichsefi/israeli-supermarket-parsers
 
-
+Optional paths (defaults match the volumes above): `DATA_FOLDER` (input), `OUTPUT_FOLDER` (CSV output), `STATUS_FOLDER` (JSON status; defaults to `OUTPUT_FOLDER`). Optional tuning: `NUMBER_OF_PROCESSES`, `ENABLED_PARSERS`, and `ENABLED_FILE_TYPES` (comma-separated enum names), `LIMIT`.
 
 Contributing
 ------------

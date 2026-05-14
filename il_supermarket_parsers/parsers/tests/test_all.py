@@ -114,6 +114,16 @@ class MahsaniAShukTestCase(
     """
 
 
+class MahsaniAShukNewSourceTestCase(
+    make_test_case(
+        ScraperFactory.MAHSANI_ASHUK_NEW_SOURCE, ParserFactory.MAHSANI_ASHUK_NEW_SOURCE
+    )
+):
+    """
+    Test case for Mahsani AShuk New Source supermarket.
+    """
+
+
 # class MegaTestCase(make_test_case(ScraperFactory.MEGA, ParserFactory.MEGA)):
 #     """
 #     Test case for Mega supermarket.

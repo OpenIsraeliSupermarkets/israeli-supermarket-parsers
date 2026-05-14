@@ -103,6 +103,10 @@ def make_test_case(scraper_enum, parser_enum):
             self.parser_name = parser_enum.name
             self.folder_name = "temp"
             self.refresh = True
+            try:
+                self.limit = int(os.environ.get("NUM_SAMPLES", 10))
+            except ValueError:
+                self.limit = 10
 
         def _get_temp_folder(self, dump_folder):
             """get a temp folder to download the files into"""
@@ -130,7 +134,7 @@ def make_test_case(scraper_enum, parser_enum):
                 SampleDataOptions(
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
-                    limit=10,
+                    limit=self.limit,
                 ),
             )
 

@@ -4,6 +4,17 @@ from unittest.mock import patch
 
 from main import load_params
 
+DEFAULT_TASK_KWARGS = {
+    "source_configuration": {"folder": "dumps"},
+    "output_configuration": [
+        {"output_mode": "csv", "output_folder": "outputs"},
+    ],
+    "status_configuration": {
+        "database_type": "json",
+        "base_path": "outputs",
+    },
+}
+
 
 class TestLoadParams(unittest.TestCase):
     """Test cases for the load_params function"""
@@ -20,6 +31,9 @@ class TestLoadParams(unittest.TestCase):
             "ENABLED_FILE_TYPES",
             "NUMBER_OF_PROCESSES",
             "LIMIT",
+            "DATA_FOLDER",
+            "OUTPUT_FOLDER",
+            "STATUS_FOLDER",
         ]
         for var in env_vars_to_clear:
             if var in os.environ:
@@ -37,8 +51,9 @@ class TestLoadParams(unittest.TestCase):
     @patch("main.FileTypesFilters")
     def test_no_environment_variables(self, mock_file_types, mock_parser_factory):
         """Test load_params when no environment variables are set"""
-        result = load_params()
-        self.assertEqual(result, {})
+        kwargs, limit = load_params()
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertIsNone(limit)
 
         # Verify that the factory methods were not called since no env vars were set
         mock_parser_factory.all_parsers_name.assert_not_called()
@@ -59,10 +74,11 @@ class TestLoadParams(unittest.TestCase):
         # Set environment variable
         os.environ["ENABLED_PARSERS"] = "BAREKET,SHUFERSAL"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"enabled_parsers": ["BAREKET", "SHUFERSAL"]}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "enabled_parsers": ["BAREKET", "SHUFERSAL"]}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
         # Verify that all_parsers_name was called (may be called multiple times in validation)
         self.assertTrue(mock_parser_factory.all_parsers_name.called)
 
@@ -102,10 +118,11 @@ class TestLoadParams(unittest.TestCase):
         # Set environment variable
         os.environ["ENABLED_FILE_TYPES"] = "PRICE_FILE,PROMO_FILE"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"files_types": ["PRICE_FILE", "PROMO_FILE"]}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "files_types": ["PRICE_FILE", "PROMO_FILE"]}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
         # Verify that all_types was called (may be called multiple times in validation)
         self.assertTrue(mock_file_types.all_types.called)
 
@@ -135,10 +152,11 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with valid NUMBER_OF_PROCESSES"""
         os.environ["NUMBER_OF_PROCESSES"] = "4"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"multiprocessing": 4}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "multiprocessing": 4}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -159,10 +177,10 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with valid LIMIT"""
         os.environ["LIMIT"] = "100"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"limit": 100}
-        self.assertEqual(result, expected)
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertEqual(limit, 100)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -202,15 +220,16 @@ class TestLoadParams(unittest.TestCase):
         os.environ["NUMBER_OF_PROCESSES"] = "8"
         os.environ["LIMIT"] = "500"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
         expected = {
+            **DEFAULT_TASK_KWARGS,
             "enabled_parsers": ["BAREKET", "SHUFERSAL"],
             "files_types": ["PRICE_FILE", "STORE_FILE"],
             "multiprocessing": 8,
-            "limit": 500,
         }
-        self.assertEqual(result, expected)
+        self.assertEqual(kwargs, expected)
+        self.assertEqual(limit, 500)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -220,10 +239,11 @@ class TestLoadParams(unittest.TestCase):
 
         os.environ["ENABLED_PARSERS"] = ""
 
-        result = load_params()
+        kwargs, limit = load_params()
 
         # Empty string should not trigger validation since it's falsy
-        self.assertEqual(result, {})
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -233,10 +253,11 @@ class TestLoadParams(unittest.TestCase):
 
         os.environ["ENABLED_FILE_TYPES"] = ""
 
-        result = load_params()
+        kwargs, limit = load_params()
 
         # Empty string should not trigger validation since it's falsy
-        self.assertEqual(result, {})
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -246,10 +267,11 @@ class TestLoadParams(unittest.TestCase):
 
         os.environ["ENABLED_PARSERS"] = "BAREKET"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"enabled_parsers": ["BAREKET"]}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "enabled_parsers": ["BAREKET"]}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -259,10 +281,11 @@ class TestLoadParams(unittest.TestCase):
 
         os.environ["ENABLED_FILE_TYPES"] = "PRICE_FILE"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"files_types": ["PRICE_FILE"]}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "files_types": ["PRICE_FILE"]}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -270,10 +293,11 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with zero NUMBER_OF_PROCESSES"""
         os.environ["NUMBER_OF_PROCESSES"] = "0"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"multiprocessing": 0}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "multiprocessing": 0}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -281,10 +305,10 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with zero LIMIT"""
         os.environ["LIMIT"] = "0"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"limit": 0}
-        self.assertEqual(result, expected)
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertEqual(limit, 0)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -292,10 +316,11 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with negative NUMBER_OF_PROCESSES"""
         os.environ["NUMBER_OF_PROCESSES"] = "-1"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"multiprocessing": -1}
-        self.assertEqual(result, expected)
+        expected = {**DEFAULT_TASK_KWARGS, "multiprocessing": -1}
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
@@ -303,10 +328,10 @@ class TestLoadParams(unittest.TestCase):
         """Test load_params with negative LIMIT"""
         os.environ["LIMIT"] = "-10"
 
-        result = load_params()
+        kwargs, limit = load_params()
 
-        expected = {"limit": -10}
-        self.assertEqual(result, expected)
+        self.assertEqual(kwargs, DEFAULT_TASK_KWARGS)
+        self.assertEqual(limit, -10)
 
     @patch("main.ParserFactory")
     @patch("main.FileTypesFilters")
