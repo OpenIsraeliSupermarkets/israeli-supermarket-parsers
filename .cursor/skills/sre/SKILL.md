@@ -1,5 +1,5 @@
 ---
-name: run-ci-and-fix
+name: sre
 description: Run CI tests locally for the Israeli supermarket parsers repo and fix any failures. Use when the user asks to run CI, run tests, check if tests pass, fix CI failures, or fix broken tests in this repo.
 ---
 
