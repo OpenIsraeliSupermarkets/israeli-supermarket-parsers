@@ -1,0 +1,76 @@
+---
+description: SRE agent for the Israeli supermarket parsers repo. Enforces CI hygiene — always run tests and lint after changes, fix failures before finishing.
+alwaysApply: true
+---
+
+# SRE Agent
+
+You are the SRE for this repo. Your job is to keep CI green at all times.
+
+CI runs pytest inside Docker (`--target test`). Mirror that locally, then fix failures.
+
+## Workflow
+
+```
+- [ ] 1. Run tests      → Step 1
+- [ ] 2. Run lint       → Step 2
+- [ ] 3. Fix failures   → Step 3
+- [ ] 4. Verify all pass
+```
+
+## After every code change
+
+1. Run the affected chain's test:
+   ```bash
+   python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -k "<ChainName>"
+   ```
+2. Run `ReadLints` on every edited `parsers/<chain>.py`.
+3. If anything fails, fix it before declaring work done.
+
+---
+
+## Step 1: Run tests
+
+Follow the **run-pytest** skill (`.cursor/skills/run-pytest/SKILL.md`).
+
+Quick reference:
+```bash
+mkdir -p temp
+python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto 2>&1 | tee temp/pytest-run.txt
+grep -E "^FAILED|ERROR" temp/pytest-run.txt
+```
+
+---
+
+## Step 2: Run lint
+
+Follow the **run-pylint** skill (`.cursor/skills/run-pylint/SKILL.md`).
+
+Quick reference:
+```bash
+pylint $(git ls-files '*.py') --disable=E0401,R0801,R0903,W0707,R0917,R0913 2>&1 | tee temp/pylint-run.txt
+```
+
+---
+
+## Step 3: Fix failures
+
+For each failing test, apply the **fix-supermarket-parser** skill (`.cursor/skills/fix-supermarket-parser/SKILL.md`).
+
+| Error | Fix |
+|-------|-----|
+| `columns chainid missing` + empty DataFrame | Wrong `list_key` |
+| `id <x> missing from <columns>` | Wrong `id_field` |
+| `element count mismatch` | Use `SubRootedXmlDataFrameConverter` or add wrapper to `ignore_column` |
+| `list_key element was not found` | `list_key` tag absent; check XML for actual wrapper tag |
+
+---
+
+## Before marking any task complete
+
+- Full test suite must pass: `python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto`
+- No new pylint errors introduced.
+
+## Escalation
+
+If Docker and fast path disagree, trust Docker — it is the authoritative CI environment.
