@@ -22,8 +22,13 @@ CI runs pytest inside Docker (`--target test`). Mirror that locally, then fix an
 
 **Fast path (no Docker — use this first):**
 
+Parallelism: use `-n auto` so pytest-xdist picks a worker count from the host (`os.cpu_count()`). Override with `-n N` if you need a fixed number.
+
+Log path: write under the repo’s `temp/` directory (same as CI’s `./temp` mount), not a hardcoded `/tmp`, so paths work across machines and sandboxes.
+
 ```bash
-python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n 2 2>&1 | tee /tmp/pytest-run.txt
+mkdir -p temp
+python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto 2>&1 | tee temp/pytest-run.txt
 ```
 
 **Exact CI path (Docker — use when fast path passes but CI still fails):**
@@ -31,10 +36,12 @@ python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n 2 2>&1 
 ```bash
 docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
 mkdir -p temp
-docker run --rm -v ./temp:/usr/src/app/temp erlichsefi/israeli-supermarket-parsers:test 2>&1 | tee /tmp/pytest-run.txt
+docker run --rm -v ./temp:/usr/src/app/temp erlichsefi/israeli-supermarket-parsers:test 2>&1 | tee temp/pytest-run.txt
 ```
 
 The Docker run command matches exactly what `.github/workflows/test-suite.yml` does.
+
+Inside the image, `Dockerfile` `CMD` still runs pytest with `-n 2`; only the **local fast path** above uses `-n auto` to match your machine.
 
 ---
 
@@ -63,7 +70,7 @@ Pylint failures show as `your-module/file.py:line:col: Cxxx message`. Fix the fl
 Scan the output for `FAILED` lines:
 
 ```bash
-grep -E "^FAILED|ERROR" /tmp/pytest-run.txt
+grep -E "^FAILED|ERROR" temp/pytest-run.txt
 ```
 
 Each line is in the form `FAILED test_all.py::ChainTestCase::test_name`.
@@ -96,7 +103,7 @@ Common error → fix mapping:
 After all individual fixes:
 
 ```bash
-python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n 2
+python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto
 ```
 
 All tests must pass before the work is done. Run `ReadLints` on every edited `parsers/<chain>.py`.
