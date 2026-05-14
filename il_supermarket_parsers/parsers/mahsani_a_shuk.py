@@ -1,5 +1,9 @@
 from il_supermarket_parsers.engines import BigIDFileConverter
-from il_supermarket_parsers.documents import XmlDataFrameConverter
+from il_supermarket_parsers.documents import (
+    XmlDataFrameConverter,
+    SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
+)
 
 
 class MahsaniAShukPromoFileConverter(BigIDFileConverter):
@@ -38,9 +42,19 @@ class MahsaniAShukNewFileConverter(BigIDFileConverter):
                 roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
                 date_columns=["PromotionUpdateTime"],
             ),
-            stores_parser=XmlDataFrameConverter(
-                list_key="Branches",
+            stores_parser=SubRootedXmlDataFrameConverter(
+                list_key="SubChains",
                 id_field="StoreID",
-                roots=[],
+                options=SubRootedXmlOptions(
+                    roots=[
+                        "ChainID",
+                        "ChainName",
+                        "LastUpdateDate",
+                        "LastUpdateTime",
+                    ],
+                    list_sub_key="Stores",
+                    sub_roots=["SubChainId", "SubChainName"],
+                    ignore_column=[],
+                ),
             ),
         )
