@@ -42,6 +42,7 @@ jobs:
       run: docker rm -f parsers-test-runner 2>/dev/null || true
     - name: Test with pytest
       id: pytest
+      continue-on-error: true
       run: |
         mkdir -p temp
         set -o pipefail
@@ -67,10 +68,13 @@ jobs:
         name: pytest-log
         path: pytest-log.txt
         if-no-files-found: warn
+    - name: Fail job if pytest failed
+      if: steps.test_result.outputs.failed == 'true'
+      run: exit 1
 
   create-issue:
     needs: build
-    if: needs.build.outputs.pytest_failed == 'true'
+    if: failure() && needs.build.outputs.pytest_failed == 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
