@@ -20,6 +20,7 @@ class ParserFactory(Enum):
     KING_STORE = all_parsers.KingStoreFileConverter
     MAAYAN_2000 = all_parsers.Maayan2000FileConverter
     MAHSANI_ASHUK = all_parsers.MahsaniAShukPromoFileConverter
+    MAHSANI_ASHUK_NEW_SOURCE = all_parsers.MahsaniAShukNewFileConverter
     # MEGA = all_parsers.MegaFileConverter
     NETIV_HASED = all_parsers.NetivHasedFileConverter
     MESHMAT_YOSEF_1 = all_parsers.MeshmatYosef1FileConverter

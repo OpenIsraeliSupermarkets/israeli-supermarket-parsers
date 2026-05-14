@@ -45,3 +45,10 @@ FROM base as test
 
 RUN python -m pip install ".[test]"
 CMD python -m pytest -vv -n 2
+
+FROM test as lint
+
+RUN pip install "pylint==3.3"
+WORKDIR /usr/src/app
+# .git is excluded from the image; mirror tracked *.py via find over the copied tree.
+CMD ["sh", "-c", "pylint $(find . -name '*.py')"]

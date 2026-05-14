@@ -3,8 +3,28 @@ from il_supermarket_parsers import ConvertingTask, ParserFactory, FileTypesFilte
 
 
 def load_params():
-    """load params from env variables with validation"""
-    kwargs = {}
+    """load params from env variables with validation.
+
+    Returns a dict suitable for ``ConvertingTask(**kwargs)`` and an optional file
+    limit for ``task.start(limit=...)``.
+    """
+    kwargs: dict = {}
+
+    kwargs["source_configuration"] = {
+        "folder": os.getenv("DATA_FOLDER", "dumps"),
+    }
+    kwargs["output_configuration"] = [
+        {
+            "output_mode": "csv",
+            "output_folder": os.getenv("OUTPUT_FOLDER", "outputs"),
+        }
+    ]
+    kwargs["status_configuration"] = {
+        "database_type": "json",
+        "base_path": os.getenv("STATUS_FOLDER", os.getenv("OUTPUT_FOLDER", "outputs")),
+    }
+
+    limit = os.getenv("LIMIT", None)
 
     # validate scrapers
     enabled_parsers = os.getenv("ENABLED_PARSERS", None)
@@ -47,19 +67,19 @@ def load_params():
         except ValueError as exc:
             raise ValueError("NUMBER_OF_PROCESSES must be an integer") from exc
 
-    # validate limit
-    limit = os.getenv("LIMIT", None)
     if limit:
         try:
-            kwargs["limit"] = int(limit)
+            limit = int(limit)
         except ValueError as exc:
             raise ValueError(f"LIMIT must be an integer, but got {limit}") from exc
+    else:
+        limit = None
 
-    return kwargs
+    return kwargs, limit
 
 
 if __name__ == "__main__":
-    args = load_params()
+    args, limit_value = load_params()
     task = ConvertingTask(**args)
-    task.start()
+    task.start(limit=limit_value)
     task.join()
