@@ -84,6 +84,14 @@ class HetCohenTestCase(
     """
 
 
+class HetCohenNewSourceTestCase(
+    make_test_case(ScraperFactory.HET_COHEN_NEW_SOURCE, ParserFactory.HET_COHEN_NEW_SOURCE)
+):
+    """
+    Test case for Het Cohen New Source supermarket.
+    """
+
+
 class KeshetTestCase(make_test_case(ScraperFactory.KESHET, ParserFactory.KESHET)):
     """
     Test case for Keshet supermarket.
@@ -106,12 +114,12 @@ class Maayan2000TestCase(
     """
 
 
-class MahsaniAShukTestCase(
-    make_test_case(ScraperFactory.MAHSANI_ASHUK, ParserFactory.MAHSANI_ASHUK)
-):
-    """
-    Test case for Mahsani AShuk supermarket.
-    """
+# class MahsaniAShukTestCase(
+#     make_test_case(ScraperFactory.MAHSANI_ASHUK, ParserFactory.MAHSANI_ASHUK)
+# ):
+#     """
+#     Test case for Mahsani AShuk supermarket (old Matrix source; removed from ScraperFactory).
+#     """
 
 
 class MahsaniAShukNewSourceTestCase(

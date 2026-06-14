@@ -16,6 +16,7 @@ class ParserFactory(Enum):
     GOOD_PHARM = all_parsers.GoodPharmFileConverter
     HAZI_HINAM = all_parsers.HaziHinamFileConverter
     HET_COHEN = all_parsers.HetChoenFileConverter
+    HET_COHEN_NEW_SOURCE = all_parsers.HetCohenNewFileConverter
     KESHET = all_parsers.KeshetFileConverter
     KING_STORE = all_parsers.KingStoreFileConverter
     MAAYAN_2000 = all_parsers.Maayan2000FileConverter
