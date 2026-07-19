@@ -76,6 +76,48 @@ STORES_XML = """\
 </Root>
 """
 
+NESTED_STORES_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Chain>
+  <ChainID>7290027600007</ChainID>
+  <ChainName>Shufersal</ChainName>
+  <LastUpdateDate>2026-07-18</LastUpdateDate>
+  <LastUpdateTime>02:01:05</LastUpdateTime>
+  <SubChains>
+    <SubChain>
+      <SubChainID>1</SubChainID>
+      <SubChainName>Shufersal Sheli</SubChainName>
+      <Stores>
+        <Store>
+          <StoreID>101</StoreID>
+          <StoreName>First Branch</StoreName>
+          <Address>1 First St</Address>
+          <City>Tel Aviv</City>
+        </Store>
+        <Store>
+          <StoreID>102</StoreID>
+          <StoreName>Second Branch</StoreName>
+          <Address>2 Second St</Address>
+          <City>Jerusalem</City>
+        </Store>
+      </Stores>
+    </SubChain>
+    <SubChain>
+      <SubChainID>8</SubChainID>
+      <SubChainName>Univers</SubChainName>
+      <Stores>
+        <Store>
+          <StoreID>201</StoreID>
+          <StoreName>Third Branch</StoreName>
+          <Address>3 Third St</Address>
+          <City>Haifa</City>
+        </Store>
+      </Stores>
+    </SubChain>
+  </SubChains>
+</Chain>
+"""
+
 
 def _write_xml(folder: str, filename: str, content: str) -> str:
     path = os.path.join(folder, filename)
@@ -279,6 +321,54 @@ class TestRawParsingPipelineStores(unittest.IsolatedAsyncioTestCase):
                 "city": "Tel Aviv",
             },
         )
+
+
+class TestRawParsingPipelineNestedStores(unittest.IsolatedAsyncioTestCase):
+    """End-to-end: all Shufersal subchains are parsed from nested store XML."""
+
+    def setUp(self) -> None:
+        """Set up a Shufersal store file with two store containers."""
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        self.root = self._tmp.name
+        self.output_dir = tempfile.mkdtemp()
+        self.status_dir = tempfile.mkdtemp()
+
+        store_dir = os.path.join(self.root, STORE_FOLDER)
+        os.makedirs(store_dir)
+        _write_xml(
+            store_dir,
+            "Stores7290027600007-000-20260718-020.xml",
+            NESTED_STORES_XML,
+        )
+
+    def tearDown(self) -> None:
+        """Tear down the temporary input directory."""
+        self._tmp.cleanup()
+
+    async def test_all_store_sections_are_combined(self) -> None:
+        """Parse every store while preserving its subchain metadata."""
+        pipeline = _build_pipeline(
+            self.root, self.output_dir, self.status_dir, "STORE_FILE"
+        )
+        await pipeline.process(
+            enabled_scraper=SCRAPER,
+            enabled_file_types="STORE_FILE",
+        )
+
+        csv_path = os.path.join(self.output_dir, "store_file_shufersal.csv")
+        self.assertTrue(os.path.exists(csv_path), "CSV output file was not created")
+        rows = read_data_rows(csv_path, ffill=True, as_records=True)
+
+        self.assertEqual([row["storeid"] for row in rows], ["101", "102", "201"])
+        self.assertEqual(
+            [row["subchainid"] for row in rows],
+            ["1", "1", "8"],
+        )
+        self.assertEqual(
+            [row["subchainname"] for row in rows],
+            ["Shufersal Sheli", "Shufersal Sheli", "Univers"],
+        )
+        _validate_status_file(self.status_dir)
 
 
 class TestRawParsingPipelineEmptyFolder(unittest.IsolatedAsyncioTestCase):
