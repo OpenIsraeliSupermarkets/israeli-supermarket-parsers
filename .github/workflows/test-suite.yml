@@ -1,8 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-guides/using-python-with-github-actions
-
 name: Unit & Integration Tests
-
 
 on:
   push:
@@ -10,7 +6,8 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron:  '00 19 * * *'
+    - cron: '00 19 * * *'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -21,56 +18,54 @@ permissions:
 
 jobs:
   build:
-
     runs-on: self-hosted
     outputs:
       pytest_failed: ${{ steps.test_result.outputs.failed }}
-
     steps:
-
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Free disk space
-      run: |
-        df --human-readable
-        docker 2>/dev/null 1>&2 rmi $(docker image ls --all --quiet) || true
-        rm --recursive --force "$AGENT_TOOLSDIRECTORY"
-        df --human-readable
-    - name: Build with Docker
-      run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
-    - name: Remove legacy test container name
-      run: docker rm -f parsers-test-runner 2>/dev/null || true
-    - name: Test with pytest
-      id: pytest
-      continue-on-error: true
-      run: |
-        mkdir -p temp
-        set -o pipefail
-        docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner erlichsefi/israeli-supermarket-parsers:test 2>&1 | tee pytest-log.txt
-    - name: Docker builder prune
-      if: always()
-      run: docker builder prune -f
-    - name: Record pytest result
-      id: test_result
-      if: always()
-      env:
-        PYTEST_CONCLUSION: ${{ steps.pytest.conclusion }}
-      run: |
-        if [ "$PYTEST_CONCLUSION" = "failure" ]; then
-          echo "failed=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "failed=false" >> "$GITHUB_OUTPUT"
-        fi
-    - name: Upload pytest log
-      if: steps.test_result.outputs.failed == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: pytest-log
-        path: pytest-log.txt
-        if-no-files-found: warn
-    - name: Fail job if pytest failed
-      if: steps.test_result.outputs.failed == 'true'
-      run: exit 1
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Free disk space
+        run: |
+          df --human-readable
+          docker 2>/dev/null 1>&2 rmi $(docker image ls --all --quiet) || true
+          rm --recursive --force "$AGENT_TOOLSDIRECTORY"
+          df --human-readable
+      - name: Build with Docker
+        run: docker build -t erlichsefi/israeli-supermarket-parsers:test --target test .
+      - name: Remove legacy test container name
+        run: docker rm -f parsers-test-runner 2>/dev/null || true
+      - name: Test with pytest
+        id: pytest
+        continue-on-error: true
+        run: |
+          mkdir -p temp
+          set -o pipefail
+          docker run --rm -v ./temp:/usr/src/app/temp --name parsers-test-runner \
+            erlichsefi/israeli-supermarket-parsers:test 2>&1 | tee pytest-log.txt
+      - name: Docker builder prune
+        if: always()
+        run: docker builder prune -f
+      - name: Record pytest result
+        id: test_result
+        if: always()
+        env:
+          PYTEST_CONCLUSION: ${{ steps.pytest.conclusion }}
+        run: |
+          if [ "$PYTEST_CONCLUSION" = "failure" ]; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload pytest log
+        if: steps.test_result.outputs.failed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest-log.txt
+          if-no-files-found: warn
+      - name: Fail job if pytest failed
+        if: steps.test_result.outputs.failed == 'true'
+        run: exit 1
 
   create-issue:
     needs: build
@@ -78,42 +73,40 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      contents: read
     steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v3
       - name: Download pytest log
         uses: actions/download-artifact@v4
         with:
           name: pytest-log
-      - name: Open issue using GitHub CLI
-        run: |
-          set -euo pipefail
-          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          MAX_LEN=60000
-          LOG_FILE="pytest-log.txt"
-          if [ -f "$LOG_FILE" ]; then
-            LOG_CONTENT=$(cat "$LOG_FILE")
-            LEN=${#LOG_CONTENT}
-            if [ "$LEN" -gt "$MAX_LEN" ]; then
-              LOG_CONTENT="…(truncated)"$'\n\n'"${LOG_CONTENT: -$MAX_LEN}"
-            fi
-          else
-            LOG_CONTENT="(pytest log not found)"
-          fi
-          BODY_FILE=$(mktemp)
-          {
-            echo "Workflow **${GITHUB_WORKFLOW}** failed on **${GITHUB_REF}** (${GITHUB_SHA:0:7})."
-            echo ""
-            echo "[View run](${RUN_URL})"
-            echo ""
-            echo "### Pytest output"
-            echo ""
-            echo '```'
-            printf '%s\n' "$LOG_CONTENT"
-            echo '```'
-          } > "$BODY_FILE"
-          gh issue create \
-            --title "[CI] Test failure: ${GITHUB_WORKFLOW} @ ${GITHUB_SHA:0:7}" \
-            --body-file "$BODY_FILE" \
-            --label "bug" \
-            --label "automation"
+      - name: Create deduped issue and webhook maintainer
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_MAINTAINER_WEBHOOK: ${{ secrets.CURSOR_MAINTAINER_WEBHOOK }}
+          CURSOR_WEBHOOK_SECRET: ${{ secrets.CURSOR_WEBHOOK_SECRET }}
+        run: |
+          chmod +x .github/scripts/create_ci_issue.sh
+          .github/scripts/create_ci_issue.sh pytest-log.txt
+
+  weekend-weekly-release:
+    needs: build
+    if: success() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Trigger weekly release on weekend only
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DOW=$(date -u +%w) # 0=Sun 6=Sat
+          if [ "$DOW" != "0" ] && [ "$DOW" != "6" ]; then
+            echo "Not weekend (DOW=${DOW}); skipping weekly release."
+            exit 0
+          fi
+          gh workflow run weekly-release.yml --ref "${{ github.ref_name }}"
+          echo "Dispatched weekly-release.yml"
