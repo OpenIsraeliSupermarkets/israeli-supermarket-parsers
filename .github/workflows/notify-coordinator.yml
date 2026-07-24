@@ -1,0 +1,38 @@
+name: Notify daily-publish coordinator
+
+# Pings the daily-publish coordinator whenever a scraper-sync work item concludes,
+# whether or not it produced a release:
+#   - release: published        -> "there was a release"
+#   - issues: closed (sync)     -> "there wasn't" (or confirms the release case too)
+
+on:
+  release:
+    types: [published]
+  issues:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: >
+      github.event_name == 'release' ||
+      contains(github.event.issue.labels.*.name, 'sync')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping daily-publish coordinator
+        env:
+          GH_TOKEN: ${{ secrets.DAILY_PUBLISH_DISPATCH_TOKEN }}
+          REASON: ${{ github.event_name == 'release' && 'release-published' || 'sync-issue-closed' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "DAILY_PUBLISH_DISPATCH_TOKEN unset; skip coordinator signal."
+            exit 0
+          fi
+          gh api repos/OpenIsraeliSupermarkets/daily-publish-supermarket-data/dispatches \
+            -f event_type='parsers-sync-completed' \
+            -f "client_payload[repo]=israeli-supermarket-parsers" \
+            -f "client_payload[reason]=${REASON}"
+          echo "Dispatched parsers-sync-completed (${REASON})."
