@@ -15,7 +15,7 @@ class ParserFactory(Enum):
     DOR_ALON = all_parsers.DorAlonFileConverter
     GOOD_PHARM = all_parsers.GoodPharmFileConverter
     HAZI_HINAM = all_parsers.HaziHinamFileConverter
-    HET_COHEN = all_parsers.HetChoenFileConverter
+    HET_COHEN = all_parsers.HetChoenFileConverter  # kept for backwards-compatible processing
     HET_COHEN_NEW_SOURCE = all_parsers.HetCohenNewFileConverter
     KESHET = all_parsers.KeshetFileConverter
     KING_STORE = all_parsers.KingStoreFileConverter
@@ -40,7 +40,7 @@ class ParserFactory(Enum):
     FRESH_MARKET_AND_SUPER_DOSH = all_parsers.FreshMarketAndSuperDoshFileConverter
     QUIK = all_parsers.QuikFileConverter
     TIV_TAAM = all_parsers.TivTaamFileConverter
-    VICTORY = all_parsers.VictoryFileConverter
+    VICTORY = all_parsers.VictoryFileConverter  # kept for backwards-compatible processing
     VICTORY_NEW_SOURCE = all_parsers.VictoryNewFileConverter
     YELLOW = all_parsers.YellowFileConverter
     YOHANANOF = all_parsers.YohananofFileConverter

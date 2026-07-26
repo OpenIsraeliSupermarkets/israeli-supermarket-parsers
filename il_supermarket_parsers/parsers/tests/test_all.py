@@ -76,12 +76,12 @@ class HaziHinamTestCase(
     """
 
 
-class HetCohenTestCase(
-    make_test_case(ScraperFactory.HET_COHEN, ParserFactory.HET_COHEN)
-):
-    """
-    Test case for Het Cohen supermarket.
-    """
+# class HetCohenTestCase(
+#     make_test_case(ScraperFactory.HET_COHEN, ParserFactory.HET_COHEN)
+# ):
+#     """
+#     Test case for Het Cohen supermarket (old source; removed from ScraperFactory).
+#     """
 
 
 class HetCohenNewSourceTestCase(
@@ -271,20 +271,17 @@ class TivTaamTestCase(make_test_case(ScraperFactory.TIV_TAAM, ParserFactory.TIV_
     """
 
 
-class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTORY)):
-    """
-    Test case for Victory supermarket.
-    """
+# class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTORY)):
+#     """
+#     Test case for Victory supermarket (old Matrix source; removed from ScraperFactory).
+#     """
 
 
 class VictoryNewTestCase(
     make_test_case(ScraperFactory.VICTORY_NEW_SOURCE, ParserFactory.VICTORY_NEW_SOURCE)
 ):
     """
-    Test case for Victory New supermarket.
-
-    Uses the Victory scraper (no separate ScraperFactory entry); parser handles
-    the new-source file layout.
+    Test case for Victory New Source supermarket.
     """
 
 

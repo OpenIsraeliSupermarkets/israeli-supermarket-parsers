@@ -50,7 +50,10 @@ async def main():
         "base_path": "status_logs",
     }
 
-    enabled_scrapers = [ScraperFactory.VICTORY.name, ScraperFactory.YELLOW.name]
+    enabled_scrapers = [
+        ScraperFactory.VICTORY_NEW_SOURCE.name,
+        ScraperFactory.YELLOW.name,
+    ]
     scraper = ScarpingTask(
         output_configuration={
             "output_mode": "queue",
