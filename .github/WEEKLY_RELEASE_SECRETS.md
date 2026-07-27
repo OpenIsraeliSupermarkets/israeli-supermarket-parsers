@@ -17,7 +17,7 @@
 | `CURSOR_MAINTAINER_WEBHOOK` | for maintainer | POST after new CI / sync issue |
 | `CURSOR_WEBHOOK_SECRET` | optional | Bearer token |
 | `RELEASE_GITHUB_TOKEN` | if main protected | PAT to push version bump + tags |
-| `DAILY_PUBLISH_DISPATCH_TOKEN` | for coordinator signal | same as scrapers |
+| `DAILY_PUBLISH_DISPATCH_TOKEN` | for coordinator signal + deps issues | same as scrapers |
 
 ## daily-publish-supermarket-data
 | Secret | Required | Purpose |
