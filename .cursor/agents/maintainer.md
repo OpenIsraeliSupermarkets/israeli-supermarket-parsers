@@ -46,6 +46,8 @@ Do **not** modify shared engines (`il_supermarket_parsers/engines/`), documents 
 
 Always bump the patch version in `setup.py` when a scraper-sync changes the published package surface — including dependency floor bumps (`il-supermarket-scraper>=…`), `ParserFactory` / `test_all.py` alignment, or parser logic fixes. Scraper sync PRs ship a new parsers release; do not leave `setup.py` unchanged after a sync that updates `requirements.txt` or factory coverage.
 
+**Already-released check (required on every sync):** Before finishing, compare `setup.py`'s `version=` to the latest GitHub release / `v*` tag on `main` (and PyPI if needed). If `main` still carries a version that was **already released** (e.g. sync landed without a bump, so `setup.py` still says `1.0.4` while `v1.0.4` exists), you **must** bump the patch (e.g. → `1.0.5`). Never ship new commits under an already-published version string. Saying "no need new version" is only valid when there are truly no package-surface changes **and** `setup.py` is not stuck on a released version with newer unreleased commits.
+
 Skip the bump only for pure docs/CI/tooling edits with no dependency or parser/test-alignment change. When syncing to a new scraper version, also update `il-supermarket-scraper>=<new_version>` in `requirements.txt`.
 
 Constraints:
