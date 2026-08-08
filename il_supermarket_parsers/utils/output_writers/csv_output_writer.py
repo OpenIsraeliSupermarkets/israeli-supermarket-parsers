@@ -60,6 +60,7 @@ class CSVOutputWriter(BaseOutputWriter):
     async def initialize(self) -> None:
         """Initialize the output writer"""
         if not self._initialized:
+            await asyncio.to_thread(self._cleanup_stale_temp)
             if self.exists():
                 self._existing_columns = await asyncio.to_thread(
                     self.get_existing_columns
@@ -168,20 +169,44 @@ class CSVOutputWriter(BaseOutputWriter):
         if not self._header_written:
             self._header_written = True
 
+    def _get_temp_path(self) -> str:
+        """Return the sibling temp file path used during column rewrites."""
+        return self.output_path.replace(".csv", "_temp.csv")
+
+    def _cleanup_stale_temp(self) -> None:
+        """Remove leftover temp file from a previous interrupted rewrite."""
+        temp_path = self._get_temp_path()
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+                Logger.debug(f"Cleaned up stale temp file: {temp_path}")
+            except OSError:
+                pass
+
     def _append_columns_to_csv_sync(self, new_columns: List[str]) -> None:
-        """Add new columns (filled with sentinel) to an existing CSV file."""
-        output_file = self.output_path.replace(".csv", "_temp.csv")
-        with open(self.output_path, "r", encoding="utf-8") as infile, open(
-            output_file, "w+", newline="", encoding="utf-8"
-        ) as outfile:
-            reader = csv.reader(infile)
-            writer = csv.writer(outfile)
-            header = next(reader)
-            writer.writerow(header + new_columns)
-            for row in reader:
-                writer.writerow(row + [self.EMPTY_STRING] * len(new_columns))
-        os.remove(self.output_path)
-        os.rename(output_file, self.output_path)
+        """Add new columns (filled with sentinel) to an existing CSV file.
+
+        Uses atomic replace to avoid leaving temp files on crash/interrupt.
+        """
+        temp_path = self._get_temp_path()
+        try:
+            with open(self.output_path, "r", encoding="utf-8") as infile, open(
+                temp_path, "w", newline="", encoding="utf-8"
+            ) as outfile:
+                reader = csv.reader(infile)
+                writer = csv.writer(outfile)
+                header = next(reader)
+                writer.writerow(header + new_columns)
+                for row in reader:
+                    writer.writerow(row + [self.EMPTY_STRING] * len(new_columns))
+            os.replace(temp_path, self.output_path)
+        except BaseException:
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
+            raise
 
     async def close(self) -> None:
         """Close the CSV file"""
