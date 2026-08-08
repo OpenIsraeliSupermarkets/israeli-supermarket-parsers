@@ -1,0 +1,49 @@
+name: Manual maintainer webhook
+on:
+  workflow_dispatch:
+    inputs:
+      issue_url:
+        description: GitHub issue URL
+        required: true
+        type: string
+      fingerprint:
+        description: Issue fingerprint
+        required: true
+        type: string
+      kind:
+        description: Webhook kind
+        required: true
+        default: ci-failure
+        type: string
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post maintainer webhook
+        env:
+          CURSOR_MAINTAINER_WEBHOOK: ${{ secrets.CURSOR_MAINTAINER_WEBHOOK }}
+          CURSOR_WEBHOOK_SECRET: ${{ secrets.CURSOR_WEBHOOK_SECRET }}
+          ISSUE_URL: ${{ inputs.issue_url }}
+          FINGERPRINT: ${{ inputs.fingerprint }}
+          KIND: ${{ inputs.kind }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CURSOR_MAINTAINER_WEBHOOK:-}" ]; then
+            echo "CURSOR_MAINTAINER_WEBHOOK secret missing" >&2
+            exit 1
+          fi
+          AUTH_HEADER=()
+          if [ -n "${CURSOR_WEBHOOK_SECRET:-}" ]; then
+            AUTH_HEADER=(-H "Authorization: Bearer ${CURSOR_WEBHOOK_SECRET}")
+          fi
+          curl -fsS -X POST "${CURSOR_MAINTAINER_WEBHOOK}" \
+            "${AUTH_HEADER[@]}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg issue_url "$ISSUE_URL" \
+              --arg run_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              --arg repo "$GITHUB_REPOSITORY" \
+              --arg fingerprint "$FINGERPRINT" \
+              --arg kind "$KIND" \
+              '{issue_url:$issue_url,run_url:$run_url,repo:$repo,fingerprint:$fingerprint,kind:$kind}')"
+          echo "Webhook posted for ${ISSUE_URL}"
