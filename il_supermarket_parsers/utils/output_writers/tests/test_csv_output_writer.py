@@ -9,6 +9,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import pandas as pd
 
@@ -318,6 +319,65 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             rows[2], {"chain_id": "3", "city": CSVOutputWriter.EMPTY_STRING}
         )
+
+    def _temp_artifacts(self) -> list[str]:
+        """Return leftover rewrite temp filenames in the output folder."""
+        names = []
+        for name in os.listdir(self._output_folder):
+            if name.endswith("_temp.csv") or name.endswith(".csv.tmp"):
+                names.append(name)
+            elif name.startswith(".") and ".csv" in name:
+                # mkstemp prefix=`.{csv_file_name}.` + suffix=`.csv.tmp`
+                names.append(name)
+        return sorted(names)
+
+    async def test_schema_evolution_leaves_no_temp_csv(self) -> None:
+        """Successful column rewrite must not leave durable temp files."""
+        writer = self._new_writer()
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"a": 2, "b": 3})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        self.assertEqual(self._temp_artifacts(), [])
+        self.assertTrue(os.path.exists(self._csv_path()))
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"a": "1", "b": CSVOutputWriter.EMPTY_STRING})
+        self.assertEqual(rows[1], {"a": "2", "b": "3"})
+
+    async def test_append_columns_cleans_temp_on_interrupt(self) -> None:
+        """If rewrite fails mid-flight, no temp artifact may remain."""
+        writer = self._new_writer()
+        await writer.write_row({"a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        with mock.patch(
+            "il_supermarket_parsers.utils.output_writers.csv_output_writer.os.replace",
+            side_effect=OSError("simulated interrupt"),
+        ):
+            with self.assertRaises(OSError):
+                writer._append_columns_to_csv_sync(["b"])
+
+        self.assertEqual(self._temp_artifacts(), [])
+        # Original file must still be intact after a failed rewrite.
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(rows, [{"a": "1"}])
+
+    async def test_initialize_removes_legacy_stale_temp_csv(self) -> None:
+        """Init deletes leftover `*_temp.csv` from older interrupted rewrites."""
+        legacy_temp = self._csv_path().replace(".csv", "_temp.csv")
+        with open(legacy_temp, "w", encoding="utf-8") as f:
+            f.write("stale\n")
+        self.assertTrue(os.path.exists(legacy_temp))
+
+        writer = self._new_writer()
+        await writer.initialize()
+        self.assertFalse(os.path.exists(legacy_temp))
+        self.assertEqual(self._temp_artifacts(), [])
 
 
 if __name__ == "__main__":
