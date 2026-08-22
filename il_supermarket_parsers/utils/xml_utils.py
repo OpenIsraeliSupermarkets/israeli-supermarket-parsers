@@ -251,16 +251,35 @@ def _get_root(root, key_to_find, attributes_to_collect, collected):
     return found_root
 
 
+def decode_bytes_to_string(content: bytes) -> str:
+    """Decode bytes to string using a prioritized encoding fallback chain.
+
+    Tries encodings in order: UTF-8 -> UTF-16 -> ISO-8859-8 (with replacement).
+    This handles BOM-prefixed UTF-16 files (e.g., starting with b'\\xff\\xfe')
+    which would otherwise be corrupted by direct ISO-8859-8 fallback.
+    """
+    # Try UTF-8 first (most common)
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError:
+        pass
+
+    # Try UTF-16 (handles BOM automatically: \xff\xfe for LE, \xfe\xff for BE)
+    try:
+        return content.decode("utf-16")
+    except UnicodeDecodeError:
+        pass
+
+    # Final fallback to ISO-8859-8 (Hebrew encoding) with replacement
+    return content.decode("ISO-8859-8", errors="replace")
+
+
 def get_root_from_content(
     file_content: Union[str, bytes], file_path: Optional[str] = None
 ):
     """get ET root from file content (bytes or string) or file path"""
     if isinstance(file_content, bytes):
-        # Try to decode as UTF-8, fallback to ISO-8859-8
-        try:
-            content_str = file_content.decode("utf-8")
-        except UnicodeDecodeError:
-            content_str = file_content.decode("ISO-8859-8", errors="replace")
+        content_str = decode_bytes_to_string(file_content)
     else:
         content_str = file_content
 
@@ -273,13 +292,11 @@ def get_root_from_content(
             root = etree.fromstring(content_str.encode("utf-8"), parser)
             root = ET.fromstring(etree.tostring(root, encoding="unicode"))
         except ET.ParseError:
-            # Try with different encoding
+            # Try with different encoding (fallback already attempted in decode_bytes_to_string,
+            # but re-decoding may help if initial decode chose wrong encoding)
             try:
-                content_str = (
-                    file_content.decode("ISO-8859-8", errors="replace")
-                    if isinstance(file_content, bytes)
-                    else file_content
-                )
+                if isinstance(file_content, bytes):
+                    content_str = decode_bytes_to_string(file_content)
                 root = ET.fromstring(content_str)
             except ET.ParseError:
                 if file_path:
