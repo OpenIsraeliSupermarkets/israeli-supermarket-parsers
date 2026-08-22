@@ -1,5 +1,4 @@
 """Tests for xml_utils module."""
-import pytest
 from il_supermarket_parsers.utils.xml_utils import (
     decode_bytes_to_string,
     get_root_from_content,

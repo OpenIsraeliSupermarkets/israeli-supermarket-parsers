@@ -68,8 +68,27 @@ For each failing test, apply the **fix-supermarket-parser** skill (`.cursor/skil
 
 ## Before marking any task complete
 
-- Full test suite must pass: `python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto`
-- No new pylint errors introduced.
+**MANDATORY CHECKLIST (in order):**
+
+1. **Run pylint on all changed files:**
+   ```bash
+   pylint $(git diff --name-only HEAD~1 -- '*.py') --disable=E0401,R0801,R0903,W0707,R0917,R0913
+   ```
+   Or run on all Python files:
+   ```bash
+   pylint $(git ls-files '*.py') --disable=E0401,R0801,R0903,W0707,R0917,R0913
+   ```
+
+2. **Fix any pylint errors/warnings** (especially unused imports, undefined names)
+
+3. **Run full test suite:**
+   ```bash
+   python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -n auto
+   ```
+
+4. **Verify pylint score is 10.00/10** before committing
+
+⚠️ **DO NOT** mark work complete or push commits until pylint passes with no errors.
 
 ## Escalation
 
