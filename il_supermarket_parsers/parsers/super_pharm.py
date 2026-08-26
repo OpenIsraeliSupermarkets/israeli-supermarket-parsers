@@ -22,12 +22,12 @@ class SuperPharmFileConverter(BigIDFileConverter):
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             pricefull_parser=XmlDataFrameConverter(
-                list_key="Details",
+                list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
             price_parser=XmlDataFrameConverter(
-                list_key="Details",
+                list_key="Items",
                 id_field="ItemCode",
                 roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
             ),
