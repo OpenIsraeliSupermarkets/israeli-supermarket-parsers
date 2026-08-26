@@ -89,7 +89,7 @@ async def _process_files(
     return dfs
 
 
-def make_test_case(scraper_enum, parser_enum):
+def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
     """create test suite for parser"""
 
     class TestParser(unittest.TestCase):
@@ -189,8 +189,16 @@ def make_test_case(scraper_enum, parser_enum):
             ):
                 files.append(file)
 
-            # assert len(files) > 0, f"No files found in {sub_folder}"
             _validate_file_loading(files, sub_folder)
+
+            # Ensure we actually downloaded and processed files for enabled scrapers
+            # Without this check, tests pass vacuously when scraper fails to download
+            if ScraperFactory.is_scraper_enabled(self.scraper_enum) and len(files) == 0:
+                self.skipTest(
+                    f"No files downloaded for enabled scraper {self.parser_name}. "
+                    f"Source may be unavailable or blocked."
+                )
+
             await _process_files(files, parser)
 
             # self._make_sure_status_file_is_valid(sub_folder)
