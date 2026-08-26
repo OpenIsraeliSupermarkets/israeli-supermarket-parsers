@@ -3,7 +3,46 @@ from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
+    ConditionalXmlDataFrameConverter,
 )
+
+_PRICE_ROOTS = ["ChainId", "SubChainId", "StoreId", "BikoretNo"]
+
+
+def _price_converter(list_key):
+    """price/pricefull converter for a given row wrapper"""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="ItemCode",
+        roots=_PRICE_ROOTS,
+    )
+
+
+def _promo_converter(list_key):
+    """promo/promofull converter for a given row wrapper"""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="PromotionId",
+        roots=_PRICE_ROOTS,
+    )
+
+
+def _price_parser():
+    """Super-Pharm migrated price files to <Items>; older dumps still use <Details>."""
+    return ConditionalXmlDataFrameConverter(
+        option_a=_price_converter("Items"),
+        option_b=_price_converter("Details"),
+        check_key="Items",
+    )
+
+
+def _promo_parser():
+    """Super-Pharm promo files may ship as <Promotions> or legacy <Details>."""
+    return ConditionalXmlDataFrameConverter(
+        option_a=_promo_converter("Promotions"),
+        option_b=_promo_converter("Details"),
+        check_key="Promotions",
+    )
 
 
 class SuperPharmFileConverter(BigIDFileConverter):
@@ -11,26 +50,10 @@ class SuperPharmFileConverter(BigIDFileConverter):
 
     def __init__(self):
         super().__init__(
-            promofull_parser=XmlDataFrameConverter(
-                list_key="Details",
-                id_field="PromotionId",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
-            promo_parser=XmlDataFrameConverter(
-                list_key="Details",
-                id_field="PromotionId",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
-            pricefull_parser=XmlDataFrameConverter(
-                list_key="Items",
-                id_field="ItemCode",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
-            price_parser=XmlDataFrameConverter(
-                list_key="Items",
-                id_field="ItemCode",
-                roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
-            ),
+            promofull_parser=_promo_parser(),
+            promo_parser=_promo_parser(),
+            pricefull_parser=_price_parser(),
+            price_parser=_price_parser(),
             stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
                 id_field="StoreID",
