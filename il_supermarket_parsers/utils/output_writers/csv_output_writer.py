@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import csv
+import tempfile
 from typing import Any, List
 
 import pandas as pd
@@ -26,6 +27,8 @@ class CSVOutputWriter(BaseOutputWriter):
 
     EMPTY_STRING = "''"
     CELL_TO_BE_SMOTED = np.nan
+    # Legacy sibling name used by older column-rewrite implementations.
+    _LEGACY_TEMP_SUFFIX = "_temp.csv"
 
     def __init__(
         self,
@@ -38,6 +41,8 @@ class CSVOutputWriter(BaseOutputWriter):
         self._existing_columns: List[str] = []
         self._reduce_duplicates = reduce_duplicates
         self._buffer: list[dict] = []
+        self.output_folder = output_folder
+        self.csv_file_name = csv_file_name
         self.output_path = os.path.join(
             output_folder,
             csv_file_name + ".csv",
@@ -57,10 +62,25 @@ class CSVOutputWriter(BaseOutputWriter):
         """Reset per-file row buffer."""
         self._buffer = []
 
+    def _legacy_temp_path(self) -> str:
+        """Path of the pre-fix sibling temp file (`*_temp.csv`)."""
+        return self.output_path[: -len(".csv")] + self._LEGACY_TEMP_SUFFIX
+
+    def _cleanup_stale_temp_files(self) -> None:
+        """Remove leftover rewrite temps from prior interrupted runs."""
+        self._cleanup_stale_temp()
+        for path in (self._legacy_temp_path(),):
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                    Logger.debug(f"Removed stale CSV rewrite temp {path}")
+                except OSError as exc:
+                    Logger.warning(f"Failed to remove stale temp {path}: {exc}")
+
     async def initialize(self) -> None:
         """Initialize the output writer"""
         if not self._initialized:
-            await asyncio.to_thread(self._cleanup_stale_temp)
+            await asyncio.to_thread(self._cleanup_stale_temp_files)
             if self.exists():
                 self._existing_columns = await asyncio.to_thread(
                     self.get_existing_columns
@@ -186,27 +206,33 @@ class CSVOutputWriter(BaseOutputWriter):
     def _append_columns_to_csv_sync(self, new_columns: List[str]) -> None:
         """Add new columns (filled with sentinel) to an existing CSV file.
 
-        Uses atomic replace to avoid leaving temp files on crash/interrupt.
+        Writes to a same-directory temp file, then atomically replaces the
+        original via :func:`os.replace`. Temp is always removed on failure so
+        interrupted rewrites cannot leave durable ``*_temp.csv`` artifacts.
         """
-        temp_path = self._get_temp_path()
+        output_dir = os.path.dirname(self.output_path) or "."
+        fd, temp_path = tempfile.mkstemp(
+            prefix=f".{self.csv_file_name}.",
+            suffix=".csv.tmp",
+            dir=output_dir,
+        )
         try:
-            with open(self.output_path, "r", encoding="utf-8") as infile, open(
-                temp_path, "w", newline="", encoding="utf-8"
-            ) as outfile:
-                reader = csv.reader(infile)
-                writer = csv.writer(outfile)
-                header = next(reader)
-                writer.writerow(header + new_columns)
-                for row in reader:
-                    writer.writerow(row + [self.EMPTY_STRING] * len(new_columns))
+            with os.fdopen(fd, "w", newline="", encoding="utf-8") as outfile:
+                with open(self.output_path, "r", encoding="utf-8") as infile:
+                    reader = csv.reader(infile)
+                    writer = csv.writer(outfile)
+                    header = next(reader)
+                    writer.writerow(header + new_columns)
+                    for row in reader:
+                        writer.writerow(row + [self.EMPTY_STRING] * len(new_columns))
             os.replace(temp_path, self.output_path)
-        except BaseException:
-            if os.path.exists(temp_path):
+            temp_path = ""  # ownership transferred; nothing left to clean
+        finally:
+            if temp_path and os.path.exists(temp_path):
                 try:
                     os.remove(temp_path)
                 except OSError:
                     pass
-            raise
 
     async def close(self) -> None:
         """Close the CSV file"""
