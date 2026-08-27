@@ -2,7 +2,9 @@
 
 Super-Pharm migrated price files from the legacy ``<Details>`` wrapper to the
 standard ``<Items>`` layout. Both shapes must keep parsing, because historical
-dumps still use the legacy wrapper.
+dumps still use the legacy wrapper. The same applies to promo files
+(``<Promotions>`` vs ``<Details>``) and store files (stores nested under
+``<SubChains>`` vs a flat ``<Stores>`` list).
 
 These tests run without network access, so they still guard the parser when the
 live-source tests in ``parsers/tests/test_all.py`` skip due to an unreachable
@@ -94,6 +96,53 @@ PROMO_DETAILS_XML = """\
 """
 
 
+STORE_SUBCHAINS_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290172900007</ChainId>
+  <ChainName>Super-Pharm</ChainName>
+  <LastUpdateDate>2026-08-27</LastUpdateDate>
+  <LastUpdateTime>10:00</LastUpdateTime>
+  <SubChains>
+    <SubChain>
+      <SubChainID>001</SubChainID>
+      <SubChainName>Main</SubChainName>
+      <Stores>
+        <Store>
+          <StoreID>001</StoreID>
+          <StoreName>Tel Aviv</StoreName>
+        </Store>
+        <Store>
+          <StoreID>002</StoreID>
+          <StoreName>Haifa</StoreName>
+        </Store>
+      </Stores>
+    </SubChain>
+  </SubChains>
+</Root>
+"""
+
+STORE_FLAT_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290172900007</ChainId>
+  <ChainName>Super-Pharm</ChainName>
+  <LastUpdateDate>2026-08-27</LastUpdateDate>
+  <LastUpdateTime>10:00</LastUpdateTime>
+  <Stores>
+    <Store>
+      <StoreID>003</StoreID>
+      <StoreName>Eilat</StoreName>
+    </Store>
+    <Store>
+      <StoreID>004</StoreID>
+      <StoreName>Beer Sheva</StoreName>
+    </Store>
+  </Stores>
+</Root>
+"""
+
+
 async def _read_rows(folder, file_name):
     """Parse one file with the Super-Pharm converter and return the rows."""
     dump_file = file_name_to_components(folder, file_name)
@@ -152,6 +201,17 @@ class SuperPharmLayoutTestCase(unittest.TestCase):
         """Promo using the legacy <Details> wrapper still yields rows."""
         rows = _parse("Promo7290172900007-000-202608260000.xml", PROMO_DETAILS_XML)
         self._assert_ids(rows, ["4001"], "promotionid")
+
+    def test_stores_subchains_layout(self):
+        """Stores nested under <SubChains> yield rows carrying the sub-chain header."""
+        rows = _parse("Stores7290172900007-000-202608270000.xml", STORE_SUBCHAINS_XML)
+        self._assert_ids(rows, ["001", "002"], "storeid")
+        self.assertEqual([row["subchainid"] for row in rows], ["001", "001"])
+
+    def test_stores_flat_layout(self):
+        """A flat <Stores> list without the <SubChains> wrapper still yields rows."""
+        rows = _parse("Stores7290172900007-000-202608270000.xml", STORE_FLAT_XML)
+        self._assert_ids(rows, ["003", "004"], "storeid")
 
     def test_price_roots_are_promoted_to_columns(self):
         """Header fields are attached to rows in both layouts."""

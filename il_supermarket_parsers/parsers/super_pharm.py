@@ -7,6 +7,7 @@ from il_supermarket_parsers.documents import (
 )
 
 _PRICE_ROOTS = ["ChainId", "SubChainId", "StoreId", "BikoretNo"]
+_STORE_ROOTS = ["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"]
 
 
 def _price_converter(list_key):
@@ -45,6 +46,27 @@ def _promo_parser():
     )
 
 
+def _stores_parser():
+    """Super-Pharm nests stores under <SubChains>; flat <Stores> dumps stay readable."""
+    return ConditionalXmlDataFrameConverter(
+        option_a=SubRootedXmlDataFrameConverter(
+            list_key="SubChains",
+            id_field="StoreID",
+            options=SubRootedXmlOptions(
+                list_sub_key="Stores",
+                sub_roots=["SubChainID", "SubChainName"],
+                roots=_STORE_ROOTS,
+            ),
+        ),
+        option_b=XmlDataFrameConverter(
+            list_key="Stores",
+            id_field="StoreID",
+            roots=_STORE_ROOTS,
+        ),
+        check_key="SubChains",
+    )
+
+
 class SuperPharmFileConverter(BigIDFileConverter):
     """סופר פארם"""
 
@@ -54,13 +76,5 @@ class SuperPharmFileConverter(BigIDFileConverter):
             promo_parser=_promo_parser(),
             pricefull_parser=_price_parser(),
             price_parser=_price_parser(),
-            stores_parser=SubRootedXmlDataFrameConverter(
-                list_key="SubChains",
-                id_field="StoreID",
-                options=SubRootedXmlOptions(
-                    list_sub_key="Stores",
-                    sub_roots=["SubChainID", "SubChainName"],
-                    roots=["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"],
-                ),
-            ),
+            stores_parser=_stores_parser(),
         )
