@@ -3,7 +3,29 @@ from il_supermarket_parsers.documents import (
     XmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
+    ConditionalXmlDataFrameConverter,
 )
+
+_ROW_ROOTS = ["ChainID", "SubChainID", "StoreID", "BikoretNo"]
+
+
+def _promo_converter(list_key):
+    """promo/promofull converter for a given row wrapper"""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="PromotionID",
+        roots=_ROW_ROOTS,
+        date_columns=["PromotionUpdateTime"],
+    )
+
+
+def _promo_parser():
+    """<Promotions> is what the new source publishes; <Sales> is the BigID legacy default."""
+    return ConditionalXmlDataFrameConverter(
+        option_a=_promo_converter("Promotions"),
+        option_b=_promo_converter("Sales"),
+        check_key="Promotions",
+    )
 
 
 class MahsaniAShukPromoFileConverter(BigIDFileConverter):
@@ -29,19 +51,15 @@ class MahsaniAShukNewFileConverter(BigIDFileConverter):
             price_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field="ItemCode",
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                roots=_ROW_ROOTS,
             ),
             pricefull_parser=XmlDataFrameConverter(
                 list_key="Items",
                 id_field="ItemCode",
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+                roots=_ROW_ROOTS,
             ),
-            promofull_parser=XmlDataFrameConverter(
-                list_key="Promotions",
-                id_field="PromotionID",
-                roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
-                date_columns=["PromotionUpdateTime"],
-            ),
+            promo_parser=_promo_parser(),
+            promofull_parser=_promo_parser(),
             stores_parser=SubRootedXmlDataFrameConverter(
                 list_key="SubChains",
                 id_field="StoreID",
