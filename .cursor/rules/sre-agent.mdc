@@ -64,6 +64,10 @@ For each failing test, apply the **fix-supermarket-parser** skill (`.cursor/skil
 | `element count mismatch` | Use `SubRootedXmlDataFrameConverter` or add wrapper to `ignore_column` |
 | `list_key element was not found` | `list_key` tag absent; check XML for actual wrapper tag |
 
+**Fixes must be backward compatible.** A chain adopting a new XML shape does not retire the old one — historical dumps still carry it. Never replace one hardcoded `list_key` with another; wrap both in `ConditionalXmlDataFrameConverter` (`check_key` = new wrapper, `option_b` = legacy) so the old shape keeps parsing. Cover every parser on the chain that could drift, not only the one that failed. See Step 4 of the fix-supermarket-parser skill.
+
+**A SKIPPED live-source test validated nothing.** Those tests skip when a chain's endpoint is unreachable or bot-protected. Prove the fix with a network-free test under `il_supermarket_parsers/tests/` exercising both shapes.
+
 ---
 
 ## Before marking any task complete
