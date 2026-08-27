@@ -9,6 +9,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import pandas as pd
 
@@ -318,6 +319,156 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             rows[2], {"chain_id": "3", "city": CSVOutputWriter.EMPTY_STRING}
         )
+
+    def _temp_artifacts(self) -> list[str]:
+        """Return leftover rewrite temp filenames in the output folder."""
+        names = []
+        for name in os.listdir(self._output_folder):
+            if name.endswith("_temp.csv") or name.endswith(".csv.tmp"):
+                names.append(name)
+            elif name.startswith(".") and ".csv" in name:
+                # mkstemp prefix=`.{csv_file_name}.` + suffix=`.csv.tmp`
+                names.append(name)
+        return sorted(names)
+
+    async def test_schema_evolution_leaves_no_temp_csv(self) -> None:
+        """Successful column rewrite must not leave durable temp files."""
+        writer = self._new_writer()
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        await writer.initialize_new_file(None)  # type: ignore[arg-type]
+        await writer.write_row({"a": 2, "b": 3})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        self.assertEqual(self._temp_artifacts(), [])
+        self.assertTrue(os.path.exists(self._csv_path()))
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"a": "1", "b": CSVOutputWriter.EMPTY_STRING})
+        self.assertEqual(rows[1], {"a": "2", "b": "3"})
+
+    async def test_append_columns_cleans_temp_on_interrupt(self) -> None:
+        """If rewrite fails mid-flight, no temp artifact may remain."""
+        writer = self._new_writer()
+        await writer.write_row({"a": 1})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        with mock.patch(
+            "il_supermarket_parsers.utils.output_writers.csv_output_writer.os.replace",
+            side_effect=OSError("simulated interrupt"),
+        ):
+            with self.assertRaises(OSError):
+                writer._append_columns_to_csv_sync(["b"])
+
+        self.assertEqual(self._temp_artifacts(), [])
+        # Original file must still be intact after a failed rewrite.
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(rows, [{"a": "1"}])
+
+    async def test_initialize_removes_legacy_stale_temp_csv(self) -> None:
+        """Init deletes leftover `*_temp.csv` from older interrupted rewrites."""
+        legacy_temp = self._csv_path().replace(".csv", "_temp.csv")
+        with open(legacy_temp, "w", encoding="utf-8") as f:
+            f.write("stale\n")
+        self.assertTrue(os.path.exists(legacy_temp))
+
+        writer = self._new_writer()
+        await writer.initialize()
+        self.assertFalse(os.path.exists(legacy_temp))
+        self.assertEqual(self._temp_artifacts(), [])
+
+
+    async def test_stale_temp_file_cleaned_on_init(self) -> None:
+        """Test that stale temp files from previous crashes are cleaned up on init."""
+        # Create a stale temp file
+        temp_path = self._csv_path().replace(".csv", "_temp.csv")
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write("stale,data\n")
+        self.assertTrue(os.path.exists(temp_path))
+
+        writer = self._new_writer()
+        await writer.initialize()
+
+        # Temp file should be removed
+        self.assertFalse(os.path.exists(temp_path))
+
+    async def test_temp_file_cleaned_on_column_rewrite_exception(self) -> None:
+        """Test that temp file is cleaned up if column rewrite fails mid-write."""
+        # Create initial CSV
+        with open(self._csv_path(), "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["a", "b"])
+            w.writerow(["1", "2"])
+
+        writer = self._new_writer()
+        await writer.initialize()
+
+        temp_path = writer._get_temp_path()
+
+        # Patch os.replace to simulate failure after temp file is written
+        original_replace = os.replace
+
+        def failing_replace(src, dst):
+            raise OSError("Simulated failure")
+
+        os.replace = failing_replace
+        try:
+            with self.assertRaises(OSError):
+                writer._append_columns_to_csv_sync(["c"])
+            # Temp file should be cleaned up even on failure
+            self.assertFalse(os.path.exists(temp_path))
+        finally:
+            os.replace = original_replace
+
+    async def test_no_temp_file_after_successful_column_rewrite(self) -> None:
+        """Test that no temp file remains after successful column rewrite."""
+        # Create initial CSV
+        with open(self._csv_path(), "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["a", "b"])
+            w.writerow(["1", "2"])
+
+        writer = self._new_writer()
+        await writer.initialize()
+
+        temp_path = writer._get_temp_path()
+
+        writer._append_columns_to_csv_sync(["c"])
+
+        # No temp file should remain
+        self.assertFalse(os.path.exists(temp_path))
+        # Original file should exist with new columns
+        self.assertTrue(os.path.exists(self._csv_path()))
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(len(rows), 1)
+        self.assertIn("c", rows[0])
+
+    async def test_column_rewrite_atomic_replace(self) -> None:
+        """Test that column rewrite uses atomic replace (original content preserved on failure)."""
+        original_content = "a,b\n1,2\n"
+        with open(self._csv_path(), "w", encoding="utf-8") as f:
+            f.write(original_content)
+
+        writer = self._new_writer()
+        await writer.initialize()
+
+        # Patch os.replace to simulate failure
+        original_replace = os.replace
+
+        def failing_replace(src, dst):
+            raise OSError("Simulated failure")
+
+        os.replace = failing_replace
+        try:
+            with self.assertRaises(OSError):
+                writer._append_columns_to_csv_sync(["c"])
+            # Original file should be preserved
+            with open(self._csv_path(), "r", encoding="utf-8") as f:
+                self.assertEqual(f.read(), original_content)
+        finally:
+            os.replace = original_replace
 
 
 if __name__ == "__main__":

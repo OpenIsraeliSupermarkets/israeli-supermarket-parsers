@@ -8,7 +8,7 @@ class ParserFactory(Enum):
 
     BAREKET = all_parsers.BareketFileConverter
     YAYNO_BITAN_AND_CARREFOUR = all_parsers.YaynoBitanFileConverter
-    COFIX = all_parsers.CofixFileConverter
+    COFIX = all_parsers.CofixFileConverter  # kept for backwards-compatible processing
     # CITY_MARKET_GIVATAYIM = all_parsers.CityMarketGivatayim
     CITY_MARKET_KIRYATGAT = all_parsers.CityMarketKiryatGat
     CITY_MARKET_SHOPS = all_parsers.CityMarketShops
@@ -38,7 +38,7 @@ class ParserFactory(Enum):
     SUPER_YUDA = all_parsers.SuperYudaFileConverter
     SUPER_SAPIR = all_parsers.SuperSapirFileConverter
     FRESH_MARKET_AND_SUPER_DOSH = all_parsers.FreshMarketAndSuperDoshFileConverter
-    QUIK = all_parsers.QuikFileConverter
+    QUIK = all_parsers.QuikFileConverter  # kept for backwards-compatible processing
     TIV_TAAM = all_parsers.TivTaamFileConverter
     VICTORY = all_parsers.VictoryFileConverter  # kept for backwards-compatible processing
     VICTORY_NEW_SOURCE = all_parsers.VictoryNewFileConverter

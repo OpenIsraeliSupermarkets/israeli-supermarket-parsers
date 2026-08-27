@@ -48,10 +48,10 @@ class CityMarketShopTestCase(
     """
 
 
-class CofixTestCase(make_test_case(ScraperFactory.COFIX, ParserFactory.COFIX)):
-    """
-    Test case for Cofix supermarket.
-    """
+# class CofixTestCase(make_test_case(ScraperFactory.COFIX, ParserFactory.COFIX)):
+#     """
+#     Test case for Cofix supermarket (gov.il 04.08.2026 folded into Rami Levy).
+#     """
 
 
 class DorAlonTestCase(make_test_case(ScraperFactory.DOR_ALON, ParserFactory.DOR_ALON)):
@@ -259,10 +259,10 @@ class FreshMarketAndSuperDoshTestCase(
     """
 
 
-class QuikTestCase(make_test_case(ScraperFactory.QUIK, ParserFactory.QUIK)):
-    """
-    Test case for Quik supermarket.
-    """
+# class QuikTestCase(make_test_case(ScraperFactory.QUIK, ParserFactory.QUIK)):
+#     """
+#     Test case for Quik supermarket (gov.il 04.08.2026 dropped dedicated link; under Rami Levy).
+#     """
 
 
 class TivTaamTestCase(make_test_case(ScraperFactory.TIV_TAAM, ParserFactory.TIV_TAAM)):
