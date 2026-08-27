@@ -6,7 +6,7 @@ from il_supermarket_parsers.documents import (
     ConditionalXmlDataFrameConverter,
 )
 
-_PRICE_ROOTS = ["ChainId", "SubChainId", "StoreId", "BikoretNo"]
+_ROW_ROOTS = ["ChainId", "SubChainId", "StoreId", "BikoretNo"]
 _STORE_ROOTS = ["ChainId", "ChainName", "LastUpdateDate", "LastUpdateTime"]
 
 
@@ -15,7 +15,7 @@ def _price_converter(list_key):
     return XmlDataFrameConverter(
         list_key=list_key,
         id_field="ItemCode",
-        roots=_PRICE_ROOTS,
+        roots=_ROW_ROOTS,
     )
 
 
@@ -24,26 +24,36 @@ def _promo_converter(list_key):
     return XmlDataFrameConverter(
         list_key=list_key,
         id_field="PromotionId",
-        roots=_PRICE_ROOTS,
+        roots=_ROW_ROOTS,
     )
+
+
+def _first_present(build_converter, list_keys):
+    """Chain converters so the first wrapper present in the file is the one used.
+
+    The final key is the fallback and is applied without a check, so a file whose
+    wrapper matches none of the candidates still goes through the historical
+    converter rather than yielding zero rows.
+    """
+    *candidates, fallback = list_keys
+    parser = build_converter(fallback)
+    for list_key in reversed(candidates):
+        parser = ConditionalXmlDataFrameConverter(
+            option_a=build_converter(list_key),
+            option_b=parser,
+            check_key=list_key,
+        )
+    return parser
 
 
 def _price_parser():
-    """Super-Pharm migrated price files to <Items>; older dumps still use <Details>."""
-    return ConditionalXmlDataFrameConverter(
-        option_a=_price_converter("Items"),
-        option_b=_price_converter("Details"),
-        check_key="Items",
-    )
+    """<Items> is the shape Super-Pharm publishes now; older dumps used <Details>."""
+    return _first_present(_price_converter, ["Items", "Products", "Details"])
 
 
 def _promo_parser():
-    """Super-Pharm promo files may ship as <Promotions> or legacy <Details>."""
-    return ConditionalXmlDataFrameConverter(
-        option_a=_promo_converter("Promotions"),
-        option_b=_promo_converter("Details"),
-        check_key="Promotions",
-    )
+    """<Promotions> is the standard shape; older dumps used <Details>."""
+    return _first_present(_promo_converter, ["Promotions", "Sales", "Details"])
 
 
 def _stores_parser():

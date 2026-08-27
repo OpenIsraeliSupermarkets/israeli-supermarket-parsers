@@ -63,6 +63,39 @@ PRICE_DETAILS_XML = """\
 </Root>
 """
 
+PRICE_PRODUCTS_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290172900007</ChainId>
+  <SubChainId>000</SubChainId>
+  <StoreId>667</StoreId>
+  <BikoretNo>0</BikoretNo>
+  <Products>
+    <Product>
+      <ItemCode>5001</ItemCode>
+      <ItemName>Sunscreen</ItemName>
+      <ItemPrice>39.90</ItemPrice>
+    </Product>
+  </Products>
+</Root>
+"""
+
+PROMO_SALES_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290172900007</ChainId>
+  <SubChainId>000</SubChainId>
+  <StoreId>667</StoreId>
+  <BikoretNo>0</BikoretNo>
+  <Sales>
+    <Sale>
+      <PromotionId>6001</PromotionId>
+      <PromotionDescription>Bundle deal</PromotionDescription>
+    </Sale>
+  </Sales>
+</Root>
+"""
+
 PROMO_PROMOTIONS_XML = """\
 <?xml version="1.0" encoding="utf-8"?>
 <Root>
@@ -184,6 +217,16 @@ class SuperPharmLayoutTestCase(unittest.TestCase):
         """Price using the legacy <Details> wrapper still yields rows."""
         rows = _parse("Price7290172900007-000-202608260000.xml", PRICE_DETAILS_XML)
         self._assert_ids(rows, ["2001", "2002"], "itemcode")
+
+    def test_pricefull_products_layout(self):
+        """PriceFull using the BigID <Products> wrapper yields rows."""
+        rows = _parse("PriceFull7290172900007-000-202608260000.xml", PRICE_PRODUCTS_XML)
+        self._assert_ids(rows, ["5001"], "itemcode")
+
+    def test_promofull_sales_layout(self):
+        """PromoFull using the BigID <Sales> wrapper yields rows."""
+        rows = _parse("PromoFull7290172900007-000-202608260000.xml", PROMO_SALES_XML)
+        self._assert_ids(rows, ["6001"], "promotionid")
 
     def test_promofull_promotions_layout(self):
         """PromoFull using the standard <Promotions> wrapper yields rows."""
