@@ -68,6 +68,7 @@ class CSVOutputWriter(BaseOutputWriter):
 
     def _cleanup_stale_temp_files(self) -> None:
         """Remove leftover rewrite temps from prior interrupted runs."""
+        self._cleanup_stale_temp()
         for path in (self._legacy_temp_path(),):
             if os.path.exists(path):
                 try:
@@ -187,6 +188,20 @@ class CSVOutputWriter(BaseOutputWriter):
         )
         if not self._header_written:
             self._header_written = True
+
+    def _get_temp_path(self) -> str:
+        """Return the sibling temp file path used during column rewrites."""
+        return self.output_path.replace(".csv", "_temp.csv")
+
+    def _cleanup_stale_temp(self) -> None:
+        """Remove leftover temp file from a previous interrupted rewrite."""
+        temp_path = self._get_temp_path()
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+                Logger.debug(f"Cleaned up stale temp file: {temp_path}")
+            except OSError:
+                pass
 
     def _append_columns_to_csv_sync(self, new_columns: List[str]) -> None:
         """Add new columns (filled with sentinel) to an existing CSV file.
