@@ -1,11 +1,9 @@
-import datetime
 import shutil
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from il_supermarket_scarper import ScarpingTask, FileTypesFilters, ScraperFactory
-from il_supermarket_scarper.utils import _now
 
 from il_supermarket_parsers.task import ConvertingTask
 
@@ -63,7 +61,7 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
                 files_types=[o.filter_type] if o.filter_type else None,
             )
 
-            scraper.start(limit=o.limit, when_date=_now())
+            scraper.start(limit=o.limit)
 
             queue_handlers = {
                 name: output.queue_handler for name, output in scraper.consume().items()
@@ -99,10 +97,7 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
         enabled_scrapers=o.enabled_scrapers if o.enabled_scrapers else None,
         files_types=[o.filter_type] if o.filter_type else None,
     )
-    task.start(
-        limit=o.limit,
-        when_date=datetime.datetime.now() if o.filter_type else None,
-    )
+    task.start(limit=o.limit)
     task.join()
     return dump_folder_name
 
