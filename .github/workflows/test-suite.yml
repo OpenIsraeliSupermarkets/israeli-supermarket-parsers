@@ -103,26 +103,3 @@ jobs:
         run: |
           chmod +x .github/scripts/create_ci_issue.sh
           .github/scripts/create_ci_issue.sh pytest-log.txt
-
-  weekend-weekly-release:
-    needs: build
-    if: success() && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Trigger weekly release on weekend only
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          DOW=$(date -u +%w) # 0=Sun 6=Sat
-          if [ "$DOW" != "0" ] && [ "$DOW" != "6" ]; then
-            echo "Not weekend (DOW=${DOW}); skipping weekly release."
-            exit 0
-          fi
-          gh workflow run weekly-release.yml \
-            --repo "${{ github.repository }}" \
-            --ref "${{ github.ref_name }}"
-          echo "Dispatched weekly-release.yml"

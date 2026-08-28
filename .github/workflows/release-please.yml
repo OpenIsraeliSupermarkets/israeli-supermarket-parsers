@@ -1,0 +1,53 @@
+# Release Please: open/update a Release PR from Conventional Commits.
+# Merge that PR when you want to ship. Tag + GitHub Release happen automatically.
+# PyPI publish and daily-publish notify run in this same workflow because
+# GITHUB_TOKEN cannot trigger other workflows (no rotating PAT).
+name: release-please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      html_url: ${{ steps.release.outputs.html_url }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/python-publish.yml
+    secrets: inherit
+
+  notify-daily-publish-deps:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/notify-daily-publish-deps.yml
+    secrets: inherit
+    with:
+      release_tag: ${{ needs.release-please.outputs.tag_name }}
+      release_url: ${{ needs.release-please.outputs.html_url }}
+
+  notify-coordinator:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/notify-coordinator.yml
+    secrets: inherit
+    with:
+      reason: release-published

@@ -10,6 +10,13 @@ on:
     types: [published]
   issues:
     types: [closed]
+  workflow_call:
+    inputs:
+      reason:
+        description: Coordinator payload reason
+        required: false
+        type: string
+        default: release-published
 
 permissions:
   contents: read
@@ -17,6 +24,7 @@ permissions:
 jobs:
   notify:
     if: >
+      github.event_name == 'workflow_call' ||
       github.event_name == 'release' ||
       contains(github.event.issue.labels.*.name, 'sync')
     runs-on: ubuntu-latest
@@ -24,7 +32,7 @@ jobs:
       - name: Ping daily-publish coordinator
         env:
           GH_TOKEN: ${{ secrets.DAILY_PUBLISH_DISPATCH_TOKEN }}
-          REASON: ${{ github.event_name == 'release' && 'release-published' || 'sync-issue-closed' }}
+          REASON: ${{ inputs.reason || (github.event_name == 'release' && 'release-published' || 'sync-issue-closed') }}
         run: |
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
