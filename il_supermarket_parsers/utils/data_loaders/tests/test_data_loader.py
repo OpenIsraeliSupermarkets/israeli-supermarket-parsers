@@ -140,7 +140,7 @@ class TestDataLoaderStoreFilter(unittest.IsolatedAsyncioTestCase):
         self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.root = self._tmp.name
         self.store_a_dir = _make_store_dir(self.root, DumpFolderNames.BAREKET.value)
-        self.store_b_dir = _make_store_dir(self.root, DumpFolderNames.COFIX.value)
+        self.store_b_dir = _make_store_dir(self.root, DumpFolderNames.SHUFERSAL.value)
         _touch(self.store_a_dir, "PriceFull7290000000000-001-20250101.xml")
         _touch(self.store_b_dir, "PriceFull7290000000000-001-20250101.xml")
 
