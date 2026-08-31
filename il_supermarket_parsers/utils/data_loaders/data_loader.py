@@ -25,7 +25,7 @@ class DataLoader(BaseDataLoader):
         """load details about the files in the folder as async generator"""
 
         resolved_stores = (
-            enabled_scraper if enabled_scraper else DumpFolderNames.all_folders_names()
+            enabled_scraper if enabled_scraper else DumpFolderNames.active_folder_names()
         )
         resolved_types = files_types if files_types else FileTypesFilters.all_types()
         files_types_set: Set[str] = (
