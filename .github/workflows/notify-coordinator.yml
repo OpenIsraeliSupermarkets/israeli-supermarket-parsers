@@ -21,14 +21,26 @@ jobs:
       contains(github.event.issue.labels.*.name, 'sync')
     runs-on: ubuntu-latest
     steps:
+      - name: Mint GitHub App installation token
+        id: app-token
+        if: ${{ vars.APP_CLIENT_ID != '' }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            israeli-supermarket-scarpers
+            israeli-supermarket-parsers
+            daily-publish-supermarket-data
       - name: Ping daily-publish coordinator
         env:
-          GH_TOKEN: ${{ secrets.DAILY_PUBLISH_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.DAILY_PUBLISH_DISPATCH_TOKEN }}
           REASON: ${{ github.event_name == 'release' && 'release-published' || 'sync-issue-closed' }}
         run: |
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "DAILY_PUBLISH_DISPATCH_TOKEN unset; skip coordinator signal."
+            echo "No App token or DAILY_PUBLISH_DISPATCH_TOKEN; skip coordinator signal."
             exit 0
           fi
           gh api repos/OpenIsraeliSupermarkets/daily-publish-supermarket-data/dispatches \
