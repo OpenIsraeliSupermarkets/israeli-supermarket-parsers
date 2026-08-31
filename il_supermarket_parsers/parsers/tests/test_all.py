@@ -26,7 +26,17 @@ class YaynotBitanTestCase(
 #     )
 # ):
 #     """
-#     Test case for Cofix supermarket.
+#     Test case for City Market Givatayim (deprecated / closed).
+#     """
+
+
+# class CityMarketKiryatOnoTestCase(
+#     make_test_case(
+#         ScraperFactory.CITY_MARKET_KIRYATONO, ParserFactory.CITY_MARKET_KIRYATONO
+#     )
+# ):
+#     """
+#     Test case for City Market Kiryat Ono (deprecated / closed).
 #     """
 
 
@@ -50,7 +60,7 @@ class CityMarketShopTestCase(
 
 # class CofixTestCase(make_test_case(ScraperFactory.COFIX, ParserFactory.COFIX)):
 #     """
-#     Test case for Cofix supermarket (gov.il 04.08.2026 folded into Rami Levy).
+#     Test case for Cofix (deprecated; folded into Rami Levy).
 #     """
 
 
@@ -80,7 +90,7 @@ class HaziHinamTestCase(
 #     make_test_case(ScraperFactory.HET_COHEN, ParserFactory.HET_COHEN)
 # ):
 #     """
-#     Test case for Het Cohen supermarket (old source; removed from ScraperFactory).
+#     Test case for Het Cohen (deprecated; use HET_COHEN_NEW_SOURCE).
 #     """
 
 
@@ -118,7 +128,7 @@ class Maayan2000TestCase(
 #     make_test_case(ScraperFactory.MAHSANI_ASHUK, ParserFactory.MAHSANI_ASHUK)
 # ):
 #     """
-#     Test case for Mahsani AShuk supermarket (old Matrix source; removed from ScraperFactory).
+#     Test case for Mahsani AShuk (deprecated; use MAHSANI_ASHUK_NEW_SOURCE).
 #     """
 
 
@@ -134,7 +144,7 @@ class MahsaniAShukNewSourceTestCase(
 
 # class MegaTestCase(make_test_case(ScraperFactory.MEGA, ParserFactory.MEGA)):
 #     """
-#     Test case for Mega supermarket.
+#     Test case for Mega (deprecated; merged with other chains).
 #     """
 
 
@@ -261,7 +271,7 @@ class FreshMarketAndSuperDoshTestCase(
 
 # class QuikTestCase(make_test_case(ScraperFactory.QUIK, ParserFactory.QUIK)):
 #     """
-#     Test case for Quik supermarket (gov.il 04.08.2026 dropped dedicated link; under Rami Levy).
+#     Test case for Quik (deprecated; folded into Rami Levy).
 #     """
 
 
@@ -273,7 +283,7 @@ class TivTaamTestCase(make_test_case(ScraperFactory.TIV_TAAM, ParserFactory.TIV_
 
 # class VictoryTestCase(make_test_case(ScraperFactory.VICTORY, ParserFactory.VICTORY)):
 #     """
-#     Test case for Victory supermarket (old Matrix source; removed from ScraperFactory).
+#     Test case for Victory (deprecated; use VICTORY_NEW_SOURCE).
 #     """
 
 

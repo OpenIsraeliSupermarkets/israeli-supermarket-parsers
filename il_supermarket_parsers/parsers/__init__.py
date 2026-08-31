@@ -1,6 +1,11 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from .bareket import BareketFileConverter
-from .city_market import CityMarketGivatayim, CityMarketKiryatGat, CityMarketShops
+from .city_market import (
+    CityMarketGivatayim,
+    CityMarketKiryatOno,
+    CityMarketKiryatGat,
+    CityMarketShops,
+)
 from .confix import CofixFileConverter
 from .hazi_hinam import HaziHinamFileConverter
 from .mahsani_a_shuk import MahsaniAShukPromoFileConverter, MahsaniAShukNewFileConverter
