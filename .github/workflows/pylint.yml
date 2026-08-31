@@ -15,33 +15,10 @@ permissions:
 
 jobs:
   build:
-    runs-on:
-      - self-hosted
-      - ci
-
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Free disk space
+    - uses: actions/checkout@v3
+    - name: Build and run lint Docker stage
       run: |
-        df --human-readable
-        docker 2>/dev/null 1>&2 rmi $(docker image ls --all --quiet) || true
-        rm --recursive --force "$AGENT_TOOLSDIRECTORY"
-        df --human-readable
-
-    - name: Build with Docker
-      run: docker build -t erlichsefi/israeli-supermarket-parsers:lint --target lint .
-
-    - name: Remove legacy pylint container name
-      run: docker rm -f parsers-pylint-runner 2>/dev/null || true
-
-    - name: Analysing the code with pylint
-      run: |
-        mkdir -p temp
-        set -o pipefail
-        docker run --rm -v ./temp:/usr/src/app/temp --name parsers-pylint-runner erlichsefi/israeli-supermarket-parsers:lint 2>&1 | tee pylint-log.txt
-
-    - name: Docker builder prune
-      if: always()
-      run: docker builder prune -f
+        docker build --target lint -t erlichsefi/israeli-supermarket-parsers:lint .
+        docker run --rm erlichsefi/israeli-supermarket-parsers:lint
