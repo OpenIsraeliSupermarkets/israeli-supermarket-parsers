@@ -9,15 +9,19 @@ from il_supermarket_parsers.documents import (
 
 class CityMarketGivatayim(BaseFileConverter):
     """
-    File converter for Dor Alon supermarket chain.
-    Extends: CofixFileConverter
+    File converter for City Market Givatayim (deprecated / closed).
+    """
+
+
+class CityMarketKiryatOno(BaseFileConverter):
+    """
+    File converter for City Market Kiryat Ono (deprecated / closed).
     """
 
 
 class CityMarketKiryatGat(BaseFileConverter):
     """
-    File converter for Dor Alon supermarket chain.
-    Extends: CofixFileConverter
+    File converter for City Market Kiryat Gat.
     """
 
 
