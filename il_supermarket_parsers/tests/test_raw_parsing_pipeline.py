@@ -5,6 +5,7 @@ and asserts on the written CSV output and parser status.
 """
 
 import os
+import gzip
 import tempfile
 import unittest
 import json
@@ -458,6 +459,55 @@ class TestRawParsingPipelineLimit(unittest.IsolatedAsyncioTestCase):
 
         logs = pipeline.get_parser_status().get_file_logs()
         self.assertEqual(len(logs), 3)
+
+        _validate_status_file(self.status_dir)
+
+
+class TestRawParsingPipelineCompressedDump(unittest.IsolatedAsyncioTestCase):
+    """A dump that is still gzip must be attempted and recorded as failed."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        self.root = self._tmp.name
+        self.output_dir = tempfile.mkdtemp()
+        self.status_dir = tempfile.mkdtemp()
+
+        store_dir = os.path.join(self.root, STORE_FOLDER)
+        os.makedirs(store_dir)
+        gz_name = "PriceFull7290027600007-001-20250101.xml.gz"
+        with gzip.open(os.path.join(store_dir, gz_name), "wb") as handle:
+            handle.write(PRICEFULL_XML.encode("utf-8"))
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    async def test_compressed_dump_is_failed_not_skipped(self) -> None:
+        """Loader picks the .gz dump up; parse fails with failed status."""
+        pipeline = _build_pipeline(
+            self.root, self.output_dir, self.status_dir, "PRICE_FULL_FILE"
+        )
+        await pipeline.process(
+            enabled_scraper=SCRAPER,
+            enabled_file_types="PRICE_FULL_FILE",
+        )
+
+        logs = pipeline.get_parser_status().get_file_logs()
+        self.assertEqual(len(logs), 1)
+        self.assertFalse(logs[0].succusfull)
+        self.assertIn("still compressed", logs[0].error)
+
+        status_files = [f for f in os.listdir(self.status_dir) if f.endswith(".json")]
+        self.assertEqual(len(status_files), 1)
+        with open(
+            os.path.join(self.status_dir, status_files[0]), "r", encoding="utf-8"
+        ) as handle:
+            data = json.load(handle)
+        events = data.get("events") or []
+        statuses = {event.get("status") for event in events}
+        self.assertIn("registered", statuses)
+        self.assertIn("failed", statuses)
+        self.assertNotIn("skipped", statuses)
+        self.assertNotIn("processed", statuses)
 
         _validate_status_file(self.status_dir)
 

@@ -8,7 +8,8 @@ import json
 from typing import List
 
 from il_supermarket_scarper import ScraperFactory
-from il_supermarket_parsers.utils import DataLoader, FileTypesFilters, DumpFile
+from il_supermarket_parsers.utils import DataLoader, FileTypesFilters
+from il_supermarket_parsers.utils.loading_utils import DumpFile, is_dump_file_name
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
 from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
@@ -33,11 +34,11 @@ def _validate_file_loading(files: List[DumpFile], sub_folder: str):
 
 
 def _list_xml_files_recursive(directory):
-    """list all xml files"""
+    """list all dump files the DataLoader is expected to pick up"""
     file_list = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if "xml" in file:
+            if is_dump_file_name(file):
                 file_list.append(os.path.join(root, file))
     return file_list
 

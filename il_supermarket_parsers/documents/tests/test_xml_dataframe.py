@@ -1,7 +1,10 @@
 import asyncio
+import gzip
 import os
+import tempfile
 
 import pandas as pd
+import pytest
 
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
 from il_supermarket_parsers.parsers.other import (
@@ -77,6 +80,21 @@ def test_bad_element():
         ignore_missing_columns=["CHAINID", "LASTUPDATEDATE"],
     )
     assert df.shape[0] > 0
+
+
+def test_gzip_dump_fails_to_convert():
+    """Compressed dumps must not yield rows; extraction is the scraper's job."""
+    source = os.path.join(TEST_DIR, "PriceFull7290172900007-083-202409270311.xml")
+    with open(source, "rb") as handle:
+        xml_bytes = handle.read()
+    with tempfile.TemporaryDirectory() as tmp:
+        gz_name = "PriceFull7290172900007-083-202409270311.xml.gz"
+        gz_path = os.path.join(tmp, gz_name)
+        with gzip.open(gz_path, "wb") as handle:
+            handle.write(xml_bytes)
+        converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
+        with pytest.raises(ValueError, match="still compressed"):
+            convert_to_dataframe(converter, tmp, gz_name)
 
 
 def test_empty_file():

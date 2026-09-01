@@ -1,7 +1,15 @@
 """Tests for xml_utils module."""
+import gzip
+import os
+import tempfile
+
+import pytest
+
 from il_supermarket_parsers.utils.xml_utils import (
     decode_bytes_to_string,
+    get_root,
     get_root_from_content,
+    raise_if_compressed,
 )
 
 
@@ -84,3 +92,47 @@ class TestGetRootFromContent:
         root = get_root_from_content(content)
         assert root.tag == "Root"
         assert root.find("Item").text == "Value"
+
+    def test_gzip_xml_content_is_rejected(self):
+        """Compressed bytes must not parse; extraction belongs to the scraper."""
+        xml = b'<?xml version="1.0"?><Root><Item>Gz</Item></Root>'
+        with pytest.raises(ValueError, match="still compressed"):
+            get_root_from_content(gzip.compress(xml))
+
+
+class TestRaiseIfCompressed:
+    """Compressed dumps must fail load instead of being inflated."""
+
+    def test_passthrough_plain_xml(self):
+        """Uncompressed XML does not raise."""
+        raise_if_compressed(b'<?xml version="1.0"?><Root/>')
+
+    def test_gzip_raises(self):
+        """Gzip payload is an error the pipeline records as failed."""
+        xml = b'<?xml version="1.0"?><Root/>'
+        with pytest.raises(ValueError, match="still compressed"):
+            raise_if_compressed(gzip.compress(xml), source="dump.gz")
+
+    def test_zip_magic_two_bytes_raise(self):
+        """Only the PK zip magic is needed; the body is never inspected."""
+        with pytest.raises(ValueError, match="still compressed"):
+            raise_if_compressed(b"PK")
+
+    def test_gzip_magic_two_bytes_raise(self):
+        """Only the gzip magic is needed; the body is never inspected."""
+        with pytest.raises(ValueError, match="still compressed"):
+            raise_if_compressed(b"\x1f\x8b")
+
+
+class TestGetRootGzipFile:
+    """get_root must fail dumps that are still gzip on disk."""
+
+    def test_get_root_rejects_gzip_file(self):
+        """A .gz dump raises so the pipeline can mark the file failed."""
+        xml = b'<?xml version="1.0"?><Root><Item>Disk</Item></Root>'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "PromoFull7290000000000-001-001-20260831-001227.gz")
+            with open(path, "wb") as handle:
+                handle.write(gzip.compress(xml))
+            with pytest.raises(ValueError, match="still compressed"):
+                get_root(path)

@@ -2,10 +2,11 @@ import os
 import asyncio
 from typing import AsyncIterator, List, Optional, Set
 
+from pydantic import ValidationError
 from il_supermarket_scarper import FileTypesFilters
 from il_supermarket_scarper.utils import DumpFolderNames
 from ..logger import Logger
-from ..loading_utils import DumpFile, file_name_to_components
+from ..loading_utils import DumpFile, file_name_to_components, is_dump_file_name
 from .base_data_loader import BaseDataLoader
 
 
@@ -24,15 +25,14 @@ class DataLoader(BaseDataLoader):
     ) -> AsyncIterator[DumpFile]:
         """load details about the files in the folder as async generator"""
 
-        resolved_stores = (
-            enabled_scraper if enabled_scraper else DumpFolderNames.active_folder_names()
-        )
+        resolved_stores = enabled_scraper
+        if not resolved_stores:
+            resolved_stores = DumpFolderNames.active_folder_names()
         resolved_types = files_types if files_types else FileTypesFilters.all_types()
-        files_types_set: Set[str] = (
-            set(resolved_types)
-            if isinstance(resolved_types, list)
-            else set(resolved_types)
-        )
+        if isinstance(resolved_types, str):
+            files_types_set: Set[str] = {resolved_types}
+        else:
+            files_types_set = set(resolved_types)
 
         files_found = await self._gather_matching_files(
             limit, resolved_stores, files_types_set
@@ -56,6 +56,9 @@ class DataLoader(BaseDataLoader):
 
         count = 0
         files_found: List[DumpFile] = []
+        wanted_folders = (
+            {name.lower() for name in stores_folders} if stores_folders else None
+        )
 
         files_in_dir = await asyncio.to_thread(os.listdir, self.folder)
 
@@ -73,7 +76,7 @@ class DataLoader(BaseDataLoader):
                 )
                 continue
 
-            if stores_folders and store_name not in stores_folders:
+            if wanted_folders and store_name.lower() not in wanted_folders:
                 Logger.debug(
                     f"Skipping folder {store_folder} because it not in "
                     f"requested chains to scan {enabled_scraper}"
@@ -81,20 +84,23 @@ class DataLoader(BaseDataLoader):
                 continue
 
             try:
-                xml_files = await asyncio.to_thread(os.listdir, store_folder)
+                listed_files = await asyncio.to_thread(os.listdir, store_folder)
             except OSError as err:
                 Logger.warning(f"Error listing files in {store_folder}: {err}")
                 continue
 
-            for xml in xml_files:
-                extension = xml.split(".")[-1]
-                if extension != "xml":
-                    Logger.warning(f"Skipping file {xml} because it is not xml file")
+            for xml in listed_files:
+                if not is_dump_file_name(xml):
+                    Logger.debug(f"Skipping file {xml} because it is not a dump file")
                     continue
 
-                dump_file: DumpFile = file_name_to_components(
-                    store_folder, xml, empty_store_id=self.empty_store_id
-                )
+                try:
+                    dump_file: DumpFile = file_name_to_components(
+                        store_folder, xml, empty_store_id=self.empty_store_id
+                    )
+                except (ValueError, TypeError, AttributeError, ValidationError) as err:
+                    Logger.warning(f"Skipping file {xml}: {err}")
+                    continue
 
                 if dump_file.detected_filetype.name in files_types_set:
                     files_found.append(dump_file)

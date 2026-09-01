@@ -5,17 +5,41 @@ import xml.etree.ElementTree as ET
 
 from lxml import etree
 
+GZIP_MAGIC_BYTES = b"\x1f\x8b"
+ZIP_MAGIC_BYTES = b"PK"
+
 
 def strip_namespace(tag):
     """Split the tag by the closing '}' of the namespace and return the tag part."""
     return tag.split("}", 1)[-1] if "}" in tag else tag
 
 
+def is_compressed_payload(data: bytes) -> bool:
+    """True when ``data`` starts with gzip or zip magic bytes."""
+    if not data or len(data) < 2:
+        return False
+    return data[:2] in (GZIP_MAGIC_BYTES, ZIP_MAGIC_BYTES)
+
+
+def raise_if_compressed(data: bytes, source: str = "") -> None:
+    """Fail when a dump is still compressed.
+
+    Extraction is the scraper's job. If the parser sees gzip/zip bytes, load
+    must fail so the file is recorded as ``failed`` rather than silently
+    inflated or skipped as "not picked up".
+    """
+    if not is_compressed_payload(data):
+        return
+    where = f" ({source})" if source else ""
+    raise ValueError(
+        f"Dump is still compressed{where}; "
+        "the scraper must extract XML before parsing"
+    )
+
+
 def count_tag_in_xml(xml_file_path, tag_to_count):
     """recursive count the number of tags from 'tag_to_count' in 'xml_file_path'"""
-    # Parse the XML file
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     # Recursive function to count "x" tags
     def count_tag_recursive(element):
@@ -40,9 +64,7 @@ def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
         ignore_tags: Optional list of tag names to ignore (will be normalized for comparison)
     """
 
-    # Parse the XML file
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     # Set to store unique keys that have values
     keys_with_values = set()
@@ -82,8 +104,7 @@ def normalize_tag(tag):
 
 def count_all_tags_in_xml(xml_file_path):
     """count all tag occurrences in the xml, returns dict {tag_name: count}"""
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     tag_counts = Counter()
 
@@ -106,8 +127,7 @@ def collect_validation_data_from_xml(xml_file_path, id_field, ignore_tags=None):
 
     This is more memory efficient than calling the functions separately.
     """
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     tag_count = 0
     keys_with_values = set()
@@ -201,16 +221,28 @@ def try_to_recover_xml(file_path):
 
 
 def get_root(file):
-    """get ET root"""
+    """get ET root
+
+    Only the first two bytes are read up front. If they are gzip (``\\x1f\\x8b``)
+    or zip (``PK``) magic, parsing fails immediately without loading the body.
+    Otherwise the file is parsed from disk.
+    """
+    with open(file, "rb") as handle:
+        magic = handle.read(2)
+        if is_compressed_payload(magic):
+            raise_if_compressed(magic, source=file)
+        handle.seek(0)
+        try:
+            return ET.parse(handle).getroot()
+        except ET.ParseError:
+            pass
+
     try:
+        try_to_recover_xml(file)
         tree = ET.parse(file)
     except ET.ParseError:
-        try:
-            try_to_recover_xml(file)
-            tree = ET.parse(file)
-        except ET.ParseError:
-            change_xml_encoding(file)
-            tree = ET.parse(file)
+        change_xml_encoding(file)
+        tree = ET.parse(file)
 
     return tree.getroot()
 
@@ -279,6 +311,7 @@ def get_root_from_content(
 ):
     """get ET root from file content (bytes or string) or file path"""
     if isinstance(file_content, bytes):
+        raise_if_compressed(file_content[:2], source=file_path or "")
         content_str = decode_bytes_to_string(file_content)
     else:
         content_str = file_content
