@@ -1,6 +1,4 @@
 import io
-import gzip
-import zipfile
 from collections import Counter
 from typing import Optional, Union
 import xml.etree.ElementTree as ET
@@ -16,22 +14,27 @@ def strip_namespace(tag):
     return tag.split("}", 1)[-1] if "}" in tag else tag
 
 
-def decompress_if_needed(data: bytes) -> bytes:
-    """Return XML bytes, decompressing gzip/zip payloads when present.
-
-    Several chains (Bina: KingStore, SuperSapir) publish gzip under
-    names without a ``.gz`` suffix, and Cerberus PromoFull dumps are often
-    stored as ``.gz``. The parser must accept both.
-    """
+def is_compressed_payload(data: bytes) -> bool:
+    """True when ``data`` starts with gzip or zip magic bytes."""
     if not data or len(data) < 2:
-        return data
-    magic = data[:2]
-    if magic == GZIP_MAGIC_BYTES:
-        return gzip.decompress(data)
-    if magic == ZIP_MAGIC_BYTES:
-        with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            return archive.read(archive.infolist()[0])
-    return data
+        return False
+    return data[:2] in (GZIP_MAGIC_BYTES, ZIP_MAGIC_BYTES)
+
+
+def raise_if_compressed(data: bytes, source: str = "") -> None:
+    """Fail when a dump is still compressed.
+
+    Extraction is the scraper's job. If the parser sees gzip/zip bytes, load
+    must fail so the file is recorded as ``failed`` rather than silently
+    inflated or skipped as "not picked up".
+    """
+    if not is_compressed_payload(data):
+        return
+    where = f" ({source})" if source else ""
+    raise ValueError(
+        f"Dump is still compressed{where}; "
+        "the scraper must extract XML before parsing"
+    )
 
 
 def count_tag_in_xml(xml_file_path, tag_to_count):
@@ -218,21 +221,28 @@ def try_to_recover_xml(file_path):
 
 
 def get_root(file):
-    """get ET root"""
+    """get ET root
+
+    Only the first two bytes are read up front. If they are gzip (``\\x1f\\x8b``)
+    or zip (``PK``) magic, parsing fails immediately without loading the body.
+    Otherwise the file is parsed from disk.
+    """
     with open(file, "rb") as handle:
-        raw = handle.read()
-    if raw[:2] in (GZIP_MAGIC_BYTES, ZIP_MAGIC_BYTES):
-        return get_root_from_content(decompress_if_needed(raw))
+        magic = handle.read(2)
+        if is_compressed_payload(magic):
+            raise_if_compressed(magic, source=file)
+        handle.seek(0)
+        try:
+            return ET.parse(handle).getroot()
+        except ET.ParseError:
+            pass
 
     try:
+        try_to_recover_xml(file)
         tree = ET.parse(file)
     except ET.ParseError:
-        try:
-            try_to_recover_xml(file)
-            tree = ET.parse(file)
-        except ET.ParseError:
-            change_xml_encoding(file)
-            tree = ET.parse(file)
+        change_xml_encoding(file)
+        tree = ET.parse(file)
 
     return tree.getroot()
 
@@ -301,7 +311,7 @@ def get_root_from_content(
 ):
     """get ET root from file content (bytes or string) or file path"""
     if isinstance(file_content, bytes):
-        file_content = decompress_if_needed(file_content)
+        raise_if_compressed(file_content[:2], source=file_path or "")
         content_str = decode_bytes_to_string(file_content)
     else:
         content_str = file_content

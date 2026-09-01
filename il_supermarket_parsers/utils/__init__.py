@@ -9,7 +9,7 @@ from .xml_utils import (
     get_root_and_search_from_content,
     get_root_from_content,
     iterparse_streaming,
-    decompress_if_needed,
+    raise_if_compressed,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     count_all_tags_in_xml,
