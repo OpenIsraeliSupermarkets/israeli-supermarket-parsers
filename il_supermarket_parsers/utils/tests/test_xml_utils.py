@@ -1,6 +1,12 @@
 """Tests for xml_utils module."""
+import gzip
+import os
+import tempfile
+
 from il_supermarket_parsers.utils.xml_utils import (
     decode_bytes_to_string,
+    decompress_if_needed,
+    get_root,
     get_root_from_content,
 )
 
@@ -84,3 +90,39 @@ class TestGetRootFromContent:
         root = get_root_from_content(content)
         assert root.tag == "Root"
         assert root.find("Item").text == "Value"
+
+    def test_gzip_xml_content(self):
+        """Gzip-compressed XML bytes should parse the same as raw XML."""
+        xml = b'<?xml version="1.0"?><Root><Item>Gz</Item></Root>'
+        root = get_root_from_content(gzip.compress(xml))
+        assert root.tag == "Root"
+        assert root.find("Item").text == "Gz"
+
+
+class TestDecompressIfNeeded:
+    """Test gzip/zip sniffing used before XML parse."""
+
+    def test_passthrough_plain_xml(self):
+        """Uncompressed XML is returned unchanged."""
+        xml = b'<?xml version="1.0"?><Root/>'
+        assert decompress_if_needed(xml) == xml
+
+    def test_gzip_roundtrip(self):
+        """Gzip payload is inflated to the original XML bytes."""
+        xml = b'<?xml version="1.0"?><Root/>'
+        assert decompress_if_needed(gzip.compress(xml)) == xml
+
+
+class TestGetRootGzipFile:
+    """get_root must open dumps that are still gzip on disk."""
+
+    def test_get_root_reads_gzip_file(self):
+        """A .gz dump is decompressed before ElementTree parse."""
+        xml = b'<?xml version="1.0"?><Root><Item>Disk</Item></Root>'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "PromoFull7290000000000-001-001-20260831-001227.gz")
+            with open(path, "wb") as handle:
+                handle.write(gzip.compress(xml))
+            root = get_root(path)
+        assert root.tag == "Root"
+        assert root.find("Item").text == "Disk"

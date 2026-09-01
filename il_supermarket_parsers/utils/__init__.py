@@ -9,6 +9,7 @@ from .xml_utils import (
     get_root_and_search_from_content,
     get_root_from_content,
     iterparse_streaming,
+    decompress_if_needed,
     count_tag_in_xml,
     collect_unique_keys_from_xml,
     count_all_tags_in_xml,
@@ -25,6 +26,7 @@ from .status import create_parser_status
 from .loading_utils import (
     create_dumpfile_from_queue_message,
     file_name_to_components,
+    is_dump_file_name,
     DumpFile,
 )
 from .csv_reader import read_data_rows

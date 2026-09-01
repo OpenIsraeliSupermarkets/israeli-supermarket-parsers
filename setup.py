@@ -32,7 +32,7 @@ setup(
     tests_require=dev_required,
     extras_require={"test": ["pytest", "pytest-xdist", "pytest-asyncio"]},
     # *strongly* suggested for sharing
-    version="1.0.8",
+    version="1.0.9",
     # The license can be anything you like
     license="CUSTOM",
     description="python package that process the data dumped by the israeli supermarket",

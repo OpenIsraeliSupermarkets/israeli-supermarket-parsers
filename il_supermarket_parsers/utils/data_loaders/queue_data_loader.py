@@ -1,4 +1,7 @@
 from typing import AsyncIterator, Optional
+
+from pydantic import ValidationError
+
 from .base_data_loader import BaseDataLoader
 from ..loading_utils import DumpFile, create_dumpfile_from_queue_message
 from ..logger import Logger
@@ -56,13 +59,22 @@ class QueueDataLoader(BaseDataLoader):
                     file_link = msg.get("file_link", "")
                     metadata = msg.get("metadata", {})
 
-                    dump_file: DumpFile = create_dumpfile_from_queue_message(
-                        file_name=file_name,
-                        file_content=file_content,
-                        file_link=file_link,
-                        metadata=metadata,
-                        empty_store_id=self.empty_store_id,
-                    )
+                    try:
+                        dump_file: DumpFile = create_dumpfile_from_queue_message(
+                            file_name=file_name,
+                            file_content=file_content,
+                            file_link=file_link,
+                            metadata=metadata,
+                            empty_store_id=self.empty_store_id,
+                        )
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        ValidationError,
+                    ) as err:
+                        Logger.warning("Skipping queue file %s: %s", file_name, err)
+                        continue
 
                     if (
                         files_types

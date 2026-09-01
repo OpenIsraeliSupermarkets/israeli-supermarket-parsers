@@ -9,6 +9,7 @@ from il_supermarket_scarper import FileTypesFilters
 from .logger import Logger
 
 EMPTY_FILE_TOEHOLD = 300
+_NON_DUMP_EXTENSIONS = frozenset({"json", "csv", "txt", "log", "md", "py", "pyc"})
 
 
 class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
@@ -60,6 +61,23 @@ class DumpFile(BaseModel):  # pylint: disable=too-many-instance-attributes
         return self.file_content is not None
 
 
+def is_dump_file_name(file_name: str) -> bool:
+    """True if this looks like a supermarket dump rather than a sidecar file.
+
+    Daily-publish and several chains persist dumps as ``.xml``, ``.gz``,
+    ``.xml.gz``, or with no extension at all. Sidecars (``.json`` status,
+    ``.csv`` outputs, etc.) must stay ignored.
+    """
+    base = os.path.basename(file_name)
+    if not base or base.startswith("."):
+        return False
+    if "." in base:
+        extension = base.rsplit(".", 1)[-1].lower()
+        if extension in _NON_DUMP_EXTENSIONS:
+            return False
+    return True
+
+
 def filename_string_to_datetime(date) -> datetime.datetime:
     """format the datetime"""
     if len(date) == 8:
@@ -109,13 +127,15 @@ def filename_to_file_type_and_chain_id(file_name):
     """get the file type"""
     lower_file_name = file_name.lower()
     match = re.search(r"\d", lower_file_name)
+    if match is None:
+        raise ValueError(f"No chain id in file name {file_name}")
     index = match.start()
-    return (
-        FileTypesFilters.get_type_from_file(
-            lower_file_name[:index].replace("null", "")
-        ),
-        lower_file_name[index:],
+    file_type = FileTypesFilters.get_type_from_file(
+        lower_file_name[:index].replace("null", "")
     )
+    if file_type is None:
+        raise ValueError(f"Unknown file type in file name {file_name}")
+    return file_type, lower_file_name[index:]
 
 
 def create_dumpfile_from_queue_message(

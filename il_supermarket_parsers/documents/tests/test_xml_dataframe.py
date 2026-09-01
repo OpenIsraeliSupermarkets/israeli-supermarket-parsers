@@ -1,5 +1,7 @@
 import asyncio
+import gzip
 import os
+import tempfile
 
 import pandas as pd
 
@@ -76,6 +78,21 @@ def test_bad_element():
         f"{TEST_DIR}/Stores7290027600007-000-202410020201",
         ignore_missing_columns=["CHAINID", "LASTUPDATEDATE"],
     )
+    assert df.shape[0] > 0
+
+
+def test_gzip_dump_converts():
+    """Dumps left gzip-compressed on disk still yield rows."""
+    source = os.path.join(TEST_DIR, "PriceFull7290172900007-083-202409270311.xml")
+    with open(source, "rb") as handle:
+        xml_bytes = handle.read()
+    with tempfile.TemporaryDirectory() as tmp:
+        gz_name = "PriceFull7290172900007-083-202409270311.xml.gz"
+        gz_path = os.path.join(tmp, gz_name)
+        with gzip.open(gz_path, "wb") as handle:
+            handle.write(xml_bytes)
+        converter = XmlDataFrameConverter(list_key="Details", id_field="ItemCode")
+        df = convert_to_dataframe(converter, tmp, gz_name)
     assert df.shape[0] > 0
 
 

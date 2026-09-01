@@ -1,9 +1,14 @@
 import io
+import gzip
+import zipfile
 from collections import Counter
 from typing import Optional, Union
 import xml.etree.ElementTree as ET
 
 from lxml import etree
+
+GZIP_MAGIC_BYTES = b"\x1f\x8b"
+ZIP_MAGIC_BYTES = b"PK"
 
 
 def strip_namespace(tag):
@@ -11,11 +16,27 @@ def strip_namespace(tag):
     return tag.split("}", 1)[-1] if "}" in tag else tag
 
 
+def decompress_if_needed(data: bytes) -> bytes:
+    """Return XML bytes, decompressing gzip/zip payloads when present.
+
+    Several chains (Bina: KingStore, SuperSapir) publish gzip under
+    names without a ``.gz`` suffix, and Cerberus PromoFull dumps are often
+    stored as ``.gz``. The parser must accept both.
+    """
+    if not data or len(data) < 2:
+        return data
+    magic = data[:2]
+    if magic == GZIP_MAGIC_BYTES:
+        return gzip.decompress(data)
+    if magic == ZIP_MAGIC_BYTES:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            return archive.read(archive.infolist()[0])
+    return data
+
+
 def count_tag_in_xml(xml_file_path, tag_to_count):
     """recursive count the number of tags from 'tag_to_count' in 'xml_file_path'"""
-    # Parse the XML file
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     # Recursive function to count "x" tags
     def count_tag_recursive(element):
@@ -40,9 +61,7 @@ def collect_unique_keys_from_xml(xml_file_path, ignore_tags=None):
         ignore_tags: Optional list of tag names to ignore (will be normalized for comparison)
     """
 
-    # Parse the XML file
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     # Set to store unique keys that have values
     keys_with_values = set()
@@ -82,8 +101,7 @@ def normalize_tag(tag):
 
 def count_all_tags_in_xml(xml_file_path):
     """count all tag occurrences in the xml, returns dict {tag_name: count}"""
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     tag_counts = Counter()
 
@@ -106,8 +124,7 @@ def collect_validation_data_from_xml(xml_file_path, id_field, ignore_tags=None):
 
     This is more memory efficient than calling the functions separately.
     """
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+    root = get_root(xml_file_path)
 
     tag_count = 0
     keys_with_values = set()
@@ -202,6 +219,11 @@ def try_to_recover_xml(file_path):
 
 def get_root(file):
     """get ET root"""
+    with open(file, "rb") as handle:
+        raw = handle.read()
+    if raw[:2] in (GZIP_MAGIC_BYTES, ZIP_MAGIC_BYTES):
+        return get_root_from_content(decompress_if_needed(raw))
+
     try:
         tree = ET.parse(file)
     except ET.ParseError:
@@ -279,6 +301,7 @@ def get_root_from_content(
 ):
     """get ET root from file content (bytes or string) or file path"""
     if isinstance(file_content, bytes):
+        file_content = decompress_if_needed(file_content)
         content_str = decode_bytes_to_string(file_content)
     else:
         content_str = file_content

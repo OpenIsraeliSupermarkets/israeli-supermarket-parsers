@@ -55,7 +55,7 @@ class TestDataLoaderBasic(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_skips_non_xml_files(self) -> None:
-        """Test that the DataLoader skips non-XML files."""
+        """Sidecar files are ignored; dump stems still load."""
         _touch(self.store_dir, "PriceFull7290000000000-001-20250101.xml")
         _touch(self.store_dir, "readme.txt")
         _touch(self.store_dir, "data.csv")
@@ -193,6 +193,59 @@ class TestDataLoaderFileTypeFilter(unittest.IsolatedAsyncioTestCase):
         loader = DataLoader(self.root)
         results = await _collect(loader)
         self.assertEqual(len(results), 3)
+
+
+class TestDataLoaderDumpExtensions(unittest.IsolatedAsyncioTestCase):
+    """DataLoader must pick up dumps stored as .gz or with no extension."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        self.root = self._tmp.name
+        self.store_dir = _make_store_dir(self.root)
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    async def test_loads_gz_dump(self) -> None:
+        """Cerberus PromoFull files are often left as .gz on disk."""
+        _touch(self.store_dir, "PromoFull7290876100000-001-001-20260831-001227.gz")
+        loader = DataLoader(self.root)
+        results = await _collect(loader)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].detected_filetype, FileTypesFilters.PROMO_FULL_FILE)
+
+    async def test_loads_extensionless_dump(self) -> None:
+        """Bina chains publish dumps whose names have no .xml suffix."""
+        _touch(self.store_dir, "Price7290058108879-000-001-20260831-000406")
+        loader = DataLoader(self.root)
+        results = await _collect(loader)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].detected_filetype, FileTypesFilters.PRICE_FILE)
+
+    async def test_loads_xml_gz_dump(self) -> None:
+        """Stacked .xml.gz suffixes still parse as a dump."""
+        _touch(self.store_dir, "Stores7290058134977-000-20260831-051232.xml.gz")
+        loader = DataLoader(self.root)
+        results = await _collect(loader)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].detected_filetype, FileTypesFilters.STORE_FILE)
+
+    async def test_bad_sidecar_does_not_abort_scan(self) -> None:
+        """One unparseable file must not drop the rest of the folder."""
+        _touch(self.store_dir, "not-a-dump.xml")
+        _touch(self.store_dir, "Promo7290700100008-000-201-20260831-105127.xml")
+        loader = DataLoader(self.root)
+        results = await _collect(loader)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].detected_filetype, FileTypesFilters.PROMO_FILE)
+
+    async def test_folder_match_is_case_insensitive(self) -> None:
+        """Kaggle zips use lowercase stems; scrapers write PascalCase folders."""
+        lower_dir = _make_store_dir(self.root, STORE_FOLDER_NAME.lower())
+        _touch(lower_dir, "PriceFull7290000000000-001-20250101.xml")
+        loader = DataLoader(self.root)
+        results = await _collect(loader, enabled_scraper=["BAREKET"])
+        self.assertEqual(len(results), 1)
 
 
 if __name__ == "__main__":
