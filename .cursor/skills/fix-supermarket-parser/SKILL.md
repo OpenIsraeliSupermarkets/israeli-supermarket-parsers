@@ -186,7 +186,7 @@ python -m pytest il_supermarket_parsers/parsers/tests/test_all.py::<ChainTestCas
 python -m pytest il_supermarket_parsers/tests/ -v
 ```
 
-A live-source test reporting SKIPPED means the source was unreachable — it did **not** validate your fix. The offline test from Step 6 is what proves the parser works.
+A live-source test reporting SKIPPED means the source was unreachable — it did **not** validate your fix. The offline test from Step 6 is what proves the parser works. To prove **every** live file of that chain parses (not a sample of 10), follow **is-parsing-complete** (`.cursor/skills/is-parsing-complete/SKILL.md`).
 
 Then run `ReadLints` on the edited `parsers/<chain>.py`.
 

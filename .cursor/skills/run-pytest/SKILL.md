@@ -1,6 +1,6 @@
 ---
 name: run-pytest
-description: Run the pytest suite for the Israeli supermarket parsers repo, locally or via Docker. Use when running tests, checking test output, or verifying a specific chain passes. Covers fast path, Docker path, and exhaustive (unlimited samples) mode.
+description: Run the pytest suite for the Israeli supermarket parsers repo, locally or via Docker. Use when running tests, checking test output, or verifying a specific chain passes. Covers fast path and Docker path. For exhaustive parse completeness, use is-parsing-complete instead of NUM_SAMPLES=None.
 ---
 
 # Run pytest
@@ -39,28 +39,16 @@ Inside the image, `CMD` uses `-n 2`; only the local fast path above uses `-n aut
 
 ## Exhaustive mode (new source or uncertain parser)
 
-By default each test downloads **10 sample files** (`NUM_SAMPLES=10`). To fetch every file from a source, temporarily patch `il_supermarket_parsers/parsers/tests/test_case.py` lines 106-109:
+Pytest PASS with `NUM_SAMPLES=10` is **not** proof every file parses. A SKIPPED live-source test validated nothing.
 
-**Before:**
-```python
-try:
-    self.limit = int(os.environ.get("NUM_SAMPLES", 10))
-except ValueError:
-    self.limit = 10
-```
-
-**After:**
-```python
-self.limit = None
-```
-
-Then run only the affected chain:
+Do **not** patch `test_case.py` to set `limit = None` (that times out CI if committed). Use
+[is-parsing-complete](../is-parsing-complete/SKILL.md)
+(`scripts/validate_parsing.py`): fresh dump dir, all files, **stops on the first parse or validation failure**.
 
 ```bash
-python -m pytest il_supermarket_parsers/parsers/tests/test_all.py -vv -k "<ChainName>" 2>&1 | tee temp/pytest-run-full.txt
+python scripts/validate_parsing.py --parsers <ChainName>
+python scripts/validate_parsing.py --parsers <ChainName> --limit 1
 ```
-
-**Revert before committing** — `limit = None` causes CI to download unbounded data and time out.
 
 ---
 

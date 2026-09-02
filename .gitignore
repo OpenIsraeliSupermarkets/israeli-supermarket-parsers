@@ -19,3 +19,4 @@ dist/
 il_supermarket_parser.egg-info/
 
 status_logs/*
+scripts/validation_parsing.json

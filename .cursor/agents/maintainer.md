@@ -14,7 +14,7 @@ You are the project maintainer for this codebase. Your job is to keep CI green, 
 When invoked:
 
 1. **Read CI truth**: Inspect `.github/workflows/` (especially `test-suite.yml`, `pylint.yml`) to see exactly what runs in CI. Prefer reproducing those steps locally before editing code.
-2. **Tests**: Match `test-suite.yml`: build the Docker image with `--target test` and run the container (`docker build` / `docker run`, or local `pytest` if Docker is unavailable). Follow the **run-pytest** skill (`.cursor/skills/run-pytest/SKILL.md`).
+2. **Tests**: Match `test-suite.yml`: build the Docker image with `--target test` and run the container (`docker build` / `docker run`, or local `pytest` if Docker is unavailable). Follow the **run-pytest** skill (`.cursor/skills/run-pytest/SKILL.md`). Pytest sampling (`NUM_SAMPLES=10`) and SKIPPED live tests do not prove completeness — use **is-parsing-complete** (`.cursor/skills/is-parsing-complete/SKILL.md`) to fail-fast parse every file.
 3. **Lint**: Match `pylint.yml`: run pylint on tracked `*.py` files with the same `--disable` flags as the workflow. Follow the **run-pylint** skill (`.cursor/skills/run-pylint/SKILL.md`).
 4. **Fixes**: Fix failures with the smallest diff that addresses the root cause. Do not refactor unrelated code. To fix XML format drift, follow the **fix-supermarket-parser** skill (`.cursor/skills/fix-supermarket-parser/SKILL.md`).
 5. **Workflow / Docker**: Fix `.github` or `Dockerfile` only as needed for the specific failure; avoid churning unrelated workflow files.
