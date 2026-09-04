@@ -7,6 +7,10 @@ import pandas as pd
 import pytest
 
 from il_supermarket_parsers.documents.xml_dataframe_parser import XmlDataFrameConverter
+from il_supermarket_parsers.documents.xml_dataframe_subroot_praser import (
+    SubRootedXmlDataFrameConverter,
+    SubRootedXmlOptions,
+)
 from il_supermarket_parsers.parsers.other import (
     KeshetFileConverter,
     RamiLevyFileConverter,
@@ -341,4 +345,101 @@ def test_validate_rejects_json_empty_object_string_for_leaf_text():
         df = df.copy()
         df.at[0, "itemname"] = "{}"
         with pytest.raises(ValueError, match="content mismatch for 'itemname'"):
+            converter.validate_succussful_extraction(df, source)
+
+
+def test_validate_rejects_wrong_header_value():
+    """Document headers must match on every row, not only exist as columns."""
+    converter = _victory_newline_converter()
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        records = df.to_dict(orient="records")
+        records[0]["chainid"] = "WRONG"
+        df = pd.DataFrame(records)
+        with pytest.raises(ValueError, match="content mismatch for 'chainid'"):
+            converter.validate_succussful_extraction(df, source)
+
+
+def test_validate_rejects_missing_column_for_empty_tag():
+    """Empty tags like ItemStatus still must be extracted as a column."""
+    converter = _victory_newline_converter()
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        df = df.drop(columns=["itemstatus"])
+        with pytest.raises(ValueError, match="column 'itemstatus' missing"):
+            converter.validate_succussful_extraction(df, source)
+
+
+def test_validate_rejects_ignore_column_on_item_data():
+    """ignore_column cannot drop a field that appears on a data row."""
+    converter = XmlDataFrameConverter(
+        list_key="Items",
+        id_field="ItemCode",
+        roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+        ignore_column=["ItemName"],
+    )
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        with pytest.raises(ValueError, match="ignored tag 'ItemName'"):
+            converter.validate_succussful_extraction(df, source)
+
+
+STORES_SUBCHAIN_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>123</ChainId>
+  <ChainName>TestChain</ChainName>
+  <LastUpdateDate>2024-01-01</LastUpdateDate>
+  <SubChains>
+    <SubChain>
+      <SubChainId>1</SubChainId>
+      <SubChainName>North</SubChainName>
+      <Stores>
+        <Store>
+          <StoreId>10</StoreId>
+          <StoreName>StoreA</StoreName>
+        </Store>
+      </Stores>
+    </SubChain>
+    <SubChain>
+      <SubChainId>2</SubChainId>
+      <SubChainName>South</SubChainName>
+      <Stores>
+        <Store>
+          <StoreId>20</StoreId>
+          <StoreName>StoreB</StoreName>
+        </Store>
+      </Stores>
+    </SubChain>
+  </SubChains>
+</Root>
+"""
+
+
+def test_validate_rejects_wrong_subchain_header():
+    """Sub-chain headers copied onto store rows must match the XML."""
+    converter = SubRootedXmlDataFrameConverter(
+        list_key="SubChains",
+        id_field="StoreId",
+        options=SubRootedXmlOptions(
+            roots=["ChainId", "ChainName", "LastUpdateDate"],
+            sub_roots=["SubChainId", "SubChainName"],
+            list_sub_key="Stores",
+        ),
+    )
+    file_name = "Stores123-000-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, STORES_SUBCHAIN_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        converter.validate_succussful_extraction(df, source)
+        records = df.to_dict(orient="records")
+        records[1]["subchainname"] = "WRONG"
+        df = pd.DataFrame(records)
+        with pytest.raises(ValueError, match="content mismatch for 'subchainname'"):
             converter.validate_succussful_extraction(df, source)

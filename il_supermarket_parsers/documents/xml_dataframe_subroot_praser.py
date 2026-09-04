@@ -60,11 +60,15 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                     )
 
     def _iter_row_elements(self, root):
-        """Yield store/row elements under each sub-chain, matching :meth:`_parse`."""
+        """Yield (row element, sub-chain headers) matching :meth:`_parse`."""
         if root is None or len(root) == 0:
             return
         ignore = {normalize_tag(x) for x in self.ignore_column}
         for sub_elem in root:
+            extra_headers = {}
+            for child in sub_elem:
+                if any(child.tag.lower() == name.lower() for name in self.sub_roots):
+                    extra_headers[child.tag.lower()] = child.text
             current_elem = sub_elem
             if self.last_mile:
                 for last in self.last_mile:
@@ -80,7 +84,7 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                 continue
             for elem in list_sub_elem:
                 if normalize_tag(elem.tag) not in ignore:
-                    yield elem
+                    yield elem, extra_headers
 
     async def _parse(
         self,
