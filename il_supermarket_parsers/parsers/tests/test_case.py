@@ -11,12 +11,9 @@ from il_supermarket_scarper import ScraperFactory
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters
 from il_supermarket_parsers.utils.loading_utils import DumpFile, is_dump_file_name
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
-from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
-    CSVOutputWriter,
-)
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.engines.base import BaseFileConverter
-from il_supermarket_parsers import read_data_rows
+from il_supermarket_parsers.utils.validation_utils import parse_file_via_csv
 from il_supermarket_parsers.utils.status import ParserStatusOutput
 from il_supermarket_parsers.utils.logger import Logger
 
@@ -52,41 +49,23 @@ async def _process_files(
         if not file.is_expected_to_be_readable:
             continue
 
-        with tempfile.TemporaryDirectory() as file_tmp_dir:
-            writer = CSVOutputWriter(
-                output_folder=file_tmp_dir,
-                csv_file_name=(
-                    f"{file.detected_filetype.name.lower()}_"
-                    f"{file.extracted_chain_id.lower()}"
-                ),
-                reduce_duplicates=test_fill_forward,
+        df, csv_created, _row_count = await parse_file_via_csv(
+            parser, file, reduce_duplicates=test_fill_forward
+        )
+
+        if file.is_expected_to_have_records:
+            assert csv_created, "CSV file was not created"
+            assert df is not None and df.shape[0] > 0, (
+                f"File {file.file_name} is empty"
             )
-            await writer.initialize()
 
-            async for row in parser.read(file):
-                await writer.write_row(row)
+            parser.run_validation(df, file)
 
-            await writer.close()
-
-            # Run validation against the created DataFrame
-            if file.is_expected_to_have_records:
-                assert writer.exists(), "CSV file was not created"
-
-                # read the data from the writer
-                df = read_data_rows(
-                    writer.get_path(), ffill=test_fill_forward, as_records=False
-                )
-                assert df.shape[0] > 0, f"File {file.file_name} is empty"
-
-                # run validation
-                parser.run_validation(df, file)
-
-                # sample the data
-                sampled_df = df.sample(n=min(10, df.shape[0]))
-                del df
-                dfs.append(sampled_df)
-            else:
-                assert not writer.exists(), "CSV file was not created"
+            sampled_df = df.sample(n=min(10, df.shape[0]))
+            del df
+            dfs.append(sampled_df)
+        else:
+            assert not csv_created, "CSV file was not created"
     return dfs
 
 
