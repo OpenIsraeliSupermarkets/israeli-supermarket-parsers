@@ -17,7 +17,11 @@ from il_supermarket_parsers.parsers.other import (
     WoltFileConverter,
 )
 from il_supermarket_parsers.parsers.salach_dabach import SalachDabachFileConverter
+from il_supermarket_parsers import read_data_rows
 from il_supermarket_parsers.utils.loading_utils import EMPTY_FILE_TOEHOLD
+from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
+    CSVOutputWriter,
+)
 
 TEST_DIR = "resources/xml"
 
@@ -420,6 +424,123 @@ STORES_SUBCHAIN_XML = """\
   </SubChains>
 </Root>
 """
+
+
+NULL_UNIT_PRICE_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>5144744100002</ChainId>
+  <SubChainId>001</SubChainId>
+  <StoreId>1</StoreId>
+  <BikoretNo>0</BikoretNo>
+  <Items>
+    <Item>
+      <ItemCode>1</ItemCode>
+      <ItemName>rice</ItemName>
+      <UnitOfMeasure>רשת</UnitOfMeasure>
+      <ItemPrice>9.7</ItemPrice>
+    </Item>
+    <Item>
+      <ItemCode>2</ItemCode>
+      <ItemName>beans</ItemName>
+      <UnitOfMeasure>null</UnitOfMeasure>
+      <ItemPrice>5.0</ItemPrice>
+    </Item>
+  </Items>
+</Root>
+"""
+
+
+def test_validate_csv_round_trip_literal_null_text():
+    """pandas.read_csv turns XML text 'null' into NaN; validation must still pass."""
+    converter = XmlDataFrameConverter(
+        list_key="Items",
+        id_field="ItemCode",
+        roots=["ChainId", "SubChainId", "StoreId", "BikoretNo"],
+    )
+    file_name = "Price5144744100002-001-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, NULL_UNIT_PRICE_XML)
+        rows = convert_to_dataframe(converter, tmp, file_name).to_dict(orient="records")
+
+        async def _round_trip():
+            writer = CSVOutputWriter(
+                output_folder=tmp, csv_file_name="out", reduce_duplicates=True
+            )
+            await writer.initialize()
+            for row in rows:
+                await writer.write_row(row)
+            await writer.close()
+            return read_data_rows(writer.get_path(), ffill=True, as_records=False)
+
+        df = asyncio.run(_round_trip())
+        converter.validate_succussful_extraction(df, source)
+        assert str(df.iloc[0]["unitofmeasure"]) == "רשת"
+        assert str(df.iloc[1]["unitofmeasure"]) == "null"
+
+
+STORES_EMPTY_SUBCHAIN_NAME_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>123</ChainId>
+  <ChainName>TestChain</ChainName>
+  <LastUpdateDate>2024-01-01</LastUpdateDate>
+  <SubChains>
+    <SubChain>
+      <SubChainId>1</SubChainId>
+      <SubChainName>North</SubChainName>
+      <Stores>
+        <Store>
+          <StoreId>10</StoreId>
+          <StoreName>StoreA</StoreName>
+        </Store>
+      </Stores>
+    </SubChain>
+    <SubChain>
+      <SubChainId>2</SubChainId>
+      <SubChainName></SubChainName>
+      <Stores>
+        <Store>
+          <StoreId>20</StoreId>
+          <StoreName>StoreB</StoreName>
+        </Store>
+      </Stores>
+    </SubChain>
+  </SubChains>
+</Root>
+"""
+
+
+def test_validate_csv_round_trip_empty_subchain_name():
+    """Empty sub-chain headers must not be ffilled from the previous sub-chain."""
+    converter = SubRootedXmlDataFrameConverter(
+        list_key="SubChains",
+        id_field="StoreId",
+        options=SubRootedXmlOptions(
+            roots=["ChainId", "ChainName", "LastUpdateDate"],
+            sub_roots=["SubChainId", "SubChainName"],
+            list_sub_key="Stores",
+        ),
+    )
+    file_name = "Stores123-000-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, STORES_EMPTY_SUBCHAIN_NAME_XML)
+        rows = convert_to_dataframe(converter, tmp, file_name).to_dict(orient="records")
+
+        async def _round_trip():
+            writer = CSVOutputWriter(
+                output_folder=tmp, csv_file_name="out", reduce_duplicates=True
+            )
+            await writer.initialize()
+            for row in rows:
+                await writer.write_row(row)
+            await writer.close()
+            return read_data_rows(writer.get_path(), ffill=True, as_records=False)
+
+        df = asyncio.run(_round_trip())
+        converter.validate_succussful_extraction(df, source)
+        assert str(df.iloc[0]["subchainname"]) == "North"
+        assert df.iloc[1]["subchainname"] in ("", "''")
 
 
 def test_validate_rejects_wrong_subchain_header():

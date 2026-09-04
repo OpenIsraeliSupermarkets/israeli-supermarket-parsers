@@ -88,11 +88,36 @@ def count_elements_in_nested_json(df):
     return dict(element_counts)
 
 
+# pandas.read_csv default NA tokens. Live XML sometimes uses these as
+# literal leaf text (e.g. Meshmat Yosef <UnitOfMeasure>null</UnitOfMeasure>);
+# after a CSV round-trip they become NaN. Treat them as missing, not as a
+# content mismatch. Do not include "{}" / "[]" — those stay mismatches.
+_PANDAS_NA_STRINGS = frozenset(
+    {
+        "",
+        "''",
+        "NO_BODY",
+        "null",
+        "NULL",
+        "None",
+        "none",
+        "NaN",
+        "nan",
+        "NAN",
+        "NA",
+        "na",
+        "N/A",
+        "n/a",
+        "<NA>",
+    }
+)
+
+
 def _is_missing_cell(value):
     """True for None, NaN, empty string, or parser/CSV empty sentinels."""
     if value is None:
         return True
-    if isinstance(value, str) and value in ("", "''", "NO_BODY"):
+    if isinstance(value, str) and value in _PANDAS_NA_STRINGS:
         return True
     if isinstance(value, float) and math.isnan(value):
         return True

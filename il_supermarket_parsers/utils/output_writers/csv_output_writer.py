@@ -135,9 +135,11 @@ class CSVOutputWriter(BaseOutputWriter):
         # Also normalise genuinely-empty source values to the sentinel so that
         # callers can distinguish "column absent" from "dedup-masked" (NaN).
         def _norm(v: Any) -> Any:
-            if v is None:
-                return None
-            if v == "":
+            if v is None or v == "":
+                return self.EMPTY_STRING
+            if isinstance(v, float) and np.isnan(v):
+                return self.EMPTY_STRING
+            if type(v).__name__ in ("NAType", "NaTType"):
                 return self.EMPTY_STRING
             if isinstance(v, (dict, list)):
                 return json.dumps(v, default=str, ensure_ascii=False)
