@@ -8,6 +8,38 @@ from il_supermarket_parsers.documents import (
 
 from .confix import CofixFileConverter
 
+_BINA_SHEMI_PROMO_ROOTS = ["ChainID", "SubChainID", "StoreID", "BikoretNo"]
+
+
+def _bina_shemi_promo_converter(list_key):
+    """Promo converter for Bina/Shemi dumps (Maayan, Shuk Ahir, Super Sapir, Netiv Hased)."""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="PromotionID",
+        roots=_BINA_SHEMI_PROMO_ROOTS,
+        date_columns=["PromotionUpdateTime"],
+        ignore_column=["XmlDocVersion", "DllVerNo"],
+    )
+
+
+def _bina_shemi_promo_parser():
+    """<Promotions> is the published wrapper; <Sales> stays as the BigID legacy fallback."""
+    return ConditionalXmlDataFrameConverter(
+        option_a=_bina_shemi_promo_converter("Promotions"),
+        option_b=_bina_shemi_promo_converter("Sales"),
+        check_key="Promotions",
+    )
+
+
+class _BinaShemiPromoFileConverter(BaseFileConverter):
+    """Bina/Shemi chains whose promo files use ChainID / PromotionID / PromotionUpdateTime."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            promo_parser=_bina_shemi_promo_parser(),
+            promofull_parser=_bina_shemi_promo_parser(),
+        )
+
 
 class YaynoBitanFileConverter(BaseFileConverter):
     """
@@ -66,7 +98,7 @@ class KingStoreFileConverter(BaseFileConverter):
     """
 
 
-class Maayan2000FileConverter(BaseFileConverter):
+class Maayan2000FileConverter(_BinaShemiPromoFileConverter):
     """
     File converter for Maayan 2000 supermarket chain.
     Extends: BaseFileConverter
@@ -80,7 +112,7 @@ class MegaFileConverter(BaseFileConverter):
     """
 
 
-class NetivHasedFileConverter(BaseFileConverter):
+class NetivHasedFileConverter(_BinaShemiPromoFileConverter):
     """
     File converter for Netiv Hased supermarket chain.
     Extends: BaseFileConverter
@@ -129,7 +161,7 @@ class ShefaBarcartAshemFileConverter(BaseFileConverter):
     """
 
 
-class ShukAhirFileConverter(BaseFileConverter):
+class ShukAhirFileConverter(_BinaShemiPromoFileConverter):
     """
     File converter for Shuk Ahir supermarket chain.
     Extends: BaseFileConverter
@@ -164,7 +196,7 @@ class SuperYudaFileConverter(BaseFileConverter):
         )
 
 
-class SuperSapirFileConverter(BaseFileConverter):
+class SuperSapirFileConverter(_BinaShemiPromoFileConverter):
     """
     File converter for Super Sapir supermarket chain.
     Extends: BaseFileConverter
