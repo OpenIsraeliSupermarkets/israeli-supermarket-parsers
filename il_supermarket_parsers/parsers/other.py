@@ -1,6 +1,7 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.documents import (
     ConditionalXmlDataFrameConverter,
+    FirstPresentXmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
     XmlDataFrameConverter,
@@ -223,19 +224,6 @@ def _yellow_promo_converter(list_key):
     )
 
 
-def _yellow_first_present(build_converter, list_keys):
-    """Use the first wrapper present in the file; last key is the legacy fallback."""
-    *candidates, fallback = list_keys
-    parser = build_converter(fallback)
-    for list_key in reversed(candidates):
-        parser = ConditionalXmlDataFrameConverter(
-            option_a=build_converter(list_key),
-            option_b=parser,
-            check_key=list_key,
-        )
-    return parser
-
-
 class YellowFileConverter(BaseFileConverter):
     """
     File converter for Yellow supermarket chain.
@@ -244,17 +232,33 @@ class YellowFileConverter(BaseFileConverter):
 
     def __init__(self) -> None:
         super().__init__(
-            price_parser=_yellow_first_present(
-                _yellow_price_converter, ["Items", "Products", "Details"]
+            price_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_price_converter("Items"),
+                    _yellow_price_converter("Products"),
+                    _yellow_price_converter("Details"),
+                ]
             ),
-            pricefull_parser=_yellow_first_present(
-                _yellow_price_converter, ["Items", "Products", "Details"]
+            pricefull_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_price_converter("Items"),
+                    _yellow_price_converter("Products"),
+                    _yellow_price_converter("Details"),
+                ]
             ),
-            promo_parser=_yellow_first_present(
-                _yellow_promo_converter, ["Promotions", "Sales", "Details"]
+            promo_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_promo_converter("Promotions"),
+                    _yellow_promo_converter("Sales"),
+                    _yellow_promo_converter("Details"),
+                ]
             ),
-            promofull_parser=_yellow_first_present(
-                _yellow_promo_converter, ["Promotions", "Sales", "Details"]
+            promofull_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_promo_converter("Promotions"),
+                    _yellow_promo_converter("Sales"),
+                    _yellow_promo_converter("Details"),
+                ]
             ),
         )
 
