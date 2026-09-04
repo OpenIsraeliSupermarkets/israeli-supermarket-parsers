@@ -174,7 +174,9 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     # missing content something like '<ManufacturerName />'
     if not content:
         content = constant_mapping.get(name.tag, no_content)
-    if "\n" in content:
+    # Nested objects are identified by child elements, not by newlines in text.
+    # Victory (and others) put line breaks inside leaf fields such as ItemName.
+    if len(name) > 0:
         result = {}
         for item in name.findall("*"):
             key = item.tag.lower()

@@ -2,10 +2,12 @@
 import gzip
 import os
 import tempfile
+import xml.etree.ElementTree as ET
 
 import pytest
 
 from il_supermarket_parsers.utils.xml_utils import (
+    build_value,
     decode_bytes_to_string,
     get_root,
     get_root_from_content,
@@ -136,3 +138,76 @@ class TestGetRootGzipFile:
                 handle.write(gzip.compress(xml))
             with pytest.raises(ValueError, match="still compressed"):
                 get_root(path)
+
+
+VICTORY_ITEM_XML = """
+<Item>
+      <PriceUpdateTime>2024-12-23T15:17:51.000</PriceUpdateTime>
+      <ItemCode>3600523651870</ItemCode>
+      <LastSaleDateTime>2026-06-21T07:55:54.000</LastSaleDateTime>
+      <ItemType>1</ItemType>
+      <ItemName>לניקוי יסודי  וחיזוק סיב השערה. 
+</ItemName>
+      <ManufactureName>IDC EU - Istanbul</ManufactureName>
+      <ManufactureCountry>TR</ManufactureCountry>
+      <ManufactureItemDescription>שמפו אלביב ארג?ינין 
+</ManufactureItemDescription>
+      <UnitQty>מיליליטר</UnitQty>
+      <Quantity>550</Quantity>
+      <UnitOfMeasure>מיליליטר 100</UnitOfMeasure>
+      <bIsWeighted>0</bIsWeighted>
+      <QtyInPackage>1</QtyInPackage>
+      <ItemPrice>17.9</ItemPrice>
+      <UnitOfMeasurePrice>3.25</UnitOfMeasurePrice>
+      <AllowDiscount>0</AllowDiscount>
+      <ItemStatus />
+    </Item>
+"""
+
+
+class TestBuildValue:
+    """build_value must treat child elements, not newlines in text, as nesting."""
+
+    def test_victory_item_newline_in_text_is_not_empty_dict(self):
+        """Victory leaf fields can contain a newline without any sub-children."""
+        item = ET.fromstring(VICTORY_ITEM_XML)
+
+        item_name = build_value(item.find("ItemName"), {})
+        assert item_name != {}
+        assert isinstance(item_name, str)
+        assert "לניקוי יסודי" in item_name
+        assert "\n" in item_name
+
+        description = build_value(item.find("ManufactureItemDescription"), {})
+        assert description != {}
+        assert isinstance(description, str)
+        assert "שמפו" in description
+        assert "\n" in description
+
+        item_status = build_value(item.find("ItemStatus"), {}, no_content="")
+        assert item_status == ""
+
+        assert build_value(item.find("ItemCode"), {}) == "3600523651870"
+
+    def test_nested_children_still_become_dict(self):
+        """An element with real children still collapses to a nested dict."""
+        item = ET.fromstring(VICTORY_ITEM_XML)
+        nested = build_value(item, {}, no_content="")
+        assert isinstance(nested, dict)
+        assert nested["itemcode"] == "3600523651870"
+        assert isinstance(nested["itemname"], str)
+        assert nested["itemname"] != {}
+        assert "לניקוי יסודי" in nested["itemname"]
+        assert nested["itemstatus"] == "NO_BODY"
+
+        promo = ET.fromstring(
+            "<PromotionItems>"
+            "<Item><ItemCode>123</ItemCode><ItemName>nested</ItemName></Item>"
+            "<Item><ItemCode>456</ItemCode><ItemName>other</ItemName></Item>"
+            "</PromotionItems>"
+        )
+        result = build_value(promo, {})
+        assert isinstance(result, dict)
+        assert isinstance(result["item"], list)
+        assert result["item"][0]["itemcode"] == "123"
+        assert result["item"][1]["itemcode"] == "456"
