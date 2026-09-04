@@ -15,10 +15,13 @@ from .xml_utils import (
     count_all_tags_in_xml,
     normalize_tag,
     collect_validation_data_from_xml,
+    xml_element_to_value,
 )
 from .dataframe_utils import (
     collect_unique_columns_from_nested_json,
     count_elements_in_nested_json,
+    extracted_value_matches,
+    preview_extracted_value,
 )
 from .data_loaders import DataLoader, get_data_loader
 from .output_writers import get_output_writer

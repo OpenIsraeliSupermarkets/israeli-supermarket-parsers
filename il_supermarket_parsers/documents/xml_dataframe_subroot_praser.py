@@ -59,6 +59,29 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                         f"columns {root} missing from {data.columns}"
                     )
 
+    def _iter_row_elements(self, root):
+        """Yield store/row elements under each sub-chain, matching :meth:`_parse`."""
+        if root is None or len(root) == 0:
+            return
+        ignore = {normalize_tag(x) for x in self.ignore_column}
+        for sub_elem in root:
+            current_elem = sub_elem
+            if self.last_mile:
+                for last in self.last_mile:
+                    current_elem = (
+                        current_elem.find(last) if current_elem is not None else None
+                    )
+                    if current_elem is None:
+                        break
+            if current_elem is None:
+                continue
+            list_sub_elem = current_elem.find(self.list_sub_key)
+            if list_sub_elem is None:
+                continue
+            for elem in list_sub_elem:
+                if normalize_tag(elem.tag) not in ignore:
+                    yield elem
+
     async def _parse(
         self,
         root,

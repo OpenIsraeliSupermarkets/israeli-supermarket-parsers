@@ -193,6 +193,33 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     return content
 
 
+def xml_element_to_value(element, empty=""):
+    """Independent ground-truth value for an XML element.
+
+    Nested iff the element has child tags. Leaf text (including newlines) stays
+    a string. Must not call :func:`build_value` — validation has to catch that
+    function turning a leaf into ``{}``.
+    """
+    if len(element) == 0:
+        text = element.text
+        if not text:
+            return empty
+        return text
+
+    result = {}
+    for child in element:
+        key = child.tag.lower()
+        value = xml_element_to_value(child, empty=empty)
+        if key not in result:
+            result[key] = value
+            continue
+        if isinstance(result[key], list):
+            result[key].append(value)
+        else:
+            result[key] = [result[key], value]
+    return result
+
+
 def change_xml_encoding(file_path):
     """change the encoding if failing with utf-8"""
     with open(file_path, "rb") as file:  # pylint: disable=unspecified-encoding

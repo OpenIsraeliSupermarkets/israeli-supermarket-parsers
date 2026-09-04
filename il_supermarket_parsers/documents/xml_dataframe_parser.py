@@ -6,6 +6,10 @@ from il_supermarket_parsers.utils import (
     count_elements_in_nested_json,
     normalize_tag,
     collect_validation_data_from_xml,
+    extracted_value_matches,
+    get_root_and_search,
+    preview_extracted_value,
+    xml_element_to_value,
 )
 from .base import BaseXMLParser
 
@@ -75,6 +79,49 @@ class XmlDataFrameConverter(BaseXMLParser):
                     f"XML has {xml_count}, DataFrame has {df_count}"
                 )
 
+    def _iter_row_elements(self, root):
+        """Yield row elements in the same order as :meth:`_parse`."""
+        if root is None:
+            return
+        ignore = {normalize_tag(x) for x in self.ignore_column}
+        for elem in root:
+            if normalize_tag(elem.tag) not in ignore:
+                yield elem
+
+    def _validate_content(self, data, source_file, ignore_list):
+        """Compare each extracted cell to the XML text (not just keys/counts)."""
+        root, _ = get_root_and_search(source_file, self.list_key, self.roots)
+        ignore = {normalize_tag(x) for x in ignore_list}
+        row_index = -1
+        for row_index, elem in enumerate(self._iter_row_elements(root)):
+            if row_index >= len(data):
+                raise ValueError(
+                    f"for file {source_file}, cannot compare content: "
+                    f"XML has more row elements than DataFrame rows ({len(data)})"
+                )
+            row = data.iloc[row_index]
+            for child in elem:
+                if normalize_tag(child.tag) in ignore:
+                    continue
+                key = child.tag.lower()
+                if key not in data.columns:
+                    continue
+                expected = xml_element_to_value(child, empty="")
+                actual = row[key]
+                if not extracted_value_matches(expected, actual):
+                    raise ValueError(
+                        f"for file {source_file}, content mismatch for '{key}' "
+                        f"at row {row_index}: XML {preview_extracted_value(expected)}"
+                        f" vs extracted {preview_extracted_value(actual)}"
+                    )
+        xml_row_count = row_index + 1 if row_index >= 0 else 0
+        if xml_row_count != len(data):
+            raise ValueError(
+                f"for file {source_file}, cannot compare content: "
+                f"XML has {xml_row_count} row elements, "
+                f"DataFrame has {len(data)} rows"
+            )
+
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None, cached_xml_data=None
     ):
@@ -133,6 +180,7 @@ class XmlDataFrameConverter(BaseXMLParser):
         # Use cached data if available
         xml_counts = cached_xml_data.get("xml_counts")
         self._validate_element_counts(data, source_file, xml_counts)
+        self._validate_content(data, source_file, ignore_list)
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

@@ -261,3 +261,84 @@ def test_nested_xml_dataframe_with_ignore_column():
         f"{TEST_DIR}/PromoFull7290785400000-002-202604250011",
         ignore_missing_columns=["XmlDocVersion", "DllVerNo"],
     )
+
+
+VICTORY_NEWLINE_PRICE_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainID>7290696200003</ChainID>
+  <SubChainID>001</SubChainID>
+  <StoreID>001</StoreID>
+  <BikoretNo>0</BikoretNo>
+  <Items>
+    <Item>
+      <PriceUpdateTime>2024-12-23T15:17:51.000</PriceUpdateTime>
+      <ItemCode>3600523651870</ItemCode>
+      <ItemType>1</ItemType>
+      <ItemName>לניקוי יסודי  וחיזוק סיב השערה. 
+</ItemName>
+      <ManufactureItemDescription>שמפו אלביב ארג?ינין 
+</ManufactureItemDescription>
+      <ItemPrice>17.9</ItemPrice>
+      <ItemStatus />
+    </Item>
+  </Items>
+</Root>
+"""
+
+
+def _victory_newline_converter():
+    return XmlDataFrameConverter(
+        list_key="Items",
+        id_field="ItemCode",
+        roots=["ChainID", "SubChainID", "StoreID", "BikoretNo"],
+    )
+
+
+def _write_temp_xml(folder, file_name, content):
+    path = os.path.join(folder, file_name)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(content)
+    return path
+
+
+def test_validate_compares_leaf_text_with_newlines():
+    """Leaf text with a newline must match the XML, not become a nested dict."""
+    converter = _victory_newline_converter()
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        converter.validate_succussful_extraction(df, source)
+
+        item_name = df.iloc[0]["itemname"]
+        assert not isinstance(item_name, dict)
+        assert item_name != {}
+        assert "לניקוי יסודי" in str(item_name)
+
+
+def test_validate_rejects_empty_dict_for_leaf_text():
+    """Structure checks pass when a leaf is {}, content comparison must not."""
+    converter = _victory_newline_converter()
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        records = df.to_dict(orient="records")
+        records[0]["itemname"] = {}
+        df = pd.DataFrame(records)
+        with pytest.raises(ValueError, match="content mismatch for 'itemname'"):
+            converter.validate_succussful_extraction(df, source)
+
+
+def test_validate_rejects_json_empty_object_string_for_leaf_text():
+    """CSV round-trip stores {} as the string '{}'; that is still a mismatch."""
+    converter = _victory_newline_converter()
+    file_name = "Price7290696200003-001-202401010000.xml"
+    with tempfile.TemporaryDirectory() as tmp:
+        source = _write_temp_xml(tmp, file_name, VICTORY_NEWLINE_PRICE_XML)
+        df = convert_to_dataframe(converter, tmp, file_name)
+        df = df.copy()
+        df.at[0, "itemname"] = "{}"
+        with pytest.raises(ValueError, match="content mismatch for 'itemname'"):
+            converter.validate_succussful_extraction(df, source)
