@@ -1,6 +1,7 @@
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.documents import (
     ConditionalXmlDataFrameConverter,
+    FirstPresentXmlDataFrameConverter,
     SubRootedXmlDataFrameConverter,
     SubRootedXmlOptions,
     XmlDataFrameConverter,
@@ -230,11 +231,68 @@ class QuikFileConverter(BaseFileConverter):
     """
 
 
+_YELLOW_ROW_ROOTS = ["ChainId", "SubChainId", "StoreId", "BikoretNo"]
+_YELLOW_IGNORE = ["XmlDocVersion", "DllVerNo"]
+
+
+def _yellow_price_converter(list_key):
+    """price/pricefull converter for a given row wrapper"""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="ItemCode",
+        roots=_YELLOW_ROW_ROOTS,
+        ignore_column=_YELLOW_IGNORE,
+    )
+
+
+def _yellow_promo_converter(list_key):
+    """promo/promofull converter for a given row wrapper"""
+    return XmlDataFrameConverter(
+        list_key=list_key,
+        id_field="PromotionId",
+        roots=_YELLOW_ROW_ROOTS,
+        date_columns=["PromotionUpdateDate"],
+        ignore_column=_YELLOW_IGNORE,
+    )
+
+
 class YellowFileConverter(BaseFileConverter):
     """
     File converter for Yellow supermarket chain.
     Extends: BaseFileConverter
     """
+
+    def __init__(self) -> None:
+        super().__init__(
+            price_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_price_converter("Items"),
+                    _yellow_price_converter("Products"),
+                    _yellow_price_converter("Details"),
+                ]
+            ),
+            pricefull_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_price_converter("Items"),
+                    _yellow_price_converter("Products"),
+                    _yellow_price_converter("Details"),
+                ]
+            ),
+            promo_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_promo_converter("Promotions"),
+                    _yellow_promo_converter("Sales"),
+                    _yellow_promo_converter("Details"),
+                ]
+            ),
+            promofull_parser=FirstPresentXmlDataFrameConverter(
+                [
+                    _yellow_promo_converter("Promotions"),
+                    _yellow_promo_converter("Sales"),
+                    _yellow_promo_converter("Details"),
+                ]
+            ),
+        )
 
 
 class YohananofFileConverter(BaseFileConverter):

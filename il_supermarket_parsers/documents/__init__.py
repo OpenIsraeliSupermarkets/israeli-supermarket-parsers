@@ -5,3 +5,4 @@ from .xml_dataframe_subroot_praser import (
     SubRootedXmlOptions,
 )
 from .conditional_xml_dataframe_parser import ConditionalXmlDataFrameConverter
+from .first_present_xml_dataframe_parser import FirstPresentXmlDataFrameConverter
