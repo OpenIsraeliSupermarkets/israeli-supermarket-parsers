@@ -1,4 +1,5 @@
 import json
+import math
 from collections import Counter
 
 
@@ -85,3 +86,106 @@ def count_elements_in_nested_json(df):
                 count_recursive(cell, in_nested_dict=True)
 
     return dict(element_counts)
+
+
+# pandas.read_csv default NA tokens. Live XML sometimes uses these as
+# literal leaf text (e.g. Meshmat Yosef <UnitOfMeasure>null</UnitOfMeasure>);
+# after a CSV round-trip they become NaN. Treat them as missing, not as a
+# content mismatch. Do not include "{}" / "[]" — those stay mismatches.
+_PANDAS_NA_STRINGS = frozenset(
+    {
+        "",
+        "''",
+        "NO_BODY",
+        "null",
+        "NULL",
+        "None",
+        "none",
+        "NaN",
+        "nan",
+        "NAN",
+        "NA",
+        "na",
+        "N/A",
+        "n/a",
+        "<NA>",
+    }
+)
+
+
+def _is_missing_cell(value):
+    """True for None, NaN, empty string, or parser/CSV empty sentinels."""
+    if value is None:
+        return True
+    if isinstance(value, str) and value in _PANDAS_NA_STRINGS:
+        return True
+    if isinstance(value, float) and math.isnan(value):
+        return True
+    return type(value).__name__ in ("NAType", "NaTType")
+
+
+def _coerce_container(actual, expected_type):
+    """Return actual as dict/list, parsing JSON strings from the CSV round-trip."""
+    if isinstance(actual, expected_type):
+        return actual
+    if isinstance(actual, str):
+        stripped = actual.strip()
+        if stripped.startswith("{") or stripped.startswith("["):
+            try:
+                parsed = json.loads(actual)
+            except (ValueError, TypeError):
+                return None
+            if isinstance(parsed, expected_type):
+                return parsed
+    return None
+
+
+def _leaves_equal(expected, actual):
+    """Compare a leaf XML string to a DataFrame cell."""
+    if isinstance(actual, (dict, list)):
+        return False
+    if isinstance(actual, str) and actual.strip() in ("{}", "[]"):
+        return False
+    expected_text = "" if _is_missing_cell(expected) else str(expected).strip()
+    actual_text = "" if _is_missing_cell(actual) else str(actual).strip()
+    if expected_text == actual_text:
+        return True
+    try:
+        return float(expected_text) == float(actual_text)
+    except (TypeError, ValueError):
+        return False
+
+
+def extracted_value_matches(expected, actual):
+    """True when an extracted cell equals the independent XML ground-truth value.
+
+    Nested values may be dict/list or a JSON string (CSV writer). A leaf must
+    stay scalar text — an empty dict or ``"{}"`` is a mismatch.
+    """
+    if isinstance(expected, dict):
+        actual_parsed = _coerce_container(actual, dict)
+        if not isinstance(actual_parsed, dict):
+            return False
+        if set(expected) != set(actual_parsed):
+            return False
+        return all(
+            extracted_value_matches(expected[key], actual_parsed[key])
+            for key in expected
+        )
+    if isinstance(expected, list):
+        actual_parsed = _coerce_container(actual, list)
+        if not isinstance(actual_parsed, list) or len(expected) != len(actual_parsed):
+            return False
+        return all(
+            extracted_value_matches(left, right)
+            for left, right in zip(expected, actual_parsed)
+        )
+    return _leaves_equal(expected, actual)
+
+
+def preview_extracted_value(value, limit=120):
+    """Short repr for content-mismatch errors."""
+    text = repr(value)
+    if len(text) > limit:
+        return text[:limit] + "..."
+    return text

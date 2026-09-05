@@ -174,7 +174,9 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
     # missing content something like '<ManufacturerName />'
     if not content:
         content = constant_mapping.get(name.tag, no_content)
-    if "\n" in content:
+    # Nested objects are identified by child elements, not by newlines in text.
+    # Victory (and others) put line breaks inside leaf fields such as ItemName.
+    if len(name) > 0:
         result = {}
         for item in name.findall("*"):
             key = item.tag.lower()
@@ -189,6 +191,33 @@ def build_value(name, constant_mapping, no_content="NO_BODY"):
                 result[key] = value
         return result
     return content
+
+
+def xml_element_to_value(element, empty=""):
+    """Independent ground-truth value for an XML element.
+
+    Nested iff the element has child tags. Leaf text (including newlines) stays
+    a string. Must not call :func:`build_value` — validation has to catch that
+    function turning a leaf into ``{}``.
+    """
+    if len(element) == 0:
+        text = element.text
+        if not text:
+            return empty
+        return text
+
+    result = {}
+    for child in element:
+        key = child.tag.lower()
+        value = xml_element_to_value(child, empty=empty)
+        if key not in result:
+            result[key] = value
+            continue
+        if isinstance(result[key], list):
+            result[key].append(value)
+        else:
+            result[key] = [result[key], value]
+    return result
 
 
 def change_xml_encoding(file_path):

@@ -6,6 +6,10 @@ from il_supermarket_parsers.utils import (
     count_elements_in_nested_json,
     normalize_tag,
     collect_validation_data_from_xml,
+    extracted_value_matches,
+    get_root_and_search,
+    preview_extracted_value,
+    xml_element_to_value,
 )
 from .base import BaseXMLParser
 
@@ -75,6 +79,82 @@ class XmlDataFrameConverter(BaseXMLParser):
                     f"XML has {xml_count}, DataFrame has {df_count}"
                 )
 
+    def _iter_row_elements(self, root):
+        """Yield (row element, extra headers) in the same order as :meth:`_parse`."""
+        if root is None:
+            return
+        ignore = {normalize_tag(x) for x in self.ignore_column}
+        for elem in root:
+            if normalize_tag(elem.tag) not in ignore:
+                yield elem, {}
+
+    def _assert_extracted_matches(self, source_file, key, expected, actual, row_index):
+        """Fail when an extracted cell does not match the XML value."""
+        if expected is None:
+            expected = ""
+        if not extracted_value_matches(expected, actual):
+            raise ValueError(
+                f"for file {source_file}, content mismatch for '{key}' "
+                f"at row {row_index}: XML {preview_extracted_value(expected)}"
+                f" vs extracted {preview_extracted_value(actual)}"
+            )
+
+    def _assert_mapping_on_row(self, row, mapping, source_file, row_index):
+        """Every header in mapping must exist on the row and match XML text."""
+        for key, expected in mapping.items():
+            if key not in row.index:
+                raise ValueError(
+                    f"for file {source_file}, column '{key}' missing from extracted data"
+                )
+            self._assert_extracted_matches(
+                source_file, key, expected, row[key], row_index
+            )
+
+    def _validate_row_fields(self, elem, row, ignore, source_file, row_index):
+        """Compare one XML row to the DataFrame; ignored tags on a row are data loss."""
+        for descendant in elem.iter():
+            if descendant is elem:
+                continue
+            if normalize_tag(descendant.tag) in ignore:
+                raise ValueError(
+                    f"for file {source_file}, ignored tag '{descendant.tag}' "
+                    f"appears on a data row {row_index}; "
+                    "ignore_column cannot drop item data"
+                )
+        for child in elem:
+            key = child.tag.lower()
+            if key not in row.index:
+                raise ValueError(
+                    f"for file {source_file}, column '{key}' missing from extracted data"
+                )
+            expected = xml_element_to_value(child, empty="")
+            self._assert_extracted_matches(
+                source_file, key, expected, row[key], row_index
+            )
+
+    def _validate_content(self, data, source_file, ignore_list):
+        """Compare each extracted cell to the XML text (not just keys/counts)."""
+        root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
+        ignore = {normalize_tag(x) for x in ignore_list}
+        row_index = -1
+        for row_index, (elem, extra_headers) in enumerate(self._iter_row_elements(root)):
+            if row_index >= len(data):
+                raise ValueError(
+                    f"for file {source_file}, cannot compare content: "
+                    f"XML has more row elements than DataFrame rows ({len(data)})"
+                )
+            row = data.iloc[row_index]
+            self._assert_mapping_on_row(row, root_store, source_file, row_index)
+            self._assert_mapping_on_row(row, extra_headers, source_file, row_index)
+            self._validate_row_fields(elem, row, ignore, source_file, row_index)
+        xml_row_count = row_index + 1 if row_index >= 0 else 0
+        if xml_row_count != len(data):
+            raise ValueError(
+                f"for file {source_file}, cannot compare content: "
+                f"XML has {xml_row_count} row elements, "
+                f"DataFrame has {len(data)} rows"
+            )
+
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None, cached_xml_data=None
     ):
@@ -133,6 +213,7 @@ class XmlDataFrameConverter(BaseXMLParser):
         # Use cached data if available
         xml_counts = cached_xml_data.get("xml_counts")
         self._validate_element_counts(data, source_file, xml_counts)
+        self._validate_content(data, source_file, ignore_list)
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

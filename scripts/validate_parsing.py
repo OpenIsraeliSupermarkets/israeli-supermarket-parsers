@@ -27,12 +27,12 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-import pandas as pd
 from il_supermarket_scarper import FileTypesFilters, ScarpingTask
 
 from il_supermarket_parsers.engines.base import BaseFileConverter
 from il_supermarket_parsers.parser_factory import ParserFactory
 from il_supermarket_parsers.utils import DataLoader, DumpFile, Logger
+from il_supermarket_parsers.utils.validation_utils import parse_file_via_csv
 
 # Smallest files first so a stores/price failure does not wait on PRICE_FULL.
 DEFAULT_TYPE_ORDER = (
@@ -155,17 +155,15 @@ async def parse_file(
         result["skipped_empty"] = True
         return result
     try:
-        rows: List[dict] = []
-        async for row in parser.read(dump_file):
-            rows.append(row)
-        result["row_count"] = len(rows)
+        df, csv_created, row_count = await parse_file_via_csv(parser, dump_file)
+        result["row_count"] = row_count
         if dump_file.is_expected_to_have_records:
-            if not rows:
+            if not csv_created or df is None or df.shape[0] == 0:
                 result["error"] = "no rows parsed"
                 return result
-            parser.run_validation(pd.DataFrame(rows), dump_file)
-        elif rows:
-            result["error"] = f"expected empty data, got {len(rows)} rows"
+            parser.run_validation(df, dump_file)
+        elif csv_created or row_count > 0:
+            result["error"] = f"expected empty data, got {row_count} rows"
             return result
         result["parsed"] = True
     except (

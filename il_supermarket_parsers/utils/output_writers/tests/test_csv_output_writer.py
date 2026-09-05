@@ -320,6 +320,30 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
             rows[2], {"chain_id": "3", "city": CSVOutputWriter.EMPTY_STRING}
         )
 
+    async def test_literal_null_text_is_not_ffilled_from_previous_row(self) -> None:
+        """XML text 'null' must survive CSV+ffill; pandas default NA would NaN it."""
+        writer = self._new_writer(reduce_duplicates=True)
+        await writer.write_row({"item_code": "1", "unit": "רשת"})
+        await writer.write_row({"item_code": "2", "unit": "null"})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        rows = read_data_rows(self._csv_path(), ffill=True)
+        self.assertEqual(rows[0]["unit"], "רשת")
+        self.assertEqual(rows[1]["unit"], "null")
+
+    async def test_none_value_is_not_ffilled_from_previous_row(self) -> None:
+        """Missing XML text (None) must use the empty sentinel, not RLE/ffill."""
+        writer = self._new_writer(reduce_duplicates=True)
+        await writer.write_row({"item_code": "1", "remarks": "keep me"})
+        await writer.write_row({"item_code": "2", "remarks": None})
+        await writer.write_row({"item_code": "3", "remarks": float("nan")})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        rows = read_data_rows(self._csv_path(), ffill=True)
+        self.assertEqual(rows[0]["remarks"], "keep me")
+        self.assertEqual(rows[1]["remarks"], CSVOutputWriter.EMPTY_STRING)
+        self.assertEqual(rows[2]["remarks"], CSVOutputWriter.EMPTY_STRING)
+
     def _temp_artifacts(self) -> list[str]:
         """Return leftover rewrite temp filenames in the output folder."""
         names = []
