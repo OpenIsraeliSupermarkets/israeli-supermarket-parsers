@@ -15,8 +15,13 @@ import pandas as pd
 
 from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
+    _allow_large_csv_fields,
 )
 from il_supermarket_parsers.utils.csv_reader import read_data_rows
+
+# csv's own default, hardcoded so the tests stay deterministic no matter what
+# raised the process-wide limit before them.
+_CSV_DEFAULT_FIELD_LIMIT = 131072
 
 
 class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
@@ -162,6 +167,44 @@ class TestCSVOutputWriter(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(pd.isna(rows[1]["a"]))
         self.assertEqual(rows[1]["b"], CSVOutputWriter.EMPTY_STRING)
+
+    async def test_schema_evolution_with_cell_above_csv_field_limit(self) -> None:
+        """A cell bigger than csv's default field limit must survive the rewrite.
+
+        Promo feeds serialise nested items/groups into one JSON cell that for a
+        large promotion exceeds 128 KiB; re-reading such a file to append a new
+        column used to abort the whole parsing job.
+        """
+        previous_limit = csv.field_size_limit(_CSV_DEFAULT_FIELD_LIMIT)
+        self.addCleanup(csv.field_size_limit, previous_limit)
+        oversized = "x" * (_CSV_DEFAULT_FIELD_LIMIT + 1)
+
+        writer = self._new_writer()
+        await writer.write_row({"a": 1, "big": oversized})
+        await writer.write_file_complete(None)  # type: ignore[arg-type]
+
+        # A later file in the same job introduces a column, forcing a rewrite.
+        second = self._new_writer()
+        await second.initialize()
+        await second.write_row({"a": 2, "big": "small", "c": 3})
+        await second.write_file_complete(None)  # type: ignore[arg-type]
+
+        rows = read_data_rows(self._csv_path())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["big"], oversized)
+        self.assertEqual(rows[0]["c"], CSVOutputWriter.EMPTY_STRING)
+        self.assertEqual(rows[1], {"a": "2", "big": "small", "c": "3"})
+
+    def test_allow_large_csv_fields_never_lowers_the_limit(self) -> None:
+        previous_limit = csv.field_size_limit()
+        self.addCleanup(csv.field_size_limit, previous_limit)
+
+        _allow_large_csv_fields()
+        raised = csv.field_size_limit()
+        self.assertGreater(raised, _CSV_DEFAULT_FIELD_LIMIT)
+
+        _allow_large_csv_fields()
+        self.assertEqual(csv.field_size_limit(), raised)
 
     async def test_reduce_duplicates_nullifies_repeated_value(self) -> None:
         """Test that repeated values are nullified when reduce_duplicates is True."""
