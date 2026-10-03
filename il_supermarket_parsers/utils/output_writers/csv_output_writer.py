@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import csv
+import sys
 import tempfile
 from typing import Any, List
 
@@ -11,6 +12,27 @@ from .base_output_writer import BaseOutputWriter
 from ..logger import Logger
 from ..loading_utils import DumpFile
 from ..types import FileCompleteMessage
+
+
+def _allow_large_csv_fields() -> None:
+    """Let :mod:`csv` read cells larger than its 128 KiB default.
+
+    Promo rows carry their nested items/groups as a single JSON cell, which for
+    a large promotion exceeds the default limit and makes ``csv.reader`` raise.
+    ``sys.maxsize`` overflows the C long on some platforms, so step down until a
+    value is accepted. The limit is only ever raised, never lowered, so readers
+    running concurrently in other threads keep working.
+    """
+    limit = sys.maxsize
+    while limit > 0:
+        try:
+            previous = csv.field_size_limit(limit)
+        except OverflowError:
+            limit //= 2
+            continue
+        if previous > limit:
+            csv.field_size_limit(previous)
+        return
 
 
 class CSVOutputWriter(BaseOutputWriter):
@@ -212,6 +234,7 @@ class CSVOutputWriter(BaseOutputWriter):
         original via :func:`os.replace`. Temp is always removed on failure so
         interrupted rewrites cannot leave durable ``*_temp.csv`` artifacts.
         """
+        _allow_large_csv_fields()
         output_dir = os.path.dirname(self.output_path) or "."
         fd, temp_path = tempfile.mkstemp(
             prefix=f".{self.csv_file_name}.",
