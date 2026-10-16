@@ -86,7 +86,7 @@ jobs:
       && needs.build.outputs.pytest_failed == 'true'
       && github.event_name != 'pull_request'
       && github.event_name != 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       issues: write
       contents: read
@@ -109,7 +109,7 @@ jobs:
   weekend-weekly-release:
     needs: build
     if: success() && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: write
       contents: read
