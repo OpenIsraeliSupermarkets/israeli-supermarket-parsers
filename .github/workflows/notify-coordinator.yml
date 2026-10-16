@@ -19,7 +19,7 @@ jobs:
     if: >
       github.event_name == 'release' ||
       contains(github.event.issue.labels.*.name, 'sync')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Mint GitHub App installation token
         id: app-token
