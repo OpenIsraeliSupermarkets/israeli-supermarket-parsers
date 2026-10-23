@@ -8,15 +8,21 @@ from ..logger import Logger
 
 
 class QueueDataLoader(BaseDataLoader):
-    """Data loader for consuming files from scraper queues"""
+    """Data loader for consuming files from scraper or routed queues.
+
+    When used with routed queues (from QueueRouter), each queue contains only
+    files of the correct type, so no put-back logic is needed.
+    """
 
     def __init__(self, queue_handlers: dict, empty_store_id: str = "0000"):
         """
         Initialize QueueDataLoader
 
         Args:
-            queue_handlers: Dict mapping scraper names to queue handler objects
-                          Each handler should have get_all_messages() async generator
+            queue_handlers: Dict mapping scraper names to queue handler objects.
+                          Each handler should have get_all_messages() async generator.
+                          May be original scraper handlers or routed handlers from
+                          QueueRouter.
             empty_store_id: Default store ID for files without store number
         """
         self.queue_handlers = queue_handlers
@@ -45,14 +51,12 @@ class QueueDataLoader(BaseDataLoader):
         """
         count = 0
         for scraper_name, queue_handler in self.queue_handlers.items():
-            # Only consume from queues matching the requested store names
             if enabled_scraper and scraper_name not in enabled_scraper:
                 continue
 
             Logger.debug(f"Consuming files from {scraper_name} queue")
 
             try:
-                already_rejected = set()
                 async for msg in queue_handler.queue_handler.get_all_messages():
                     file_name = msg["file_name"]
                     file_content = msg["file_content"]
@@ -80,23 +84,12 @@ class QueueDataLoader(BaseDataLoader):
                         files_types
                         and dump_file.detected_filetype.name not in files_types
                     ):
-                        if file_name in already_rejected:
-                            Logger.warning(
-                                "File %s was already put back once and returned to this "
-                                "consumer — no other consumer is handling type %s. Skipping.",
-                                file_name,
-                                dump_file.detected_filetype,
-                            )
-                            continue
                         Logger.debug(
-                            "Skipping file %s (type %s not in %s), "
-                            "putting back for another consumer",
+                            "Skipping file %s (type %s not in %s)",
                             file_name,
                             dump_file.detected_filetype,
                             files_types,
                         )
-                        already_rejected.add(file_name)
-                        await queue_handler.queue_handler.send(msg)
                         continue
 
                     Logger.debug(
@@ -109,11 +102,9 @@ class QueueDataLoader(BaseDataLoader):
                         Logger.info(f"Reached limit of {limit} files, stopping")
                         return
 
-                # The sentinel (None) was consumed by this process. Re-publish it so
-                # other concurrent consumers of the same queue can also terminate.
                 await queue_handler.queue_handler.close()
                 Logger.debug(
-                    f"Re-published end-of-stream sentinel for {scraper_name} queue"
+                    f"Closed queue handler for {scraper_name} queue"
                 )
 
             except Exception as e:
