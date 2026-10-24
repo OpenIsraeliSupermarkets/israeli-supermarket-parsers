@@ -1,6 +1,5 @@
 import asyncio
-import itertools
-from typing import List
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -14,8 +13,13 @@ from .utils import (
 from .utils.multi_processing import MultiProcessor, ProcessJob
 from .utils.types import (
     OutputConfiguration,
+    QueueSourceConfiguration,
     SourceConfiguration,
     StatusConfiguration,
+)
+from .utils.data_loaders.queue_router import (
+    QueueRouter,
+    RoutedQueueWrapper,
 )
 
 
@@ -91,13 +95,89 @@ class ParallelParser(MultiProcessor):
     ):
         super().__init__(multiprocessing=multiprocessing)
         self.params = params
+        self._routers: Dict[str, QueueRouter] = {}
+        self._routed_handlers: Optional[
+            Dict[str, Dict[str, RoutedQueueWrapper]]
+        ] = None
 
     def task_to_execute(self):
         """the task to execute"""
         return RawProcessing
 
+    def _setup_queue_routing(self) -> None:
+        """Set up queue routing when source is queue-based.
+
+        Creates a QueueRouter for each scraper, which reads from the scraper
+        queue and routes messages to per-file-type internal queues.
+        """
+        source_config = self.params.source_configuration
+        if not isinstance(source_config, QueueSourceConfiguration):
+            return
+
+        if self._routed_handlers is not None:
+            return
+
+        self._routed_handlers = {}
+        for scraper_name, handler in source_config.queue_handlers.items():
+            router = QueueRouter(
+                scraper_name, handler, self.params.enabled_file_types
+            )
+            self._routers[scraper_name] = router
+
+            self._routed_handlers[scraper_name] = {}
+            for file_type in self.params.enabled_file_types:
+                self._routed_handlers[scraper_name][file_type] = (
+                    router.get_routed_handler(file_type)
+                )
+
+            router.start()
+
+        Logger.info(
+            "Set up queue routing for %d scrapers with %d file types each",
+            len(self._routers),
+            len(self.params.enabled_file_types),
+        )
+
+    def _get_source_config_for_job(
+        self, parser_name: str, file_type: str
+    ) -> SourceConfiguration:
+        """Get the source configuration for a specific (parser, file_type) job.
+
+        For folder sources, returns the original configuration.
+        For queue sources, returns a configuration with only the routed queue
+        for this specific (parser, file_type) combination.
+        """
+        source_config = self.params.source_configuration
+        if not isinstance(source_config, QueueSourceConfiguration):
+            return source_config
+
+        if self._routed_handlers is None:
+            self._setup_queue_routing()
+
+        if parser_name not in self._routed_handlers:
+            Logger.warning(
+                "No routed handler for parser %s, using empty queue handlers",
+                parser_name,
+            )
+            return QueueSourceConfiguration(queue_handlers={})
+
+        routed_handler = self._routed_handlers[parser_name].get(file_type)
+        if routed_handler is None:
+            Logger.warning(
+                "No routed handler for %s/%s, using empty queue handlers",
+                parser_name,
+                file_type,
+            )
+            return QueueSourceConfiguration(queue_handlers={})
+
+        return QueueSourceConfiguration(
+            queue_handlers={parser_name: routed_handler}
+        )
+
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
+        self._setup_queue_routing()
+
         params_order = [
             "limit",
             "store_enum",
@@ -108,17 +188,23 @@ class ParallelParser(MultiProcessor):
         ]
 
         Logger.info(f"Creating combinations for {self.params.to_string()},")
-        combinations = list(
-            itertools.product(
-                [limit],
-                self.params.enabled_parsers,
-                self.params.enabled_file_types,
-                [self.params.source_configuration],
-                [self.params.output_configuration],
-                [self.params.status_configuration],
-            )
-        )
-        task_can_executed_independently = [
-            dict(zip(params_order, combo)) for combo in combinations
-        ]
+
+        task_can_executed_independently = []
+        for parser_name in self.params.enabled_parsers:
+            for file_type in self.params.enabled_file_types:
+                source_config = self._get_source_config_for_job(
+                    parser_name, file_type
+                )
+                combo = (
+                    limit,
+                    parser_name,
+                    file_type,
+                    source_config,
+                    self.params.output_configuration,
+                    self.params.status_configuration,
+                )
+                task_can_executed_independently.append(
+                    dict(zip(params_order, combo))
+                )
+
         return task_can_executed_independently
