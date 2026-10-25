@@ -59,6 +59,25 @@ task.join()
 
 Optional filters (same names as Docker): `enabled_parsers`, `files_types`, and `multiprocessing`. Pass a maximum number of files with `task.start(limit=10)`.
 
+### Queue memory caps
+
+Queue mode keeps each scraped file and each parsed row in a `multiprocessing.Manager` queue. Two `ConvertingTask` options bound those queues. `0`, the default, leaves a queue unbounded.
+
+- `max_queue_size` — maximum messages in each routed file queue (one per chain and file type). The router blocks when a queue is full, so a slow parser applies backpressure to the scraper queue.
+- `max_output_queue_size` — maximum parsed rows in each output queue. Writers block when that queue is full. The end-of-stream marker waits for a free slot, so it is still delivered.
+
+A dead Manager is logged at error level and stored as a failed file-type job (`had_errors` on the parser status).
+
+```python
+task = ConvertingTask(
+    source_configuration={"queue_handlers": scraper.consume()},
+    output_configuration=[{"output_mode": "queue", "queue_type": "memory"}],
+    status_configuration={"database_type": "json", "base_path": "outputs"},
+    max_queue_size=8,
+    max_output_queue_size=200,
+)
+```
+
 
 Quick start
 -----------

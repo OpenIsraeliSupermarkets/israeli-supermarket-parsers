@@ -1,7 +1,7 @@
 import asyncio
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils import (
@@ -31,6 +31,7 @@ class ParallelParserParams(BaseModel):
     source_configuration: SourceConfiguration
     output_configuration: List[OutputConfiguration]
     status_configuration: StatusConfiguration
+    max_queue_size: int = Field(default=0, ge=0)
 
     def to_string(self) -> str:
         """Summarize these params for logging."""
@@ -96,9 +97,7 @@ class ParallelParser(MultiProcessor):
         super().__init__(multiprocessing=multiprocessing)
         self.params = params
         self._routers: Dict[str, QueueRouter] = {}
-        self._routed_handlers: Optional[
-            Dict[str, Dict[str, RoutedQueueWrapper]]
-        ] = None
+        self._routed_handlers: Optional[Dict[str, Dict[str, RoutedQueueWrapper]]] = None
 
     def task_to_execute(self):
         """the task to execute"""
@@ -120,7 +119,10 @@ class ParallelParser(MultiProcessor):
         self._routed_handlers = {}
         for scraper_name, handler in source_config.queue_handlers.items():
             router = QueueRouter(
-                scraper_name, handler, self.params.enabled_file_types
+                scraper_name,
+                handler,
+                self.params.enabled_file_types,
+                max_queue_size=self.params.max_queue_size,
             )
             self._routers[scraper_name] = router
 
@@ -170,9 +172,7 @@ class ParallelParser(MultiProcessor):
             )
             return QueueSourceConfiguration(queue_handlers={})
 
-        return QueueSourceConfiguration(
-            queue_handlers={parser_name: routed_handler}
-        )
+        return QueueSourceConfiguration(queue_handlers={parser_name: routed_handler})
 
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
@@ -192,9 +192,7 @@ class ParallelParser(MultiProcessor):
         task_can_executed_independently = []
         for parser_name in self.params.enabled_parsers:
             for file_type in self.params.enabled_file_types:
-                source_config = self._get_source_config_for_job(
-                    parser_name, file_type
-                )
+                source_config = self._get_source_config_for_job(parser_name, file_type)
                 combo = (
                     limit,
                     parser_name,
@@ -203,8 +201,6 @@ class ParallelParser(MultiProcessor):
                     self.params.output_configuration,
                     self.params.status_configuration,
                 )
-                task_can_executed_independently.append(
-                    dict(zip(params_order, combo))
-                )
+                task_can_executed_independently.append(dict(zip(params_order, combo)))
 
         return task_can_executed_independently
