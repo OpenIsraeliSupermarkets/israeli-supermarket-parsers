@@ -63,7 +63,9 @@ Optional filters (same names as Docker): `enabled_parsers`, `files_types`, and `
 
 Queue mode keeps each scraped file and each parsed row in a `multiprocessing.Manager` queue. Two `ConvertingTask` options bound those queues. `0`, the default, leaves a queue unbounded.
 
-- `max_queue_size` — maximum messages in each routed file queue (one per chain and file type). The router blocks when a queue is full, so a slow parser applies backpressure to the scraper queue. Docker: `PARSER_MAX_QUEUE_SIZE`.
+In queue mode the parser runs one long-lived worker per process (`multiprocessing`). Each chain and file type pair is pinned to one worker, so its files stay in order and its output has a single writer. Every worker reads its own inbox for the whole run, so a full inbox only slows the routers down.
+
+- `max_queue_size` — maximum files waiting in each worker's inbox. At most `multiprocessing × max_queue_size` files are held in memory, on top of the scraper queue. Routers block when an inbox is full, so a slow parser applies backpressure to the scraper queue. Docker: `PARSER_MAX_QUEUE_SIZE`.
 - `max_output_queue_size` — maximum parsed rows in each output queue. Writers block when that queue is full. The end-of-stream marker waits for a free slot, so it is still delivered. Docker: `PARSER_MAX_OUTPUT_QUEUE_SIZE`.
 
 A dead Manager is logged at error level and stored as a failed file-type job (`had_errors` on the parser status).

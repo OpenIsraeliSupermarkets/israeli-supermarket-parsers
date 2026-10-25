@@ -1,8 +1,10 @@
 import asyncio
+import threading
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .queue_worker import run_queue_worker
 from .raw_parsing_pipeline import RawParsingPipeline
 from .utils import (
     Logger,
@@ -17,10 +19,7 @@ from .utils.types import (
     SourceConfiguration,
     StatusConfiguration,
 )
-from .utils.data_loaders.queue_router import (
-    QueueRouter,
-    RoutedQueueWrapper,
-)
+from .utils.data_loaders.queue_router import QueueRouter, WorkerDispatcher
 
 
 class ParallelParserParams(BaseModel):
@@ -86,8 +85,30 @@ class RawProcessing(ProcessJob):
             asyncio.run(output_writer.close())
 
 
+class QueueWorkerProcessing(ProcessJob):
+    """Parse every pair the dispatcher sends to one worker inbox."""
+
+    def job(self, **kwargs):
+        """Run the worker loop until the dispatcher stops it."""
+        asyncio.run(
+            run_queue_worker(
+                inbox=kwargs["inbox"],
+                output_configuration=kwargs["output_configuration"],
+                status_configuration=kwargs["status_config"],
+                limit=kwargs.get("limit"),
+                worker_index=kwargs.get("worker_index", 0),
+            )
+        )
+
+
 class ParallelParser(MultiProcessor):
-    """run insert task on parallel"""
+    """run insert task on parallel
+
+    Folder sources run one pool job per (parser, file type). Queue sources run
+    one long-lived worker per process slot instead: routers send each file to
+    the worker that owns its pair, through inboxes capped at ``max_queue_size``.
+    Every inbox has a running reader, so the cap cannot stall a router.
+    """
 
     def __init__(
         self,
@@ -97,86 +118,84 @@ class ParallelParser(MultiProcessor):
         super().__init__(multiprocessing=multiprocessing)
         self.params = params
         self._routers: Dict[str, QueueRouter] = {}
-        self._routed_handlers: Optional[Dict[str, Dict[str, RoutedQueueWrapper]]] = None
+        self._dispatcher: Optional[WorkerDispatcher] = None
+        self._routing_started = False
+
+    def _is_queue_source(self) -> bool:
+        return isinstance(self.params.source_configuration, QueueSourceConfiguration)
 
     def task_to_execute(self):
         """the task to execute"""
+        if self._is_queue_source():
+            return QueueWorkerProcessing
         return RawProcessing
 
+    def _worker_count(self) -> int:
+        return max(1, self.multiprocessing or 0)
+
     def _setup_queue_routing(self) -> None:
-        """Set up queue routing when source is queue-based.
-
-        Creates a QueueRouter for each scraper, which reads from the scraper
-        queue and routes messages to per-file-type internal queues.
-        """
-        source_config = self.params.source_configuration
-        if not isinstance(source_config, QueueSourceConfiguration):
+        """Create the worker inboxes and one router per scraper queue."""
+        if not self._is_queue_source() or self._dispatcher is not None:
             return
 
-        if self._routed_handlers is not None:
-            return
-
-        self._routed_handlers = {}
-        for scraper_name, handler in source_config.queue_handlers.items():
-            router = QueueRouter(
+        self._dispatcher = WorkerDispatcher(
+            worker_count=self._worker_count(),
+            enabled_parsers=self.params.enabled_parsers,
+            enabled_file_types=self.params.enabled_file_types,
+            max_queue_size=self.params.max_queue_size,
+        )
+        queue_handlers = self.params.source_configuration.queue_handlers
+        for scraper_name, handler in queue_handlers.items():
+            self._routers[scraper_name] = QueueRouter(
                 scraper_name,
                 handler,
                 self.params.enabled_file_types,
-                max_queue_size=self.params.max_queue_size,
+                dispatcher=self._dispatcher,
             )
-            self._routers[scraper_name] = router
-
-            self._routed_handlers[scraper_name] = {}
-            for file_type in self.params.enabled_file_types:
-                self._routed_handlers[scraper_name][file_type] = (
-                    router.get_routed_handler(file_type)
-                )
-
-            router.start()
 
         Logger.info(
-            "Set up queue routing for %d scrapers with %d file types each",
+            "Set up queue routing for %d scrapers into %d workers (inbox cap %s)",
             len(self._routers),
-            len(self.params.enabled_file_types),
+            len(self._dispatcher.inboxes),
+            self.params.max_queue_size or "unbounded",
         )
 
-    def _get_source_config_for_job(
-        self, parser_name: str, file_type: str
-    ) -> SourceConfiguration:
-        """Get the source configuration for a specific (parser, file_type) job.
+    def on_workers_started(self) -> None:
+        """Start the routers and their coordinator once the pool has forked."""
+        if self._dispatcher is None or self._routing_started:
+            return
+        self._routing_started = True
+        for router in self._routers.values():
+            router.start()
+        threading.Thread(
+            target=self._finish_queue_routing,
+            name="queue-router-coordinator",
+            daemon=True,
+        ).start()
 
-        For folder sources, returns the original configuration.
-        For queue sources, returns a configuration with only the routed queue
-        for this specific (parser, file_type) combination.
-        """
-        source_config = self.params.source_configuration
-        if not isinstance(source_config, QueueSourceConfiguration):
-            return source_config
-
-        if self._routed_handlers is None:
-            self._setup_queue_routing()
-
-        if parser_name not in self._routed_handlers:
-            Logger.warning(
-                "No routed handler for parser %s, using empty queue handlers",
-                parser_name,
-            )
-            return QueueSourceConfiguration(queue_handlers={})
-
-        routed_handler = self._routed_handlers[parser_name].get(file_type)
-        if routed_handler is None:
-            Logger.warning(
-                "No routed handler for %s/%s, using empty queue handlers",
-                parser_name,
-                file_type,
-            )
-            return QueueSourceConfiguration(queue_handlers={})
-
-        return QueueSourceConfiguration(queue_handlers={parser_name: routed_handler})
+    def _finish_queue_routing(self) -> None:
+        """Once every router is done, close the remaining pairs and stop workers."""
+        for router in self._routers.values():
+            router.wait()
+        self._dispatcher.end_all()
+        self._dispatcher.stop_workers()
 
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
-        self._setup_queue_routing()
+        Logger.info(f"Creating combinations for {self.params.to_string()},")
+
+        if self._is_queue_source():
+            self._setup_queue_routing()
+            return [
+                {
+                    "worker_index": index,
+                    "inbox": inbox,
+                    "limit": limit,
+                    "output_configuration": self.params.output_configuration,
+                    "status_config": self.params.status_configuration,
+                }
+                for index, inbox in enumerate(self._dispatcher.inboxes)
+            ]
 
         params_order = [
             "limit",
@@ -187,17 +206,14 @@ class ParallelParser(MultiProcessor):
             "status_config",
         ]
 
-        Logger.info(f"Creating combinations for {self.params.to_string()},")
-
         task_can_executed_independently = []
         for parser_name in self.params.enabled_parsers:
             for file_type in self.params.enabled_file_types:
-                source_config = self._get_source_config_for_job(parser_name, file_type)
                 combo = (
                     limit,
                     parser_name,
                     file_type,
-                    source_config,
+                    self.params.source_configuration,
                     self.params.output_configuration,
                     self.params.status_configuration,
                 )

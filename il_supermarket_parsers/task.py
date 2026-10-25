@@ -41,10 +41,10 @@ class ConvertingTaskConfig(BaseModel):
 class ConvertingTask:
     """Encapsulates a parsing task that can be run in a separate thread.
 
-    ``max_queue_size`` caps each routed file queue and ``max_output_queue_size``
-    caps each parsed-row queue. ``0`` (the default) leaves a queue unbounded.
-    A full queue blocks the producer, and the end-of-stream marker still waits
-    for a free slot.
+    ``max_queue_size`` caps each queue-mode worker's file inbox and
+    ``max_output_queue_size`` caps each parsed-row queue. ``0`` (the default)
+    leaves a queue unbounded. A full queue blocks the producer, and the
+    end-of-stream marker still waits for a free slot.
 
     Example::
 

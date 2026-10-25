@@ -50,6 +50,13 @@ class MultiProcessor:
         """post process the results"""
         return results
 
+    def on_workers_started(self):
+        """Hook run once worker processes exist, before any job result is read.
+
+        Start background threads here rather than in ``get_arguments_list``:
+        forking a pool while threads hold locks can hang the children.
+        """
+
     def get_tasks_queue(self, limit=None):
         """get a queue with all the tasks need to execute"""
 
@@ -75,6 +82,7 @@ class MultiProcessor:
                 processes=self.multiprocessing
             )
             try:
+                self.on_workers_started()
                 with tqdm(
                     total=size,
                     desc="Total Processing...",
@@ -89,6 +97,7 @@ class MultiProcessor:
                 self._pool = None
 
         else:
+            self.on_workers_started()
             internal_task = self.task_to_execute()
             tasks_to_accomplish = Queue()
             for kwargs in task_args_list:

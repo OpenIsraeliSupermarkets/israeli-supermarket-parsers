@@ -171,9 +171,7 @@ class TestQueueRouter(unittest.TestCase):
 
         router = QueueRouter("TEST_CHAIN", mock_handler, enabled_types)
 
-        handlers = {
-            ft: router.get_routed_handler(ft) for ft in enabled_types
-        }
+        handlers = {ft: router.get_routed_handler(ft) for ft in enabled_types}
 
         router.start()
 
@@ -243,11 +241,11 @@ class TestQueueRouter(unittest.TestCase):
 class TestQueueRoutingIntegration(unittest.TestCase):
     """Integration test for queue routing with ParallelParser."""
 
-    def test_parallel_parser_creates_routed_configs(self):
-        """Test that ParallelParser creates routed source configs for queue sources.
+    def test_parallel_parser_creates_one_job_per_worker(self):
+        """Queue sources run one long-lived worker per process slot.
 
-        This verifies that each (parser, file_type) job gets a source config
-        with only its routed queue, not the original shared queue.
+        Each worker job carries its own inbox; the pairs are spread across
+        those inboxes by the dispatcher rather than one pool job per pair.
         """
         # pylint: disable=import-outside-toplevel
         from il_supermarket_parsers.multiprocess_pharser import (
@@ -274,21 +272,36 @@ class TestQueueRoutingIntegration(unittest.TestCase):
             status_configuration={"database_type": "json", "base_path": "temp"},
         )
 
-        parser = ParallelParser(params, multiprocessing=1)
+        parser = ParallelParser(params, multiprocessing=2)
         args_list = parser.get_arguments_list(limit=1)
+        parser.on_workers_started()
 
+        self.assertEqual(len(args_list), 2)
         self.assertEqual(
-            len(args_list),
-            len(enabled_scrapers) * len(enabled_types),
+            {args["worker_index"] for args in args_list},
+            {0, 1},
         )
-
         for args in args_list:
-            source_config = args["source_configuration"]
-            self.assertIsInstance(source_config, QueueSourceConfiguration)
+            self.assertEqual(args["limit"], 1)
+            self.assertIsNotNone(args["inbox"])
 
-            parser_name = args["store_enum"]
-            self.assertIn(parser_name, source_config.queue_handlers)
-            self.assertEqual(len(source_config.queue_handlers), 1)
+        # Empty scraper queues: every pair is ended, then every worker stopped.
+        items = []
+        for args in args_list:
+            while True:
+                item = args["inbox"].get(timeout=5)
+                if item is None:
+                    break
+                items.append(item)
+        self.assertTrue(all(item["kind"] == "end" for item in items))
+        self.assertEqual(
+            sorted((item["parser_name"], item["file_type"]) for item in items),
+            sorted(
+                (scraper, file_type)
+                for scraper in enabled_scrapers
+                for file_type in enabled_types
+            ),
+        )
 
     def test_routing_preserves_all_messages(self):
         """Test that routing preserves all messages without loss.
@@ -315,9 +328,11 @@ class TestQueueRoutingIntegration(unittest.TestCase):
         async def consume_all():
             tasks = []
             for file_type in enabled_types:
+
                 async def consume(ft=file_type):
                     async for msg in handlers[ft].queue_handler.get_all_messages():
                         received[ft].append(msg["file_name"])
+
                 tasks.append(consume())
             await asyncio.gather(*tasks)
 

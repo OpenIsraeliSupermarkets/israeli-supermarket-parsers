@@ -1,19 +1,21 @@
-"""Routes scraper queue messages to per-file-type internal queues.
+"""Routes scraper queue messages by file type.
 
 When multiple (chain, file_type) jobs read from the same scraper queue,
 the original design had each job put back messages of the wrong type.
 This led to race conditions where files were dropped.
 
 This module provides a router that reads each scraper queue once and
-dispatches messages to the correct file-type queue based on the detected
-file type. Each job then reads only from its own routed queue.
+sends each message on by its detected file type. It either fills one
+unbounded queue per file type (``get_routed_handler``) or hands every file
+to a :class:`WorkerDispatcher`, which feeds a fixed set of always-running
+parse workers through capped queues.
 """
 
 import asyncio
 import multiprocessing
 import threading
 from queue import Empty
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import ValidationError
 
@@ -104,12 +106,127 @@ class RoutedQueueWrapper:
         self.queue_handler = handler
 
 
+class WorkerDispatcher:
+    """Send every (parser, file type) pair's files to one parse worker.
+
+    Each worker owns one capped inbox and runs for the whole task, so every
+    inbox always has a reader and a full inbox only slows the router down.
+    A pair is pinned to one worker the first time it is seen, which keeps its
+    files in arrival order and gives its output queue and CSV a single writer.
+
+    Inbox items:
+        ``{"kind": "file", "parser_name", "file_type", "message"}``
+        ``{"kind": "end", "parser_name", "file_type", "error"}``
+        ``None`` stops the worker.
+    """
+
+    def __init__(
+        self,
+        worker_count: int,
+        enabled_parsers: List[str],
+        enabled_file_types: List[str],
+        max_queue_size: int = 0,
+    ):
+        manager = _ManagerHolder.manager()
+        self.inboxes = [
+            manager.Queue(max_queue_size) for _ in range(max(1, worker_count))
+        ]
+        self._enabled = {
+            (parser_name, file_type)
+            for parser_name in enabled_parsers
+            for file_type in enabled_file_types
+        }
+        self._assigned: Dict[Tuple[str, str], int] = {}
+        self._pairs_per_worker = [0] * len(self.inboxes)
+        self._ended: Set[Tuple[str, str]] = set()
+        self._lock = threading.Lock()
+
+    def is_enabled(self, parser_name: str, file_type: str) -> bool:
+        """True when this (parser, file type) pair is being parsed."""
+        return (parser_name, file_type) in self._enabled
+
+    def _worker_for(self, key: Tuple[str, str]) -> int:
+        with self._lock:
+            index = self._assigned.get(key)
+            if index is None:
+                index = min(
+                    range(len(self.inboxes)),
+                    key=lambda i: self._pairs_per_worker[i],
+                )
+                self._assigned[key] = index
+                self._pairs_per_worker[index] += 1
+            return index
+
+    def _put(self, index: int, item: dict) -> None:
+        try:
+            self.inboxes[index].put(item)
+        except MANAGER_CONNECTION_ERRORS as err:
+            Logger.error(
+                "Worker inbox %d lost its Manager connection while sending %s/%s: %s",
+                index,
+                item["parser_name"],
+                item["file_type"],
+                err,
+            )
+            raise QueueManagerConnectionError(
+                f"Manager connection lost for worker inbox {index}"
+            ) from err
+
+    def dispatch(self, parser_name: str, file_type: str, message: dict) -> None:
+        """Queue one file for the pair's worker, blocking while its inbox is full."""
+        key = (parser_name, file_type)
+        if key not in self._enabled:
+            return
+        self._put(
+            self._worker_for(key),
+            {
+                "kind": "file",
+                "parser_name": parser_name,
+                "file_type": file_type,
+                "message": message,
+            },
+        )
+
+    def end(self, parser_name: str, file_type: str, error: Optional[str] = None):
+        """Close the pair on its worker. Repeated calls for a pair are ignored."""
+        key = (parser_name, file_type)
+        with self._lock:
+            if key not in self._enabled or key in self._ended:
+                return
+            self._ended.add(key)
+        self._put(
+            self._worker_for(key),
+            {
+                "kind": "end",
+                "parser_name": parser_name,
+                "file_type": file_type,
+                "error": error,
+            },
+        )
+
+    def end_all(self) -> None:
+        """Close every pair that has not been closed yet (no scraper queue, etc.)."""
+        for parser_name, file_type in sorted(self._enabled):
+            try:
+                self.end(parser_name, file_type)
+            except QueueManagerConnectionError:
+                return
+
+    def stop_workers(self) -> None:
+        """Tell every worker to exit once its inbox is drained."""
+        for index, inbox in enumerate(self.inboxes):
+            try:
+                inbox.put(None)
+            except MANAGER_CONNECTION_ERRORS as err:
+                Logger.error("Could not stop worker %d: %s", index, err)
+
+
 class QueueRouter:
-    """Routes messages from a scraper queue to per-file-type internal queues.
+    """Routes messages from a scraper queue by file type.
 
     The router runs in a background thread, reading from the scraper queue
-    and dispatching each message to the appropriate file-type queue based
-    on the detected file type from the filename.
+    and dispatching each message based on the detected file type from the
+    filename: to a per-file-type queue, or through a ``WorkerDispatcher``.
 
     Uses process-safe queues (via multiprocessing.Manager) so that the
     routed handlers can be passed to worker processes.
@@ -121,7 +238,7 @@ class QueueRouter:
         original_handler: Any,
         enabled_file_types: List[str],
         empty_store_id: str = "0000",
-        max_queue_size: int = 0,
+        dispatcher: Optional[WorkerDispatcher] = None,
     ):
         """Initialize the router.
 
@@ -130,19 +247,20 @@ class QueueRouter:
             original_handler: The original scraper queue handler
             enabled_file_types: List of file type names to route
             empty_store_id: Default store ID for files without store number
-            max_queue_size: Cap for each routed queue. 0 leaves it unbounded.
-                A full queue blocks ``put`` until a consumer takes an item.
+            dispatcher: Send files to parse workers instead of filling one
+                unbounded queue per file type.
         """
         self._scraper_name = scraper_name
         self._original_handler = original_handler
         self._enabled_file_types = set(enabled_file_types)
         self._empty_store_id = empty_store_id
-        self._max_queue_size = max_queue_size
+        self._dispatcher = dispatcher
 
         self._routed_queues: Dict[str, Any] = {}
-        manager = _ManagerHolder.manager()
-        for file_type in enabled_file_types:
-            self._routed_queues[file_type] = manager.Queue(max_queue_size)
+        if dispatcher is None:
+            manager = _ManagerHolder.manager()
+            for file_type in enabled_file_types:
+                self._routed_queues[file_type] = manager.Queue()
 
         self._router_thread: Optional[threading.Thread] = None
         self._started = False
@@ -184,6 +302,7 @@ class QueueRouter:
 
     async def _async_router(self) -> None:
         """Async router implementation."""
+        error: Optional[str] = None
         try:
             skipped_types: Set[str] = set()
             async for msg in self._original_handler.queue_handler.get_all_messages():
@@ -205,9 +324,8 @@ class QueueRouter:
                     Logger.warning("Router skipping queue file %s: %s", file_name, err)
                     continue
 
-                if file_type in self._routed_queues:
-                    # Blocks while this file-type queue is full (backpressure).
-                    self._put_routed(file_type, msg)
+                if file_type in self._enabled_file_types:
+                    self._route(file_type, msg)
                     Logger.debug(
                         "Routed %s to %s queue for %s",
                         file_name,
@@ -230,34 +348,33 @@ class QueueRouter:
                 self._scraper_name,
             )
 
+        except Exception as err:  # pylint: disable=broad-except
+            error = f"{type(err).__name__}: {err}"
+            Logger.error("Queue router %s stopped: %s", self._scraper_name, error)
+            if self._dispatcher is None:
+                raise
+
         finally:
-            for file_type in self._routed_queues:
-                # Blocking put: the sentinel waits for a free slot when the
-                # queue is full, so it is not dropped ahead of real files.
-                self._put_sentinel(file_type)
+            for file_type in sorted(self._enabled_file_types):
+                self._end(file_type, error)
             self._finished.set()
 
-    def _put_routed(self, file_type: str, msg: dict) -> None:
-        """Put one routed file, blocking while that queue is at its cap."""
-        try:
+    def _route(self, file_type: str, msg: dict) -> None:
+        if self._dispatcher is not None:
+            # Blocks while the worker's inbox is full; that worker is always
+            # running, so this is backpressure rather than a stall.
+            self._dispatcher.dispatch(self._scraper_name, file_type, msg)
+        else:
             self._routed_queues[file_type].put(msg)
-        except MANAGER_CONNECTION_ERRORS as err:
-            Logger.error(
-                "Queue router %s failed to route %s (%s): %s",
-                self._scraper_name,
-                msg.get("file_name", ""),
-                file_type,
-                err,
-            )
-            raise QueueManagerConnectionError(
-                f"Manager connection lost while routing {self._scraper_name}/{file_type}"
-            ) from err
 
-    def _put_sentinel(self, file_type: str) -> None:
-        """Deliver the end-of-stream marker, including when the queue is full."""
+    def _end(self, file_type: str, error: Optional[str]) -> None:
+        """Deliver end-of-stream for one file type, even after a failure."""
         try:
-            self._routed_queues[file_type].put(None)
-        except MANAGER_CONNECTION_ERRORS as err:
+            if self._dispatcher is not None:
+                self._dispatcher.end(self._scraper_name, file_type, error)
+            else:
+                self._routed_queues[file_type].put(None)
+        except (QueueManagerConnectionError, *MANAGER_CONNECTION_ERRORS) as err:
             Logger.error(
                 "Queue router %s could not end %s after Manager failure: %s",
                 self._scraper_name,
@@ -266,7 +383,7 @@ class QueueRouter:
             )
         else:
             Logger.debug(
-                "Sent end-of-stream to routed queue %s/%s",
+                "Sent end-of-stream for %s/%s",
                 self._scraper_name,
                 file_type,
             )
@@ -286,14 +403,12 @@ class QueueRouter:
 def create_routed_queue_handlers(
     queue_handlers: Dict[str, Any],
     enabled_file_types: List[str],
-    max_queue_size: int = 0,
 ) -> Dict[str, Dict[str, RoutedQueueWrapper]]:
     """Create routed queue handlers for all scrapers.
 
     Args:
         queue_handlers: Dict mapping scraper names to queue handlers
         enabled_file_types: List of file type names to route
-        max_queue_size: Cap for each routed queue. 0 leaves it unbounded.
 
     Returns:
         Dict mapping scraper names to dicts of (file_type -> RoutedQueueWrapper)
@@ -302,12 +417,7 @@ def create_routed_queue_handlers(
     routed_handlers: Dict[str, Dict[str, RoutedQueueWrapper]] = {}
 
     for scraper_name, handler in queue_handlers.items():
-        router = QueueRouter(
-            scraper_name,
-            handler,
-            enabled_file_types,
-            max_queue_size=max_queue_size,
-        )
+        router = QueueRouter(scraper_name, handler, enabled_file_types)
         routers[scraper_name] = router
 
         routed_handlers[scraper_name] = {}
