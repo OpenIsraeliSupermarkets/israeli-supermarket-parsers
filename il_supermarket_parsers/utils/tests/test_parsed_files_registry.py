@@ -1,4 +1,4 @@
-"""Parsed-file registry on ParserStatus and the re-download diff."""
+"""Parsed-file registry on ParserStatus."""
 
 import datetime
 import json
@@ -13,7 +13,6 @@ from il_supermarket_parsers.utils.loading_utils import DumpFile
 from il_supermarket_parsers.utils.status import (
     ParserStatus,
     ParserStatusOutput,
-    files_to_download,
 )
 
 
@@ -80,9 +79,7 @@ class TestParsedFilesRegistry(unittest.TestCase):
         output = self._load()
         self.assertEqual(output.parsed_file_names(), expected)
         rows = {row.file_name: row for row in output.parsed_files}
-        self.assertEqual(
-            rows["Price7290027600007-001-202501010000.xml"].row_count, 3
-        )
+        self.assertEqual(rows["Price7290027600007-001-202501010000.xml"].row_count, 3)
         self.assertIsNone(rows["Price7290027600007-002-202501010000.xml"].row_count)
         self.assertTrue(output.validate_file_status())
 
@@ -110,29 +107,6 @@ class TestParsedFilesRegistry(unittest.TestCase):
         output = ParserStatusOutput(global_status=[], events=[])
         self.assertEqual(output.parsed_files, [])
         self.assertTrue(output.validate_file_status())
-
-
-class TestFilesToDownload(unittest.TestCase):
-    """downloaded minus parsed, compared on normalized names."""
-
-    def test_diff_ignores_extensions_and_null(self) -> None:
-        downloaded = [
-            "Price7290027600007-001-202501010000.xml",
-            "PriceNULL7290027600007-002-202501010000.gz",
-            "Promo7290027600007-001-202501010000.xml",
-        ]
-        parsed = [
-            "Price7290027600007-001-202501010000",
-            "Price7290027600007-002-202501010000.xml",
-        ]
-        self.assertEqual(
-            files_to_download(downloaded, parsed),
-            ["Promo7290027600007-001-202501010000"],
-        )
-
-    def test_nothing_missing(self) -> None:
-        self.assertEqual(files_to_download(["Stores1-1.xml"], ["Stores1-1.xml"]), [])
-        self.assertEqual(files_to_download([], []), [])
 
 
 if __name__ == "__main__":
