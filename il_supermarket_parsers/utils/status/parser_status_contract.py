@@ -8,7 +8,7 @@ Mirrors il_supermarket_scarper.utils.scraper_status_contract.
 
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
 from pydantic import BaseModel, Field
 
@@ -89,6 +89,26 @@ class FailedFileStatus(BaseModel):
     task_id: str
 
 
+# -- Parsed-file registry --
+
+
+class ParsedFile(BaseModel):
+    """Durable record that a file was resolved by the parser.
+
+    Mirrors the scraper's ``verified_downloads``: survives dump cleanup so
+    callers can diff "downloaded so far" against "parsed so far". Written for
+    processed and skipped (empty) files; failed files are left out so they
+    stay eligible for a forced re-download.
+    """
+
+    file_name: str
+    store_folder: str
+    file_type: str
+    row_count: Optional[int] = None
+    task_id: str
+    system_timestamp: datetime
+
+
 # -- Aggregate output --
 
 
@@ -98,6 +118,7 @@ class ParserStatusOutput(BaseModel):
     Structure mirrors ScraperStatusOutput:
     - global_status: started + completed events for the run
     - events: one entry per file (processed, skipped, or failed)
+    - parsed_files: durable registry of every file resolved so far
     """
 
     global_status: List[Union[StartedParsingStatus, CompletedParsingStatus]] = Field(
@@ -111,16 +132,24 @@ class ParserStatusOutput(BaseModel):
             FailedFileStatus,
         ]
     ] = Field(default_factory=list)
+    parsed_files: List[ParsedFile] = Field(default_factory=list)
+
+    def parsed_file_names(self) -> Set[str]:
+        """Return every file name recorded in the parsed-file registry."""
+        return {row.file_name for row in self.parsed_files}
 
     def _build_per_file_status_data(self):
         """Build per-file status records and status counters.
 
+        A file may be parsed again in a later run (forced re-download), so
+        records are keyed by ``(task_id, file_name)``.
+
         Returns:
             A tuple of (per_file_dict, per_file_status_counter_dict)
-            - per_file_dict: Maps file name to status flags
+            - per_file_dict: Maps (task_id, file name) to status flags
                 (registered, processed, skipped, failed)
-            - per_file_status_counter_dict: Maps file name to list of status
-                types for duplicate detection
+            - per_file_status_counter_dict: Maps (task_id, file name) to list
+                of status types for duplicate detection
         """
         per_file = defaultdict(
             lambda: {
@@ -133,20 +162,17 @@ class ParserStatusOutput(BaseModel):
         per_file_status_counter = defaultdict(list)
 
         for event in self.events:
+            fn = (event.task_id, event.file_name)
             if isinstance(event, RegisteredFileToProcessStatus):
-                fn = event.file_name
                 per_file[fn]["registered"] = True
                 per_file_status_counter[fn].append("registered")
             elif isinstance(event, ProcessedFileStatus):
-                fn = event.file_name
                 per_file[fn]["processed"] = True
                 per_file_status_counter[fn].append("processed")
             elif isinstance(event, SkippedFileStatus):
-                fn = event.file_name
                 per_file[fn]["skipped"] = True
                 per_file_status_counter[fn].append("skipped")
             elif isinstance(event, FailedFileStatus):
-                fn = event.file_name
                 per_file[fn]["failed"] = True
                 per_file_status_counter[fn].append("failed")
 

@@ -12,7 +12,7 @@ the same on-disk format.
 import os
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from il_supermarket_scarper.utils.databases.base import AbstractDataBase
 
@@ -22,6 +22,7 @@ from ..types import FileExecutionLog
 from .parser_status_contract import (
     CompletedParsingStatus,
     FailedFileStatus,
+    ParsedFile,
     ProcessedFileStatus,
     SkippedFileStatus,
     StartedParsingStatus,
@@ -54,6 +55,7 @@ class ParserStatus:
     SKIPPED = "skipped"
     FAILED = "failed"
     COMPLETED = "completed"
+    PARSED_FILES = "parsed_files"
 
     def __init__(self, status_database: AbstractDataBase) -> None:
         self.database = status_database
@@ -102,6 +104,26 @@ class ParserStatus:
             "is_expected_to_have_records": dump_file.is_expected_to_have_records,
         }
 
+    def _record_parsed_file(
+        self, dump_file: DumpFile, row_count: Optional[int]
+    ) -> None:
+        """Append the file to the durable parsed-file registry."""
+        row = ParsedFile(
+            system_timestamp=_now(),
+            row_count=row_count,
+            task_id=self.task_id,
+            **self._dumpfile_to_event_fields(dump_file),
+        )
+        self.database.insert_document(self.PARSED_FILES, row.dict())
+
+    def parsed_file_names(self) -> Set[str]:
+        """Return every file name recorded in the parsed-file registry."""
+        return {
+            doc["file_name"]
+            for doc in self.database.list_documents(self.PARSED_FILES)
+            if doc.get("file_name")
+        }
+
     def on_parsing_start(
         self,
         limit: Optional[int],
@@ -126,6 +148,7 @@ class ParserStatus:
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
+        self._record_parsed_file(dump_file, row_count=None)
 
         fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update({"loaded": False, "succusfull": None})
@@ -149,6 +172,7 @@ class ParserStatus:
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
+        self._record_parsed_file(dump_file, row_count=row_count)
 
         fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update(
