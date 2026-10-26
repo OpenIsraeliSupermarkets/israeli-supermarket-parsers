@@ -49,10 +49,10 @@ The package parses XML price/promo/store data published by Israeli supermarket c
 ### Layer Breakdown
 
 **`il_supermarket_parsers/`** — public API
-- `task.py` — `ConvertingTask` + `ConvertingTaskConfig` (Pydantic): main entry point. Runs `ParallelParser` in a background thread. Accepts multiple output configurations simultaneously (fan-out). Supports both folder-based and queue-based sources.
+- `task.py` — `ConvertingTask` + `ConvertingTaskConfig` (Pydantic): main entry point. Runs `ParallelParser` in a background thread. Accepts multiple output configurations simultaneously (fan-out). Supports both folder-based and queue-based sources. `max_queue_size` caps each queue-mode worker's inbox and `max_output_queue_size` caps each parsed-row queue (`0` = unbounded). Docker/`main.py` read them from `PARSER_MAX_QUEUE_SIZE` and `PARSER_MAX_OUTPUT_QUEUE_SIZE`. A full queue blocks the producer, including the end-of-stream `None`. A Manager connection error while reading a routed queue or worker inbox is logged at ERROR and completes the affected pairs' status with `had_errors=True`.
 - `parser_factory.py` — `ParserFactory` enum mapping store names (e.g. `SHUFERSAL`) to converter classes.
 - `raw_parsing_pipeline.py` — `RawParsingPipeline`: async streaming pipeline. For each `DumpFile` yielded by the data loader it calls `parser.read(file)` (an async generator of `dict` rows) and forwards each row to `output_writer.write_row()`. Tracks per-file status (registered, skipped, processed, failed).
-- `multiprocess_pharser.py` — `ParallelParser` + `RawProcessing`: builds the job list and runs them in a `MultiProcessor` pool.
+- `multiprocess_pharser.py` — `ParallelParser` + `RawProcessing`: builds the job list and runs them in a `MultiProcessor` pool. Folder sources run one job per (store × file type). Queue sources run one `QueueWorkerProcessing` job per process instead: `QueueRouter` threads send each file through a `WorkerDispatcher` to the worker that owns its (store, file type) pair, and `queue_worker.run_queue_worker` parses it.
 
 **`engines/`** — wires file-type → document converter
 - `BaseFileConverter` — dispatches to the correct `XmlBaseConverter` based on `DumpFile.detected_filetype` (PRICE, PRICE_FULL, PROMO, PROMO_FULL, STORE). `read()` is an `async` generator yielding `dict` rows. Supports both file-system and queue-based (`DumpFile.is_queue_based`) files.

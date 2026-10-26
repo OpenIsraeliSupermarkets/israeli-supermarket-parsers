@@ -34,6 +34,8 @@ class TestLoadParams(unittest.TestCase):
             "DATA_FOLDER",
             "OUTPUT_FOLDER",
             "STATUS_FOLDER",
+            "PARSER_MAX_QUEUE_SIZE",
+            "PARSER_MAX_OUTPUT_QUEUE_SIZE",
         ]
         for var in env_vars_to_clear:
             if var in os.environ:
@@ -219,6 +221,8 @@ class TestLoadParams(unittest.TestCase):
         os.environ["ENABLED_FILE_TYPES"] = "PRICE_FILE,STORE_FILE"
         os.environ["NUMBER_OF_PROCESSES"] = "8"
         os.environ["LIMIT"] = "500"
+        os.environ["PARSER_MAX_QUEUE_SIZE"] = "8"
+        os.environ["PARSER_MAX_OUTPUT_QUEUE_SIZE"] = "200"
 
         kwargs, limit = load_params()
 
@@ -227,6 +231,8 @@ class TestLoadParams(unittest.TestCase):
             "enabled_parsers": ["BAREKET", "SHUFERSAL"],
             "files_types": ["PRICE_FILE", "STORE_FILE"],
             "multiprocessing": 8,
+            "max_queue_size": 8,
+            "max_output_queue_size": 200,
         }
         self.assertEqual(kwargs, expected)
         self.assertEqual(limit, 500)
@@ -533,6 +539,64 @@ class TestLoadParams(unittest.TestCase):
         self.assertIn("ENABLED_FILE_TYPES contains invalid", error_msg)
         self.assertIn("Price_File", error_msg)
         self.assertIn("Promo_File", error_msg)
+
+    @patch("main.ParserFactory")
+    @patch("main.FileTypesFilters")
+    def test_queue_size_env_vars(self, _mock_file_types, _mock_parser_factory):
+        """PARSER_MAX_QUEUE_SIZE and PARSER_MAX_OUTPUT_QUEUE_SIZE reach the task."""
+        os.environ["PARSER_MAX_QUEUE_SIZE"] = "4"
+        os.environ["PARSER_MAX_OUTPUT_QUEUE_SIZE"] = "50"
+
+        kwargs, limit = load_params()
+
+        expected = {
+            **DEFAULT_TASK_KWARGS,
+            "max_queue_size": 4,
+            "max_output_queue_size": 50,
+        }
+        self.assertEqual(kwargs, expected)
+        self.assertIsNone(limit)
+
+    @patch("main.ParserFactory")
+    @patch("main.FileTypesFilters")
+    def test_queue_size_zero_is_unbounded(self, _mock_file_types, _mock_parser_factory):
+        """Zero is a real cap value and means unbounded."""
+        os.environ["PARSER_MAX_QUEUE_SIZE"] = "0"
+        os.environ["PARSER_MAX_OUTPUT_QUEUE_SIZE"] = "0"
+
+        kwargs, _limit = load_params()
+
+        self.assertEqual(kwargs["max_queue_size"], 0)
+        self.assertEqual(kwargs["max_output_queue_size"], 0)
+
+    @patch("main.ParserFactory")
+    @patch("main.FileTypesFilters")
+    def test_queue_size_must_be_an_integer(
+        self, _mock_file_types, _mock_parser_factory
+    ):
+        """Non-numeric queue caps are rejected."""
+        os.environ["PARSER_MAX_QUEUE_SIZE"] = "nope"
+
+        with self.assertRaises(ValueError) as context:
+            load_params()
+
+        self.assertEqual(
+            str(context.exception), "PARSER_MAX_QUEUE_SIZE must be an integer"
+        )
+
+    @patch("main.ParserFactory")
+    @patch("main.FileTypesFilters")
+    def test_queue_size_rejects_negative(self, _mock_file_types, _mock_parser_factory):
+        """A negative queue cap is rejected."""
+        os.environ["PARSER_MAX_OUTPUT_QUEUE_SIZE"] = "-1"
+
+        with self.assertRaises(ValueError) as context:
+            load_params()
+
+        self.assertEqual(
+            str(context.exception),
+            "PARSER_MAX_OUTPUT_QUEUE_SIZE must be zero or greater",
+        )
 
 
 if __name__ == "__main__":

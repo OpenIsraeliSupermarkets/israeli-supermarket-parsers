@@ -2,7 +2,7 @@ import os
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
@@ -26,6 +26,8 @@ class ConvertingTaskConfig(BaseModel):
     multiprocessing: int = 6
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
+    max_queue_size: int = Field(default=0, ge=0)
+    max_output_queue_size: int = Field(default=0, ge=0)
 
     def get_enabled_parsers(self) -> List[str]:
         """Return configured parser names, or all parsers if none are set."""
@@ -38,6 +40,11 @@ class ConvertingTaskConfig(BaseModel):
 
 class ConvertingTask:
     """Encapsulates a parsing task that can be run in a separate thread.
+
+    ``max_queue_size`` caps each queue-mode worker's file inbox and
+    ``max_output_queue_size`` caps each parsed-row queue. ``0`` (the default)
+    leaves a queue unbounded. A full queue blocks the producer, and the
+    end-of-stream marker still waits for a free slot.
 
     Example::
 
@@ -88,7 +95,9 @@ class ConvertingTask:
                 for parser_name in parsers:
                     for file_type in file_types:
                         self._output_queues[(parser_name, file_type)] = (
-                            create_output_queue()
+                            create_output_queue(
+                                maxsize=self._config.max_output_queue_size
+                            )
                         )
                 output_configuration.queues = self._output_queues
 
@@ -102,6 +111,7 @@ class ConvertingTask:
                 source_configuration=self._config.source_configuration,
                 output_configuration=self._config.output_configuration,
                 status_configuration=self._config.status_configuration,
+                max_queue_size=self._config.max_queue_size,
             ),
             multiprocessing=self._config.multiprocessing,
         )

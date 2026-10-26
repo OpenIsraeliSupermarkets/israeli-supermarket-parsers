@@ -5,6 +5,7 @@ from .queue_router import (
     QueueRouter,
     RoutedQueueHandler,
     RoutedQueueWrapper,
+    WorkerDispatcher,
     create_routed_queue_handlers,
 )
 from .gate import get_data_loader
@@ -16,6 +17,7 @@ __all__ = [
     "QueueRouter",
     "RoutedQueueHandler",
     "RoutedQueueWrapper",
+    "WorkerDispatcher",
     "create_routed_queue_handlers",
     "get_data_loader",
 ]

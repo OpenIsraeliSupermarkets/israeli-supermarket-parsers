@@ -38,9 +38,13 @@ class ParsedRowsQueue:
         return iter(self._queue.get, None)
 
 
-def create_output_queue():
-    """Create a new process-safe queue for parsed row output."""
-    return _QueueManagerHolder.manager().Queue()
+def create_output_queue(maxsize: int = 0):
+    """Create a process-safe queue for parsed row output.
+
+    ``maxsize`` of 0 leaves the queue unbounded. A positive value blocks
+    ``put`` when the queue is full, including the end-of-stream ``None``.
+    """
+    return _QueueManagerHolder.manager().Queue(maxsize)
 
 
 def create_queue_pair() -> tuple:

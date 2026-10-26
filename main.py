@@ -2,6 +2,23 @@ import os
 from il_supermarket_parsers import ConvertingTask, ParserFactory, FileTypesFilters
 
 
+def _read_non_negative_int(name: str):
+    """Return an env int, or None when the variable is unset or empty.
+
+    ``0`` is kept: it is the unbounded-queue default.
+    """
+    raw = os.getenv(name)
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if value < 0:
+        raise ValueError(f"{name} must be zero or greater")
+    return value
+
+
 def load_params():
     """load params from env variables with validation.
 
@@ -74,6 +91,14 @@ def load_params():
             raise ValueError(f"LIMIT must be an integer, but got {limit}") from exc
     else:
         limit = None
+
+    max_queue_size = _read_non_negative_int("PARSER_MAX_QUEUE_SIZE")
+    if max_queue_size is not None:
+        kwargs["max_queue_size"] = max_queue_size
+
+    max_output_queue_size = _read_non_negative_int("PARSER_MAX_OUTPUT_QUEUE_SIZE")
+    if max_output_queue_size is not None:
+        kwargs["max_output_queue_size"] = max_output_queue_size
 
     return kwargs, limit
 
