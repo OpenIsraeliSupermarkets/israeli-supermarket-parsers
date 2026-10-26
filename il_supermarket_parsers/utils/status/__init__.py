@@ -6,6 +6,7 @@ from .parser_status_contract import (
     ProcessedFileStatus,
     SkippedFileStatus,
     FailedFileStatus,
+    ParsedFile,
     ParserStatusOutput,
     RegisteredFileToProcessStatus,
 )
@@ -13,6 +14,7 @@ from .parser_status_contract import (
 __all__ = [
     "ParserStatus",
     "create_parser_status",
+    "ParsedFile",
     "StartedParsingStatus",
     "CompletedParsingStatus",
     "ProcessedFileStatus",

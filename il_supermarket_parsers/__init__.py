@@ -11,4 +11,5 @@ from .utils.status import (
     SkippedFileStatus,
     FailedFileStatus,
     RegisteredFileToProcessStatus,
+    ParsedFile,
 )
