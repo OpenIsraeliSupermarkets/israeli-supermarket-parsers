@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    # 07:17 UTC = 09:17/10:17 IL. GitHub has been creating these scheduled
-    # runs 3-9 hours late (up to 00:38 IL), and after midnight IL the chains
-    # have no files for "today", so most chain tests skip. Starting early
-    # leaves room for that delay. The off-hour minute avoids the top-of-hour
-    # scheduler peak. See issue #134.
+    # 07:17 UTC = 10:17 IDT / 09:17 IST, after laibcatalog's ~08:00 IL
+    # republish. GitHub has created the 13:00 UTC runs 3-9 hours late (up to
+    # 00:38 IL), and after midnight IL chains have no files for today.
+    # Starting earlier keeps a delayed run before midnight. Weekend
+    # weekly-release still sees Sat/Sun UTC. See issue #134.
     - cron: '17 7 * * *'
   workflow_dispatch:
 
@@ -31,18 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Refuse overnight scheduled run
-        # Chain tests scrape today's files. Between 00:00 and 08:00 IL most
-        # chains have not published yet, so a run then tests almost nothing
-        # and would still be green. Fail loudly instead (issue #134).
-        if: github.event_name == 'schedule'
-        run: |
-          hour=$(TZ=Asia/Jerusalem date +%H)
-          echo "Israel time: $(TZ=Asia/Jerusalem date '+%Y-%m-%d %H:%M')"
-          if [ "$((10#$hour))" -lt 8 ]; then
-            echo "::error::Scheduled run started at ${hour}:xx Israel time (00:00-08:00). Chains have no files for today yet, so the chain tests were not run."
-            exit 1
-          fi
       - name: Free disk space
         run: |
           df --human-readable
