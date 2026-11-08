@@ -20,6 +20,9 @@ class SampleDataOptions:
     queue_handlers: Optional[Dict[str, Any]] = None
     kafka_config: Optional[Dict[str, Any]] = None
     use_streaming: bool = False
+    # execution time passed to the scraper as ``when_date`` (disk mode).
+    # Defaults to now when a filter_type is set.
+    when_date: Optional[datetime.datetime] = None
 
 
 def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] = None):
@@ -99,10 +102,10 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
         enabled_scrapers=o.enabled_scrapers if o.enabled_scrapers else None,
         files_types=[o.filter_type] if o.filter_type else None,
     )
-    task.start(
-        limit=o.limit,
-        when_date=datetime.datetime.now() if o.filter_type else None,
-    )
+    when_date = o.when_date
+    if when_date is None and o.filter_type:
+        when_date = datetime.datetime.now()
+    task.start(limit=o.limit, when_date=when_date)
     task.join()
     return dump_folder_name
 
