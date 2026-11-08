@@ -6,7 +6,12 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 13 * * *'
+    # 07:17 UTC = 10:17 IDT / 09:17 IST, after laibcatalog's ~08:00 IL
+    # republish. GitHub has created the 13:00 UTC runs 3-9 hours late (up to
+    # 00:38 IL), and after midnight IL chains have no files for today.
+    # Starting earlier keeps a delayed run before midnight. Weekend
+    # weekly-release still sees Sat/Sun UTC. See issue #134.
+    - cron: '17 7 * * *'
   workflow_dispatch:
 
 concurrency:
