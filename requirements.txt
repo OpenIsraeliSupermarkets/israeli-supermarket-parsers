@@ -1,6 +1,6 @@
 pandas>2.2.2
 pymongo==4.6.3
-il-supermarket-scraper>=1.0.11
+il-supermarket-scraper @ git+https://github.com/OpenIsraeliSupermarkets/israeli-supermarket-scarpers.git@84ee90cd3e98819bf48141aa5ca36c6371068221
 tqdm>=4.66
 kafka-python>=2.0.2
 
