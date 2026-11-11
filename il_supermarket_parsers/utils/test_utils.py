@@ -94,7 +94,7 @@ def get_sample_data(dump_folder_name: str, options: Optional[SampleDataOptions] 
             "output_mode": "disk",
             "base_storage_path": dump_folder_name,
         },
-        status_configuration={"database_type": "json", "base_path": "status_logs"},
+        status_configuration={"database_type": "json", "base_path": status_folder},
         multiprocessing=1,
         enabled_scrapers=o.enabled_scrapers if o.enabled_scrapers else None,
         files_types=[o.filter_type] if o.filter_type else None,
