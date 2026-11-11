@@ -1,5 +1,6 @@
 """PARSER_VERIFY_EXTRACTION: pipeline wiring and env parsing."""
 
+import json
 import os
 import tempfile
 import unittest
@@ -20,13 +21,47 @@ from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
     CSVOutputWriter,
 )
 from il_supermarket_parsers.utils.status.parser_status import ParserStatus
-from il_supermarket_parsers.tests.test_raw_parsing_pipeline import (
-    PRICEFULL_XML,
-    SCRAPER,
-    STORE_FOLDER,
-    _validate_status_file,
-    _write_xml,
+from il_supermarket_parsers.utils.status.parser_status_contract import (
+    ParserStatusOutput,
 )
+
+SCRAPER = "SHUFERSAL"
+STORE_FOLDER = "Shufersal"
+PRICEFULL_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290027600007</ChainId>
+  <SubChainId>1</SubChainId>
+  <StoreId>001</StoreId>
+  <BikoretNo>0</BikoretNo>
+  <Items>
+    <Item>
+      <ItemCode>1001</ItemCode>
+      <ItemName>Milk 3%</ItemName>
+      <ItemPrice>6.90</ItemPrice>
+    </Item>
+    <Item>
+      <ItemCode>1002</ItemCode>
+      <ItemName>Bread</ItemName>
+      <ItemPrice>5.50</ItemPrice>
+    </Item>
+  </Items>
+</Root>
+"""
+
+
+def _write_xml(folder, filename, content):
+    with open(os.path.join(folder, filename), "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
+def _validate_status_file(status_dir):
+    for status_file in os.listdir(status_dir):
+        if status_file.endswith(".json"):
+            with open(
+                os.path.join(status_dir, status_file), "r", encoding="utf-8"
+            ) as handle:
+                assert ParserStatusOutput(**json.load(handle)).validate_file_status()
 
 
 class TestModeParsing(unittest.TestCase):
