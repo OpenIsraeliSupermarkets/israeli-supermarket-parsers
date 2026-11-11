@@ -88,6 +88,52 @@ def count_elements_in_nested_json(df):
     return dict(element_counts)
 
 
+def collect_keys_and_counts_from_rows(rows):
+    """Keys and nested element counts of parsed row dicts, in one pass.
+
+    The row-dict counterpart of :func:`collect_unique_columns_from_nested_json`
+    plus :func:`count_elements_in_nested_json`, for rows that have not been
+    through the CSV writer (nested values are still ``dict``/``list``). JSON
+    strings are parsed too, so CSV-shaped rows give the same answer.
+
+    Returns ``(keys, {key_lower: count})``. ``keys`` holds the row columns and
+    every nested key.
+    """
+    keys = set()
+    element_counts = Counter()
+
+    def count_recursive(data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                keys.add(key)
+                if isinstance(value, list):
+                    element_counts[key.lower()] += len(value)
+                    for item in value:
+                        count_recursive(item)
+                else:
+                    # a nested dict or a scalar inside a nested dict counts once
+                    element_counts[key.lower()] += 1
+                    if isinstance(value, dict):
+                        count_recursive(value)
+        elif isinstance(data, list):
+            for item in data:
+                count_recursive(item)
+
+    for row in rows:
+        keys.update(row.keys())
+        for cell in row.values():
+            if isinstance(cell, str):
+                stripped = cell.strip()
+                if stripped.startswith("{") or stripped.startswith("["):
+                    try:
+                        count_recursive(json.loads(cell))
+                    except (ValueError, TypeError):
+                        continue
+            elif isinstance(cell, (dict, list)):
+                count_recursive(cell)
+    return keys, dict(element_counts)
+
+
 # pandas.read_csv default NA tokens. Live XML sometimes uses these as
 # literal leaf text (e.g. Meshmat Yosef <UnitOfMeasure>null</UnitOfMeasure>);
 # after a CSV round-trip they become NaN. Treat them as missing, not as a

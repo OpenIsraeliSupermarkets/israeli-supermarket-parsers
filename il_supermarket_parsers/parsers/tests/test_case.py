@@ -49,15 +49,18 @@ async def _process_files(
         if not file.is_expected_to_be_readable:
             continue
 
+        # the production verifier runs on the same rows as run_validation
+        # below, so the two checks cannot drift apart
         df, csv_created, _row_count = await parse_file_via_csv(
-            parser, file, reduce_duplicates=test_fill_forward
+            parser,
+            file,
+            reduce_duplicates=test_fill_forward,
+            verify_extraction=True,
         )
 
         if file.is_expected_to_have_records:
             assert csv_created, "CSV file was not created"
-            assert df is not None and df.shape[0] > 0, (
-                f"File {file.file_name} is empty"
-            )
+            assert df is not None and df.shape[0] > 0, f"File {file.file_name} is empty"
 
             parser.run_validation(df, file)
 

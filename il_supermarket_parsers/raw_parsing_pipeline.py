@@ -9,6 +9,10 @@ from .utils.data_loaders import BaseDataLoader
 from .utils.output_writers import BaseOutputWriter
 from .utils.status import ParserStatus
 from .utils.types import ExecutionLog, FileCompleteMessage
+from .utils.extraction_verification import (
+    ExtractionVerification,
+    get_extraction_verification,
+)
 from .engines.base import BaseFileConverter
 
 
@@ -22,6 +26,7 @@ class RawParsingPipeline:
         data_loader: BaseDataLoader,
         output_writer: BaseOutputWriter,
         parser_status: ParserStatus,
+        extraction_verification: Optional[str] = None,
     ) -> None:
         """
         Initialize RawParsingPipeline
@@ -31,10 +36,20 @@ class RawParsingPipeline:
             output_writer: OutputWriter instance to write results
             parser_status: Tracks and persists per-file outcomes. Defaults to a
                            JsonDataBase-backed ParserStatus writing to "outputs/".
+            extraction_verification: "off" or "full". Defaults to the
+                           PARSER_VERIFY_EXTRACTION env var (unset = "off").
+                           With "full" each file's rows are kept in memory and
+                           checked against its XML after the file is parsed; a
+                           mismatch marks the file failed (its rows are still
+                           written).
         """
         self.data_loader = data_loader
         self.output_writer = output_writer
         self.parser_status = parser_status
+        self.verify = (
+            get_extraction_verification(extraction_verification)
+            == ExtractionVerification.FULL
+        )
 
     async def process(
         self,
@@ -79,7 +94,10 @@ class RawParsingPipeline:
 
                 await self.output_writer.initialize_new_file(file)
 
-                async for row in parser.read(file):
+                verified_rows = [] if self.verify else None
+                async for row in parser.read(file, run_validation=self.verify):
+                    if verified_rows is not None:
+                        verified_rows.append(row)
                     try:
                         await self.output_writer.write_row(row)
                     except (
@@ -93,7 +111,9 @@ class RawParsingPipeline:
                         write_error_count += 1
                     row_count += 1
 
-                self.parser_status.register_processed_file(file, row_count)
+                if not self._record_parsed_file(parser, file, verified_rows, row_count):
+                    execution_errors += 1
+                verified_rows = None
                 await self.output_writer.write_file_complete(
                     FileCompleteMessage(
                         file_name=file.file_name,
@@ -125,6 +145,35 @@ class RawParsingPipeline:
             output_path=self.output_writer.get_path(),
             total_files=len(files_to_process),
         )
+
+    def _record_parsed_file(
+        self,
+        parser: BaseFileConverter,
+        file,
+        verified_rows: Optional[list],
+        row_count: int,
+    ) -> bool:
+        """Verify the file when enabled and record its outcome.
+
+        Returns False when extraction verification found a mismatch; the file
+        is then recorded as failed (its rows are already written).
+        """
+        if verified_rows is not None:
+            try:
+                parser.verify_extraction(file, verified_rows)
+            except ValueError as error:
+                Logger.error(
+                    f"Extraction verification failed for {file.file_name}: {error}"
+                )
+                self.parser_status.register_failed_file(
+                    file,
+                    row_count,
+                    error,
+                    f"extraction verification ({type(error).__name__})",
+                )
+                return False
+        self.parser_status.register_processed_file(file, row_count)
+        return True
 
     def get_parser_status(self) -> ParserStatus:
         """Return the status tracker used by this pipeline."""

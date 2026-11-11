@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import AsyncIterator
+from typing import AsyncIterator, List
 import os
 import pandas as pd
 from il_supermarket_scarper import FileTypesFilters
@@ -87,12 +87,14 @@ class BaseFileConverter(ABC):
 
         Args:
             dump_file: DumpFile object (can be file system or queue-based)
-            run_validation: Whether to run validation (not supported in streaming mode yet)
+            run_validation: Keep the parsed XML after the last row so
+                :meth:`verify_extraction` can check the rows against it.
 
         Yields:
             dict: Row data as dictionaries
         """
         parser: XmlBaseConverter = self._get_parser(dump_file)
+        kwargs = {"keep_document": True} if run_validation else {}
         # Determine if file is queue-based or file system based
         if dump_file.is_queue_based:
             # Queue-based file (in-memory content)
@@ -100,6 +102,7 @@ class BaseFileConverter(ABC):
                 dump_file.store_folder,
                 dump_file.file_name,
                 file_content=dump_file.file_content,
+                **kwargs,
             ):
                 yield row
         else:
@@ -107,13 +110,19 @@ class BaseFileConverter(ABC):
             async for row in parser.convert(
                 dump_file.store_folder,
                 dump_file.file_name,
+                **kwargs,
             ):
                 yield row
 
-        # Note: Validation is not yet supported in streaming mode
-        # Would need to collect all rows first, which defeats the purpose of streaming
-        if run_validation:
-            raise NotImplementedError("Validation not yet supported in streaming mode")
+    def verify_extraction(self, dump_file: DumpFile, rows: List[dict]) -> None:
+        """Check every row of a file against its XML (production verifier).
+
+        ``rows`` are all the rows :meth:`read` yielded for ``dump_file`` with
+        ``run_validation=True``. Works for queue-based files too. Raises
+        ``ValueError`` on the first mismatch; the kept XML is released either
+        way.
+        """
+        self._get_parser(dump_file).verify_rows(rows)
 
     def _get_parser(self, dump_file: DumpFile) -> XmlBaseConverter:
         """get the appropriate parser based on file type"""

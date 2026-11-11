@@ -59,6 +59,20 @@ class SubRootedXmlDataFrameConverter(XmlDataFrameConverter):
                         f"columns {root} missing from {data.columns}"
                     )
 
+    def verify_rows(self, rows):
+        """Row-dict verification, plus the sub-root header columns."""
+        rows = rows if isinstance(rows, list) else list(rows)
+        source_file = self._kept_source
+        super().verify_rows(rows)
+        if self.sub_roots and rows:
+            columns = set().union(*(row.keys() for row in rows))
+            for root in self.sub_roots:
+                if root.lower() not in columns:
+                    raise ValueError(
+                        f"parse error for file {source_file}, "
+                        f"columns {root} missing from {sorted(columns)}"
+                    )
+
     def _iter_row_elements(self, root):
         """Yield (row element, sub-chain headers) matching :meth:`_parse`."""
         if root is None or len(root) == 0:

@@ -6,6 +6,8 @@ from .xml_utils import (
     build_value,
     strip_namespace,
     get_root_and_search,
+    search_root,
+    scan_document,
     get_root_and_search_from_content,
     get_root_from_content,
     iterparse_streaming,
@@ -20,6 +22,7 @@ from .xml_utils import (
 from .dataframe_utils import (
     collect_unique_columns_from_nested_json,
     count_elements_in_nested_json,
+    collect_keys_and_counts_from_rows,
     extracted_value_matches,
     preview_extracted_value,
 )
