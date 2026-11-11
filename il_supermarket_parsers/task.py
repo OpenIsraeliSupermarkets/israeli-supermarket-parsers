@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .multiprocess_pharser import ParallelParser, ParallelParserParams
 from .parser_factory import ParserFactory
 from .utils import FileTypesFilters
+from .utils.extraction_verification import get_extraction_verification
 from .utils.output_writers import ParsedRowsQueue, create_output_queue
 from .utils.types import (
     OutputConfiguration,
@@ -26,6 +27,8 @@ class ConvertingTaskConfig(BaseModel):
     multiprocessing: int = 6
     enabled_parsers: Optional[list] = None
     files_types: Optional[list] = None
+    # "off" | "full"; None reads PARSER_VERIFY_EXTRACTION (unset = "off")
+    extraction_verification: Optional[str] = None
 
     def get_enabled_parsers(self) -> List[str]:
         """Return configured parser names, or all parsers if none are set."""
@@ -102,6 +105,9 @@ class ConvertingTask:
                 source_configuration=self._config.source_configuration,
                 output_configuration=self._config.output_configuration,
                 status_configuration=self._config.status_configuration,
+                extraction_verification=get_extraction_verification(
+                    self._config.extraction_verification
+                ).value,
             ),
             multiprocessing=self._config.multiprocessing,
         )

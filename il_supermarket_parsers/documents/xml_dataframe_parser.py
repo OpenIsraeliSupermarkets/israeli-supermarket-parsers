@@ -3,12 +3,15 @@ from il_supermarket_parsers.utils import (
     collect_unique_keys_from_xml,
     collect_unique_columns_from_nested_json,
     count_all_tags_in_xml,
+    collect_keys_and_counts_from_rows,
     count_elements_in_nested_json,
     normalize_tag,
     collect_validation_data_from_xml,
     extracted_value_matches,
     get_root_and_search,
     preview_extracted_value,
+    scan_document,
+    search_root,
     xml_element_to_value,
 )
 from .base import BaseXMLParser
@@ -102,7 +105,7 @@ class XmlDataFrameConverter(BaseXMLParser):
     def _assert_mapping_on_row(self, row, mapping, source_file, row_index):
         """Every header in mapping must exist on the row and match XML text."""
         for key, expected in mapping.items():
-            if key not in row.index:
+            if key not in row:
                 raise ValueError(
                     f"for file {source_file}, column '{key}' missing from extracted data"
                 )
@@ -123,7 +126,7 @@ class XmlDataFrameConverter(BaseXMLParser):
                 )
         for child in elem:
             key = child.tag.lower()
-            if key not in row.index:
+            if key not in row:
                 raise ValueError(
                     f"for file {source_file}, column '{key}' missing from extracted data"
                 )
@@ -137,7 +140,9 @@ class XmlDataFrameConverter(BaseXMLParser):
         root, root_store = get_root_and_search(source_file, self.list_key, self.roots)
         ignore = {normalize_tag(x) for x in ignore_list}
         row_index = -1
-        for row_index, (elem, extra_headers) in enumerate(self._iter_row_elements(root)):
+        for row_index, (elem, extra_headers) in enumerate(
+            self._iter_row_elements(root)
+        ):
             if row_index >= len(data):
                 raise ValueError(
                     f"for file {source_file}, cannot compare content: "
@@ -214,6 +219,82 @@ class XmlDataFrameConverter(BaseXMLParser):
         xml_counts = cached_xml_data.get("xml_counts")
         self._validate_element_counts(data, source_file, xml_counts)
         self._validate_content(data, source_file, ignore_list)
+
+    def verify_rows(self, rows):
+        """Check the rows of the last ``convert`` against the XML it parsed.
+
+        The row-dict, single-parse version of
+        :meth:`validate_succussful_extraction`, for production: it reuses the
+        document ``convert(..., keep_document=True)`` kept and makes the same
+        checks (row count vs id tags, header and id columns, every XML key
+        captured, nested element counts, ignored tags on rows, every cell).
+        Raises ``ValueError`` on the first mismatch.
+        """
+        document, source_file = self._take_kept_document()
+        rows = rows if isinstance(rows, list) else list(rows)
+        scanned = scan_document(document, self.id_field, ignore_tags=self.ignore_column)
+        if len(rows) != scanned["tag_count"]:
+            raise ValueError(
+                f"for file {source_file}, missing data, {len(rows)} rows "
+                f"but {scanned['tag_count']} {self.id_field} tags"
+            )
+        if not rows:
+            return
+        self._verify_row_columns(rows, source_file)
+        ignore = {normalize_tag(key) for key in self.ignore_column}
+        self._verify_keys_and_counts(rows, scanned, ignore, source_file)
+        self._verify_row_content(document, rows, ignore, source_file)
+
+    def _verify_row_columns(self, rows, source_file):
+        """Header, id and source columns must be present on the rows."""
+        columns = set().union(*(row.keys() for row in rows))
+        required = [c.lower() for c in list(self.roots or []) + [self.id_field]]
+        for column in required + ["found_folder", "file_name"]:
+            if column not in columns:
+                raise ValueError(
+                    f"parse error for file {source_file}, "
+                    f"column {column} missing from {sorted(columns)}"
+                )
+
+    @staticmethod
+    def _verify_keys_and_counts(rows, scanned, ignore, source_file):
+        """Every XML key is captured and nested element counts match."""
+        row_keys, row_counts = collect_keys_and_counts_from_rows(rows)
+        data_keys = {normalize_tag(key) for key in row_keys}
+        if keys_not_used := scanned["xml_keys"] - data_keys - ignore:
+            raise ValueError(
+                f"for file {source_file}, there is data we didn't get {keys_not_used}"
+            )
+        xml_counts = scanned["xml_counts"]
+        for tag, row_count in row_counts.items():
+            xml_count = xml_counts.get(tag, 0)
+            if xml_count != row_count:
+                raise ValueError(
+                    f"for file {source_file}, element count mismatch for '{tag}': "
+                    f"XML has {xml_count}, rows have {row_count}"
+                )
+
+    def _verify_row_content(self, document, rows, ignore, source_file):
+        """Compare every row element of the XML to its row, cell by cell."""
+        root, root_store = search_root(document, self.list_key, self.roots)
+        row_index = -1
+        for row_index, (elem, extra_headers) in enumerate(
+            self._iter_row_elements(root)
+        ):
+            if row_index >= len(rows):
+                raise ValueError(
+                    f"for file {source_file}, cannot compare content: "
+                    f"XML has more row elements than rows ({len(rows)})"
+                )
+            row = rows[row_index]
+            self._assert_mapping_on_row(row, root_store, source_file, row_index)
+            self._assert_mapping_on_row(row, extra_headers, source_file, row_index)
+            self._validate_row_fields(elem, row, ignore, source_file, row_index)
+        if row_index + 1 != len(rows):
+            raise ValueError(
+                f"for file {source_file}, cannot compare content: "
+                f"XML has {row_index + 1} row elements, there are {len(rows)} rows"
+            )
 
     def list_single_entry(self, elem, found_folder, file_name, **sub_root_store):
         """build a single row"""

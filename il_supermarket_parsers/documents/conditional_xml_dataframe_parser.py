@@ -28,6 +28,7 @@ class ConditionalXmlDataFrameConverter(XmlBaseConverter):
         self.option_b = option_b
         self.root_value = root_value
         self.check_key = check_key
+        self._last_parser = None
 
     def _pick_parser(self, found_store, file_name, file_content):
         """Return option_a or option_b based on XML structure (sync helpers)."""
@@ -74,10 +75,18 @@ class ConditionalXmlDataFrameConverter(XmlBaseConverter):
             raise ValueError("Either check_key or root_value must be set")
 
         parser = self._pick_parser(found_store, file_name, file_content)
+        self._last_parser = parser
         async for row in parser.convert(
             found_store, file_name, file_content=file_content, **kwarg
         ):
             yield row
+
+    def verify_rows(self, rows):
+        """Verify with the converter the last ``convert`` picked."""
+        parser = getattr(self, "_last_parser", None)
+        if parser is None:
+            raise RuntimeError("verify_rows called before convert")
+        parser.verify_rows(rows)
 
     def validate_succussful_extraction(
         self, data, source_file, ignore_missing_columns=None

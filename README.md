@@ -100,6 +100,25 @@ Then running it using:
 
 Optional paths (defaults match the volumes above): `DATA_FOLDER` (input), `OUTPUT_FOLDER` (CSV output), `STATUS_FOLDER` (JSON status; defaults to `OUTPUT_FOLDER`). Optional tuning: `NUMBER_OF_PROCESSES`, `ENABLED_PARSERS`, and `ENABLED_FILE_TYPES` (comma-separated enum names), `LIMIT`.
 
+Extraction verification
+-----------------------
+
+Set `PARSER_VERIFY_EXTRACTION=full` (default `off`) to check every parsed file
+against its XML in production, the same checks the chain test suite makes:
+row count vs id tags, header and id columns, every XML tag captured, nested
+element counts, and every cell value. `ConvertingTask(extraction_verification=...)`
+overrides the env var. Any other value fails at startup.
+
+A file that does not match is recorded as failed in the parser status, with
+the mismatch as its error. Its rows are still written, so the data is not
+lost, and the failure shows up in the parse success rate.
+
+The check reuses the XML the parser already loaded and the rows it already
+holds, so it adds no extra file read and almost no memory. Measured on 26 real
+PriceFull/PromoFull/Stores files (180 MB, Shufersal, King Store, Wolt), parsing
+took 9.0 s with `off` and 16.4 to 17.2 s with `full`, about 1.9x. Peak memory
+stayed the same.
+
 Contributing
 ------------
 

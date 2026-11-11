@@ -31,6 +31,7 @@ class ParallelParserParams(BaseModel):
     source_configuration: SourceConfiguration
     output_configuration: List[OutputConfiguration]
     status_configuration: StatusConfiguration
+    extraction_verification: str = "off"
 
     def to_string(self) -> str:
         """Summarize these params for logging."""
@@ -40,6 +41,7 @@ class ParallelParserParams(BaseModel):
             f"output_configuration={self.output_configuration},"
             f"status_configuration={self.status_configuration},"
             f"source_configuration={self.source_configuration},"
+            f"extraction_verification={self.extraction_verification},"
         )
 
 
@@ -56,6 +58,7 @@ class RawProcessing(ProcessJob):
         parser_name = kwargs.pop("store_enum")
         limit = kwargs.pop("limit", None)
         status_config = kwargs.pop("status_config", {})
+        extraction_verification = kwargs.pop("extraction_verification", None)
 
         data_loader = get_data_loader(source_config)
 
@@ -71,6 +74,7 @@ class RawProcessing(ProcessJob):
             data_loader=data_loader,
             output_writer=output_writer,
             parser_status=parser_status,
+            extraction_verification=extraction_verification,
         )
 
         try:
@@ -96,9 +100,7 @@ class ParallelParser(MultiProcessor):
         super().__init__(multiprocessing=multiprocessing)
         self.params = params
         self._routers: Dict[str, QueueRouter] = {}
-        self._routed_handlers: Optional[
-            Dict[str, Dict[str, RoutedQueueWrapper]]
-        ] = None
+        self._routed_handlers: Optional[Dict[str, Dict[str, RoutedQueueWrapper]]] = None
 
     def task_to_execute(self):
         """the task to execute"""
@@ -119,9 +121,7 @@ class ParallelParser(MultiProcessor):
 
         self._routed_handlers = {}
         for scraper_name, handler in source_config.queue_handlers.items():
-            router = QueueRouter(
-                scraper_name, handler, self.params.enabled_file_types
-            )
+            router = QueueRouter(scraper_name, handler, self.params.enabled_file_types)
             self._routers[scraper_name] = router
 
             self._routed_handlers[scraper_name] = {}
@@ -170,9 +170,7 @@ class ParallelParser(MultiProcessor):
             )
             return QueueSourceConfiguration(queue_handlers={})
 
-        return QueueSourceConfiguration(
-            queue_handlers={parser_name: routed_handler}
-        )
+        return QueueSourceConfiguration(queue_handlers={parser_name: routed_handler})
 
     def get_arguments_list(self, limit=None):
         """create list of arguments"""
@@ -185,6 +183,7 @@ class ParallelParser(MultiProcessor):
             "source_configuration",
             "output_configuration",
             "status_config",
+            "extraction_verification",
         ]
 
         Logger.info(f"Creating combinations for {self.params.to_string()},")
@@ -192,9 +191,7 @@ class ParallelParser(MultiProcessor):
         task_can_executed_independently = []
         for parser_name in self.params.enabled_parsers:
             for file_type in self.params.enabled_file_types:
-                source_config = self._get_source_config_for_job(
-                    parser_name, file_type
-                )
+                source_config = self._get_source_config_for_job(parser_name, file_type)
                 combo = (
                     limit,
                     parser_name,
@@ -202,9 +199,8 @@ class ParallelParser(MultiProcessor):
                     source_config,
                     self.params.output_configuration,
                     self.params.status_configuration,
+                    self.params.extraction_verification,
                 )
-                task_can_executed_independently.append(
-                    dict(zip(params_order, combo))
-                )
+                task_can_executed_independently.append(dict(zip(params_order, combo)))
 
         return task_can_executed_independently

@@ -167,6 +167,39 @@ def collect_validation_data_from_xml(xml_file_path, id_field, ignore_tags=None):
     }
 
 
+def scan_document(document, id_field, ignore_tags=None):
+    """One pass over a parsed document for the extraction verifier.
+
+    Same results as :func:`collect_validation_data_from_xml` (``tag_count``,
+    normalized ``xml_keys``, ``xml_counts``) but walks an already parsed tree
+    with ``Element.iter()`` instead of re-reading the file recursively, and
+    normalizes each distinct tag once.
+    """
+    ignore_set = {normalize_tag(tag) for tag in ignore_tags} if ignore_tags else set()
+    id_lower = id_field.lower()
+    lowered = {}
+    normalized = {}
+    tag_counts = Counter()
+    keys_with_values = set()
+    for element in document.iter():
+        tag = element.tag
+        tag_lower = lowered.get(tag)
+        if tag_lower is None:
+            tag_lower = lowered[tag] = strip_namespace(tag).lower()
+            normalized[tag] = normalize_tag(tag)
+        tag_counts[tag_lower] += 1
+        text = element.text
+        if text and text.strip():
+            key = normalized[tag]
+            if key not in ignore_set:
+                keys_with_values.add(key)
+    return {
+        "tag_count": tag_counts.get(id_lower, 0),
+        "xml_keys": keys_with_values,
+        "xml_counts": dict(tag_counts),
+    }
+
+
 def build_value(name, constant_mapping, no_content="NO_BODY"):
     """convert entry to json"""
 
@@ -278,10 +311,17 @@ def get_root(file):
 
 def get_root_and_search(file, key_to_find, attributes_to_collect):
     """get the root and search for the key"""
-    root = get_root(file)
-    #
+    return search_root(get_root(file), key_to_find, attributes_to_collect)
+
+
+def search_root(document, key_to_find, attributes_to_collect):
+    """Find ``key_to_find`` in a parsed document and collect header fields.
+
+    Returns ``(list root or None, {header: text})``, like
+    :func:`get_root_and_search`, without parsing the file again.
+    """
     root_store = {}
-    root = _get_root(root, key_to_find, attributes_to_collect, root_store)
+    root = _get_root(document, key_to_find, attributes_to_collect, root_store)
     return root, root_store
 
 
@@ -376,10 +416,11 @@ def get_root_and_search_from_content(
     file_path: Optional[str] = None,
 ):
     """get the root and search for the key from file content or path"""
-    root = get_root_from_content(file_content, file_path)
-    root_store = {}
-    root = _get_root(root, key_to_find, attributes_to_collect, root_store)
-    return root, root_store
+    return search_root(
+        get_root_from_content(file_content, file_path),
+        key_to_find,
+        attributes_to_collect,
+    )
 
 
 def iterparse_streaming(
