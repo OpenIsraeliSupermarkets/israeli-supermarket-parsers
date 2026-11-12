@@ -5,9 +5,11 @@ import asyncio
 import csv
 import sys
 import json
-from typing import List
+import datetime
+from typing import List, Optional
 
 from il_supermarket_scarper import ScraperFactory
+from il_supermarket_scarper.scraper_stability import ScraperStability
 from il_supermarket_parsers.utils import DataLoader, FileTypesFilters
 from il_supermarket_parsers.utils.loading_utils import DumpFile, is_dump_file_name
 from il_supermarket_parsers.utils.test_utils import SampleDataOptions, get_sample_data
@@ -72,6 +74,28 @@ async def _process_files(
     return dfs
 
 
+def empty_download_skip_reason(
+    scraper_enum, file_type: str, limit: Optional[int], when_date
+) -> Optional[str]:
+    """Why an empty download is acceptable, or None if it is a failure.
+
+    Asks ``ScraperStability`` with the same arguments the download used.
+    """
+    approved = ScraperStability.is_validate_scraper_found_no_files(
+        scraper_enum.name,
+        limit=limit,
+        files_types=[file_type],
+        when_date=when_date,
+        utilize_date_param=scraper_enum.value.utilize_date_param,
+    )
+    if not approved:
+        return None
+    return (
+        f"no files for {scraper_enum.name} {file_type}: empty result approved "
+        f"by ScraperStability (when_date={when_date})"
+    )
+
+
 def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
     """create test suite for parser"""
 
@@ -106,7 +130,7 @@ def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
                 else:
                     os.remove(file_path)
 
-        def _refresh_download_folder(self, download_path, file_type):
+        def _refresh_download_folder(self, download_path, file_type, when_date):
             """delete the download folder"""
             if os.path.isdir(download_path) and self.refresh:
                 self._delete_folder_and_sub_folder(download_path)
@@ -118,6 +142,7 @@ def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
                     filter_type=file_type,
                     enabled_scrapers=[self.scraper_enum.name],
                     limit=self.limit,
+                    when_date=when_date,
                 ),
             )
 
@@ -158,8 +183,16 @@ def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
             """test the sub case"""
             sub_folder = self._get_temp_folder(dump_path)
 
-            if ScraperFactory.is_scraper_enabled(self.scraper_enum):
-                self._refresh_download_folder(sub_folder, file_type)
+            # A test that downloads nothing must never pass (issue #133).
+            if not ScraperFactory.is_scraper_enabled(self.scraper_enum):
+                self.skipTest(
+                    f"disabled: ScraperFactory does not enable {self.parser_name} "
+                    f"(deprecated, listed in DISABLED_SCRAPPERS, or - with scraper "
+                    f"releases before the enabled/stability split - expected empty)"
+                )
+
+            when_date = datetime.datetime.now()
+            self._refresh_download_folder(sub_folder, file_type, when_date)
 
             parser = self.parser_class()
             # Collect files from async generator
@@ -174,13 +207,18 @@ def make_test_case(scraper_enum, parser_enum):  # pylint: disable=R0915
 
             _validate_file_loading(files, sub_folder)
 
-            # Ensure we actually downloaded and processed files for enabled scrapers
-            # Without this check, tests pass vacuously when scraper fails to download
-            if ScraperFactory.is_scraper_enabled(self.scraper_enum) and len(files) == 0:
-                self.skipTest(
-                    f"No files downloaded for enabled scraper {self.parser_name}. "
-                    f"Source may be unavailable or blocked."
+            if len(files) == 0:
+                reason = empty_download_skip_reason(
+                    self.scraper_enum, file_type, self.limit, when_date
                 )
+                if reason is None:
+                    self.fail(
+                        f"No {file_type} files downloaded for {self.parser_name} "
+                        f"(when_date={when_date}) and ScraperStability does not "
+                        f"approve an empty result. Source may be down, blocked "
+                        f"or changed."
+                    )
+                self.skipTest(reason)
 
             await _process_files(files, parser)
 
