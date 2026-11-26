@@ -105,8 +105,24 @@ class ParsedFile(BaseModel):
     store_folder: str
     file_type: str
     row_count: Optional[int] = None
+    # SHA-256 of the dump as parsed (#154). None for entries written before it.
+    content_sha256: Optional[str] = None
     task_id: str
     system_timestamp: datetime
+
+
+class AlreadyParsedFile(BaseModel):
+    """A dump left out because the same name and content was parsed before (#154).
+
+    Kept apart from ``events`` so the per-file event checks are unchanged.
+    """
+
+    system_timestamp: datetime
+    file_name: str
+    store_folder: str
+    file_type: str
+    content_sha256: str
+    task_id: str
 
 
 # -- Aggregate output --
@@ -119,6 +135,7 @@ class ParserStatusOutput(BaseModel):
     - global_status: started + completed events for the run
     - events: one entry per file (processed, skipped, or failed)
     - parsed_files: durable registry of every file resolved so far
+    - already_parsed: dumps skipped because they were parsed before (#154)
     """
 
     global_status: List[Union[StartedParsingStatus, CompletedParsingStatus]] = Field(
@@ -133,6 +150,7 @@ class ParserStatusOutput(BaseModel):
         ]
     ] = Field(default_factory=list)
     parsed_files: List[ParsedFile] = Field(default_factory=list)
+    already_parsed: List[AlreadyParsedFile] = Field(default_factory=list)
 
     def parsed_file_names(self) -> Set[str]:
         """Return every file name recorded in the parsed-file registry."""

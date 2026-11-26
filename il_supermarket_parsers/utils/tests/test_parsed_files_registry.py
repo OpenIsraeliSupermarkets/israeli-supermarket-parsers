@@ -14,6 +14,7 @@ from il_supermarket_parsers.utils.status import (
     ParserStatus,
     ParserStatusOutput,
 )
+from il_supermarket_parsers.utils.status.parser_status import dump_file_sha256
 
 
 def _dump_file(file_name: str, content: bytes = b"<Root/>") -> DumpFile:
@@ -107,6 +108,24 @@ class TestParsedFilesRegistry(unittest.TestCase):
         output = ParserStatusOutput(global_status=[], events=[])
         self.assertEqual(output.parsed_files, [])
         self.assertTrue(output.validate_file_status())
+
+    def test_was_parsed_by_name_and_hash(self) -> None:
+        """Queue-based dumps hash their content; a new status reads the registry."""
+        name = "Price7290027600007-001-202501010000.xml"
+        dump = _dump_file(name, b"<Root>a</Root>")
+        sha = dump_file_sha256(dump)
+        status = ParserStatus(self.db)
+        status.register_processed_file(dump, row_count=1, content_sha256=sha)
+
+        fresh = ParserStatus(self.db)
+        self.assertTrue(fresh.was_parsed(name, sha))
+        self.assertFalse(
+            fresh.was_parsed(
+                name, dump_file_sha256(_dump_file(name, b"<Root>b</Root>"))
+            )
+        )
+        self.assertFalse(fresh.was_parsed("other.xml", sha))
+        self.assertFalse(fresh.was_parsed(name, None))
 
 
 if __name__ == "__main__":

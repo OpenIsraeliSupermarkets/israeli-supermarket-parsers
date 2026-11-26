@@ -8,6 +8,7 @@ from .utils import Logger
 from .utils.data_loaders import BaseDataLoader
 from .utils.output_writers import BaseOutputWriter
 from .utils.status import ParserStatus
+from .utils.status.parser_status import dump_file_sha256
 from .utils.types import ExecutionLog, FileCompleteMessage
 from .utils.extraction_verification import (
     ExtractionVerification,
@@ -78,10 +79,23 @@ class RawParsingPipeline:
             files_types=[enabled_file_types],
         ):
             Logger.debug(f"Processing file {file.file_name}")
+
+            # Same name and same content parsed before (#154): its rows are
+            # already in the output. This happens when a killed run leaves its
+            # dumps on disk and the next run finds them again.
+            content_sha256 = dump_file_sha256(file)
+            if self.parser_status.was_parsed(file.file_name, content_sha256):
+                Logger.info(
+                    f"File {file.file_name} was already parsed with the same "
+                    "content, skipping"
+                )
+                self.parser_status.register_already_parsed_file(file, content_sha256)
+                continue
+
             files_to_process.append(file)
 
             if not file.is_expected_to_be_readable:
-                self.parser_status.register_skipped_file(file)
+                self.parser_status.register_skipped_file(file, content_sha256)
                 Logger.debug(f"File {file.file_name} is empty, skipping")
                 continue
 
@@ -111,7 +125,9 @@ class RawParsingPipeline:
                         write_error_count += 1
                     row_count += 1
 
-                if not self._record_parsed_file(parser, file, verified_rows, row_count):
+                if not self._record_parsed_file(
+                    parser, file, verified_rows, row_count, content_sha256
+                ):
                     execution_errors += 1
                 verified_rows = None
                 await self.output_writer.write_file_complete(
@@ -152,6 +168,7 @@ class RawParsingPipeline:
         file,
         verified_rows: Optional[list],
         row_count: int,
+        content_sha256: Optional[str],
     ) -> bool:
         """Verify the file when enabled and record its outcome.
 
@@ -172,7 +189,7 @@ class RawParsingPipeline:
                     f"extraction verification ({type(error).__name__})",
                 )
                 return False
-        self.parser_status.register_processed_file(file, row_count)
+        self.parser_status.register_processed_file(file, row_count, content_sha256)
         return True
 
     def get_parser_status(self) -> ParserStatus:
