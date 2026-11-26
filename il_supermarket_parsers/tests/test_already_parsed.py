@@ -9,19 +9,72 @@ import os
 import tempfile
 import unittest
 
+from il_supermarket_scarper.utils import DumpFolderNames
 from il_supermarket_scarper.utils.databases import JsonDataBase
 
-from il_supermarket_parsers.tests.test_raw_parsing_pipeline import (
-    PRICEFULL_XML,
-    SCRAPER,
-    STORE_FOLDER,
-    _build_pipeline,
-    _validate_status_file,
-    _write_xml,
+from il_supermarket_parsers.raw_parsing_pipeline import RawParsingPipeline
+from il_supermarket_parsers.utils.data_loaders.data_loader import DataLoader
+from il_supermarket_parsers.utils.output_writers.csv_output_writer import (
+    CSVOutputWriter,
 )
+from il_supermarket_parsers.utils.status.parser_status import ParserStatus
 from il_supermarket_parsers.utils.status.parser_status_contract import (
     ParserStatusOutput,
 )
+
+SCRAPER = "SHUFERSAL"
+STORE_FOLDER = DumpFolderNames.SHUFERSAL.value
+PRICEFULL_XML = """\
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290027600007</ChainId>
+  <SubChainId>1</SubChainId>
+  <StoreId>001</StoreId>
+  <BikoretNo>0</BikoretNo>
+  <Items>
+    <Item>
+      <ItemCode>1001</ItemCode>
+      <ItemType>0</ItemType>
+      <ItemName>Milk 3%</ItemName>
+      <ItemPrice>6.90</ItemPrice>
+    </Item>
+    <Item>
+      <ItemCode>1002</ItemCode>
+      <ItemType>0</ItemType>
+      <ItemName>Bread</ItemName>
+      <ItemPrice>5.50</ItemPrice>
+    </Item>
+  </Items>
+</Root>
+"""
+
+
+def _write_xml(folder: str, filename: str, content: str) -> None:
+    with open(os.path.join(folder, filename), "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
+def _build_pipeline(root: str, output_dir: str, status_dir: str, file_type: str):
+    """A RawParsingPipeline for SHUFERSAL over *root*, as the task wires it."""
+    return RawParsingPipeline(
+        data_loader=DataLoader(root),
+        output_writer=CSVOutputWriter(
+            output_folder=output_dir,
+            csv_file_name=f"{file_type.lower()}_{SCRAPER.lower()}",
+        ),
+        parser_status=ParserStatus(
+            JsonDataBase(f"{SCRAPER}_{file_type}".lower(), base_path=status_dir)
+        ),
+    )
+
+
+def _validate_status_file(status_dir: str) -> None:
+    """Every status JSON keeps a coherent per-file lifecycle."""
+    for name in os.listdir(status_dir):
+        if name.endswith(".json"):
+            with open(os.path.join(status_dir, name), "r", encoding="utf-8") as handle:
+                assert ParserStatusOutput(**json.load(handle)).validate_file_status()
+
 
 FILE_TYPE = "PRICE_FULL_FILE"
 FILE_NAME = "PriceFull7290027600007-001-20250101.xml"
