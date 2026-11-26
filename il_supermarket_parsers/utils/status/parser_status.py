@@ -9,10 +9,11 @@ so that both systems write structured, collection-based JSON files with
 the same on-disk format.
 """
 
+import hashlib
 import os
 import uuid
 from datetime import datetime
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from il_supermarket_scarper.utils.databases.base import AbstractDataBase
 
@@ -20,6 +21,7 @@ from ..loading_utils import DumpFile
 from ..logger import Logger
 from ..types import FileExecutionLog
 from .parser_status_contract import (
+    AlreadyParsedFile,
     CompletedParsingStatus,
     FailedFileStatus,
     ParsedFile,
@@ -32,6 +34,24 @@ from .parser_status_contract import (
 
 def _now() -> datetime:
     return datetime.now()
+
+
+def dump_file_sha256(dump_file: DumpFile) -> Optional[str]:
+    """SHA-256 of the dump's bytes, or None when the file is not there (#154).
+
+    Queue-based dumps hash their in-memory content; folder dumps are read in
+    1 MiB chunks so a large file is never held in memory.
+    """
+    digest = hashlib.sha256()
+    if dump_file.is_queue_based:
+        digest.update(dump_file.file_content)
+        return digest.hexdigest()
+    if not os.path.exists(dump_file.get_full_path):
+        return None
+    with open(dump_file.get_full_path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 class ParserStatus:
@@ -56,11 +76,15 @@ class ParserStatus:
     FAILED = "failed"
     COMPLETED = "completed"
     PARSED_FILES = "parsed_files"
+    ALREADY_PARSED = "already_parsed"
 
     def __init__(self, status_database: AbstractDataBase) -> None:
         self.database = status_database
         self._file_logs: List[FileExecutionLog] = []
         self.task_id: uuid.UUID = str(uuid.uuid4())
+        # file name -> hashes it was parsed with (None: entry from before #154).
+        # Read from the database on first use, then kept up to date in memory.
+        self._parsed_hashes: Optional[Dict[str, Set[Optional[str]]]] = None
 
     def _dumpfile_to_event_fields(self, dump_file: DumpFile) -> dict:
         """Minimal fields shared by all per-file contract events."""
@@ -105,16 +129,62 @@ class ParserStatus:
         }
 
     def _record_parsed_file(
-        self, dump_file: DumpFile, row_count: Optional[int]
+        self,
+        dump_file: DumpFile,
+        row_count: Optional[int],
+        content_sha256: Optional[str],
     ) -> None:
         """Append the file to the durable parsed-file registry."""
         row = ParsedFile(
             system_timestamp=_now(),
             row_count=row_count,
+            content_sha256=content_sha256,
             task_id=self.task_id,
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document(self.PARSED_FILES, row.dict())
+        self._registry().setdefault(dump_file.file_name, set()).add(content_sha256)
+
+    # -- already-parsed check (#154) ---------------------------------------
+
+    def _registry(self) -> Dict[str, Set[Optional[str]]]:
+        """The parsed-file registry as file name -> hashes, read once."""
+        if self._parsed_hashes is None:
+            self._parsed_hashes = {}
+            for doc in self.database.list_documents(self.PARSED_FILES):
+                if doc.get("file_name"):
+                    self._parsed_hashes.setdefault(doc["file_name"], set()).add(
+                        doc.get("content_sha256")
+                    )
+        return self._parsed_hashes
+
+    def was_parsed(self, file_name: str, content_sha256: Optional[str]) -> bool:
+        """True when this dump, same name and same content, was parsed before.
+
+        - Name never parsed: False.
+        - Name parsed before hashes were recorded: True (we can't tell, and
+          parsing it again would duplicate its rows).
+        - Otherwise: True only for a hash seen before. The scraper downloads a
+          file again under the same name when its content changed, and that
+          new content must be parsed.
+        - No hash (the file is missing): False, so the normal path handles it.
+        """
+        hashes = self._registry().get(file_name)
+        if not hashes or content_sha256 is None:
+            return False
+        return None in hashes or content_sha256 in hashes
+
+    def register_already_parsed_file(
+        self, dump_file: DumpFile, content_sha256: str
+    ) -> None:
+        """Record a dump left out because it was parsed before."""
+        row = AlreadyParsedFile(
+            system_timestamp=_now(),
+            content_sha256=content_sha256,
+            task_id=self.task_id,
+            **self._dumpfile_to_event_fields(dump_file),
+        )
+        self.database.insert_document(self.ALREADY_PARSED, row.dict())
 
     def parsed_file_names(self) -> Set[str]:
         """Return every file name recorded in the parsed-file registry."""
@@ -140,7 +210,9 @@ class ParserStatus:
         )
         self.database.insert_document("global_status", event.dict())
 
-    def register_skipped_file(self, dump_file: DumpFile) -> None:
+    def register_skipped_file(
+        self, dump_file: DumpFile, content_sha256: Optional[str] = None
+    ) -> None:
         """Record that a file was skipped because it is not readable."""
         event = SkippedFileStatus(
             system_timestamp=_now(),
@@ -148,7 +220,7 @@ class ParserStatus:
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
-        self._record_parsed_file(dump_file, row_count=None)
+        self._record_parsed_file(dump_file, None, content_sha256)
 
         fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update({"loaded": False, "succusfull": None})
@@ -163,7 +235,12 @@ class ParserStatus:
         )
         self.database.insert_document("events", event.dict())
 
-    def register_processed_file(self, dump_file: DumpFile, row_count: int) -> None:
+    def register_processed_file(
+        self,
+        dump_file: DumpFile,
+        row_count: int,
+        content_sha256: Optional[str] = None,
+    ) -> None:
         """Record that a file was parsed successfully."""
         event = ProcessedFileStatus(
             system_timestamp=_now(),
@@ -172,7 +249,7 @@ class ParserStatus:
             **self._dumpfile_to_event_fields(dump_file),
         )
         self.database.insert_document("events", event.dict())
-        self._record_parsed_file(dump_file, row_count=row_count)
+        self._record_parsed_file(dump_file, row_count, content_sha256)
 
         fields = self._dumpfile_to_execution_log_fields(dump_file)
         fields.update(
